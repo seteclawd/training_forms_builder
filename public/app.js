@@ -630,7 +630,7 @@ function renderProperties(field) {
     field.columns?.forEach((col, i) => {
       html += `<div class="option-row" draggable="true" data-col-index="${i}" data-col-id="col_${i}">
         <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
-        <input type="text" value="${esc(col)}" placeholder="Column ${i+1} name" onchange="updateTableColumn(${i}, this.value)" style="min-width:150px;">
+        <input type="text" value="${esc(col)}" placeholder="Column ${i+1} name" onchange="updateTableColumn(${i}, this.value)" style="min-width:100px;">
         <select onchange="updateTableColumnType(${i}, this.value)">
           <option value="text" ${(field.columnTypes?.[i] || 'text') === 'text' ? 'selected' : ''}>Text</option>
           <option value="radio" ${field.columnTypes?.[i] === 'radio' ? 'selected' : ''}>Radio</option>
@@ -638,6 +638,7 @@ function renderProperties(field) {
           <option value="number" ${field.columnTypes?.[i] === 'number' ? 'selected' : ''}>Number</option>
           <option value="signature" ${field.columnTypes?.[i] === 'signature' ? 'selected' : ''}>Signature</option>
         </select>
+        <input type="text" value="${field.columnWidths?.[i] || ''}" placeholder="Width" style="width:60px;text-align:center;padding:4px 8px;border:1px solid #e2e8f0;border-radius:4px;" onchange="updateTableColumnWidth(${i}, this.value)" title="e.g. 20%, 150px, auto">
         <button onclick="moveTableColumn(${i}, -1)" title="Move Up">↑</button>
         <button onclick="moveTableColumn(${i}, 1)" title="Move Down">↓</button>
         <button onclick="removeTableColumn(${i})">✕</button>
@@ -810,6 +811,13 @@ function updateTableColumn(idx, value) {
 function updateTableColumnType(idx, value) {
   if (!selectedField || !selectedField.columnTypes) return;
   selectedField.columnTypes[idx] = value;
+  selectField(selectedField);
+}
+
+function updateTableColumnWidth(idx, value) {
+  if (!selectedField) return;
+  if (!selectedField.columnWidths) selectedField.columnWidths = [];
+  selectedField.columnWidths[idx] = value;
   selectField(selectedField);
 }
 
@@ -1032,7 +1040,12 @@ function renderPreviewField(field) {
 
 function renderPreviewTable(field) {
   let html = `        <table>\n          <thead>\n            <tr>\n`;
-  field.columns?.forEach(col => html += `              <th>${esc(col)}</th>\n`);
+  field.columns?.forEach((col, i) => {
+    const colWidth = field.columnWidths?.[i];
+    const widthStyle = colWidth ? ` style="width:${esc(colWidth)}"` : '';
+    html += `              <th${widthStyle}>${esc(col)}</th>
+`;
+  });
   html += `            </tr>\n          </thead>\n          <tbody>\n`;
   field.rows?.forEach((row, idx) => {
     const rowLabel = typeof row === 'object' ? row.label : row;
