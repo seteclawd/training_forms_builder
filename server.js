@@ -308,7 +308,7 @@ function renderFieldHtml(field) {
       html += `          <div class="signature-box">\n            <p style="margin:0 0 8px;color:#64748b;font-size:0.85rem;">${esc(field.label)}</p>\n            <canvas id="${name}" width="400" height="${sigH}"></canvas>\n          </div>\n`;
       break;
     case 'db_crewName': case 'db_crewId': case 'db_crewLicense': case 'db_crew3lc':
-    case 'db_instructorTri': case 'db_instructorSfi': case 'db_examinerTre':
+    case 'db_instructorTri': case 'db_examinerTre':
     case 'db_examinerSfe': case 'db_location': case 'db_trainingType': case 'db_fstdId':
       {
         const dbName = field.dbSource || 'unknown';

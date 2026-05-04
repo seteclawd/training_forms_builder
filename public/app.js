@@ -416,8 +416,6 @@ function createField(type) {
       return { ...base, label: 'Crew 3LC', dbSource: 'crew3lc', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_instructorTri':
       return { ...base, label: 'Instructor - TRI', dbSource: 'instructorTri', options: [{value:'', label:'-- Select from database --'}] };
-    case 'db_instructorSfi':
-      return { ...base, label: 'Instructor - SFI', dbSource: 'instructorSfi', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_examinerTre':
       return { ...base, label: 'Examiner - TRE', dbSource: 'examinerTre', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_examinerSfe':
@@ -441,7 +439,6 @@ function getDefaultLabel(type) {
     table: 'Table', signature: 'Signature', heading: 'Heading',
     db_crewName: 'Crew Name', db_crewId: 'Crew ID', db_crewLicense: 'Crew License',
     db_crew3lc: 'Crew 3LC', db_instructorTri: 'Instructor - TRI',
-    db_instructorSfi: 'Instructor - SFI', db_examinerTre: 'Examiner - TRE',
     db_examinerSfe: 'Examiner - SFE', db_location: 'Location',
     db_trainingType: 'Type of Training', db_fstdId: 'FSTD ID'
   };
@@ -983,10 +980,22 @@ function generateLivePreviewHtml(title, sectionName) {
     });
     bodyHtml += `    </fieldset>\n`;
   });
+  return `
   <div class="preview-header" style="display:flex;align-items:center;gap:16px;">
     <div style="font-size:1.5rem;font-weight:900;letter-spacing:2px;color:#fff;text-transform:uppercase;font-family:'Segoe UI',Arial,sans-serif;opacity:0.9;">TEXEL</div>
     <div style="flex:1;text-align:center;">
-      <script>
+      <h1 style="margin:0;font-size:1rem;">👁️ ${esc(formId || 'Draft Preview')}</h1>
+      ${formIssue || formRev || formDate ? `<div style="margin-top:4px;display:flex;justify-content:center;gap:12px;font-size:0.8rem;opacity:0.85;">
+        ${formIssue ? `<span>Issue: ${esc(formIssue)}</span>` : ''}
+        ${formRev ? `<span>Rev: ${esc(formRev)}</span>` : ''}
+        ${formDate ? `<span>Date: ${esc(formDate)}</span>` : ''}
+      </div>` : ''}
+      <p style="margin:4px 0 0;opacity:0.8;font-size:0.8rem;">Live Preview - ${esc(sectionName)}</p>
+    </div>
+  </div>
+  ${bodyHtml || '<p style="color:#94a3b8;text-align:center;padding:40px;">Empty section. Add sub-sections and fields.</p>'}
+
+  <script>
   function formatDate(input) {
     const val = input.value.trim();
     if (!val) return;
@@ -1091,7 +1100,7 @@ function renderPreviewField(field) {
 `;
       break;
     case 'db_crewName': case 'db_crewId': case 'db_crewLicense': case 'db_crew3lc':
-    case 'db_instructorTri': case 'db_instructorSfi': case 'db_examinerTre':
+    case 'db_instructorTri': case 'db_examinerTre':
     case 'db_examinerSfe': case 'db_location': case 'db_trainingType': case 'db_fstdId':
       {
         const dbOpts = field.options || [{value:'', label:'-- Select from database --'}];
