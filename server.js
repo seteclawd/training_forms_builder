@@ -332,6 +332,9 @@ function renderTableHtml(field) {
         html += `                <td><input type="number" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></td>\n`;
       } else if (colType === 'select') {
         html += `                <td><select name="${esc(fieldName)}_${i}"><option value="">Select...</option><option value="yes">Yes</option><option value="no">No</option></select></td>\n`;
+      } else if (colType === 'multiline') {
+        const mlRows = fs.columnRows?.[i] || 2;
+        html += `                <td><textarea rows="${mlRows}" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></textarea></td>\n`;
       } else if (colType === 'signature') {
         const sigH = fs.columnSigHeights?.[i] || '2row';
         const sigPx = { '1row': 40, '2row': 60, '3row': 100, '4row': 150, '5row': 200 }[sigH] || 60;

@@ -633,6 +633,7 @@ function renderProperties(field) {
         <input type="text" value="${esc(col)}" placeholder="Column ${i+1} name" onchange="updateTableColumn(${i}, this.value)" style="min-width:100px;">
         <select onchange="updateTableColumnType(${i}, this.value)">
           <option value="text" ${(field.columnTypes?.[i] || 'text') === 'text' ? 'selected' : ''}>Text</option>
+          <option value="multiline" ${field.columnTypes?.[i] === 'multiline' ? 'selected' : ''}>Multi-line</option>
           <option value="radio" ${field.columnTypes?.[i] === 'radio' ? 'selected' : ''}>Radio</option>
           <option value="checkbox" ${field.columnTypes?.[i] === 'checkbox' ? 'selected' : ''}>Checkbox</option>
           <option value="number" ${field.columnTypes?.[i] === 'number' ? 'selected' : ''}>Number</option>
@@ -646,6 +647,7 @@ function renderProperties(field) {
           <option value="4row" ${field.columnSigHeights?.[i] === '4row' ? 'selected' : ''}>4 rows</option>
           <option value="5row" ${field.columnSigHeights?.[i] === '5row' ? 'selected' : ''}>5 rows</option>
         </select>
+        <input type="number" value="${field.columnRows?.[i] || 2}" min="1" max="10" placeholder="Rows" style="width:45px;text-align:center;padding:4px 8px;border:1px solid #e2e8f0;border-radius:4px;" onchange="updateTableColumnRows(${i}, this.value)" title="Multi-line rows (default 2)"
         <button onclick="moveTableColumn(${i}, -1)" title="Move Up">↑</button>
         <button onclick="moveTableColumn(${i}, 1)" title="Move Down">↓</button>
         <button onclick="removeTableColumn(${i})">✕</button>
@@ -825,6 +827,13 @@ function updateTableColumnSigHeight(idx, value) {
   if (!selectedField) return;
   if (!selectedField.columnSigHeights) selectedField.columnSigHeights = [];
   selectedField.columnSigHeights[idx] = value;
+  selectField(selectedField);
+}
+
+function updateTableColumnRows(idx, value) {
+  if (!selectedField) return;
+  if (!selectedField.columnRows) selectedField.columnRows = [];
+  selectedField.columnRows[idx] = value;
   selectField(selectedField);
 }
 
@@ -1074,6 +1083,10 @@ function renderPreviewTable(field) {
       else if (colType === 'checkbox') html += `              <td class="radio-cell"><input type="checkbox"></td>\n`;
       else if (colType === 'number') html += `              <td><input type="number" class="notes-input" placeholder="..."></td>\n`;
       else if (colType === 'select') html += `              <td><select><option>Select...</option><option>Yes</option><option>No</option></select></td>\n`;
+      else if (colType === 'multiline') {
+        const mlRows = field.columnRows?.[i] || 2;
+        html += `              \u003ctd\u003e\u003ctextarea rows="${mlRows}" class="notes-input" placeholder="..."\u003e\u003c/textarea\u003e\u003c/td\u003e\n`;
+      }
       else if (colType === 'signature') {
         const sigHeight = field.columnSigHeights?.[i] || '2row';
         const sigPx = { '1row': 40, '2row': 60, '3row': 100, '4row': 150, '5row': 200 }[sigHeight] || 60;
