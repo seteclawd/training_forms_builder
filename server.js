@@ -154,14 +154,17 @@ function generateHtml(config, isPreview = false) {
 </head>
 <body>
 <div class="container">
-  <div class="header">
-    <h1>${esc(config.formId || config.title || 'Training Form')}</h1>
-    <div style="margin-top:8px;display:flex;justify-content:center;gap:20px;font-size:0.85rem;opacity:0.9;">
-      ${config.formIssue ? `<span>Issue: ${esc(config.formIssue)}</span>` : ''}
-      ${config.formRevision ? `<span>Rev: ${esc(config.formRevision)}</span>` : ''}
-      ${config.formDate ? `<span>Date: ${esc(config.formDate)}</span>` : ''}
+  <div class="header" style="display:flex;align-items:center;gap:20px;">
+    <div class="logo" style="font-size:2.5rem;font-weight:900;letter-spacing:3px;color:#fff;text-transform:uppercase;font-family:'Segoe UI',Arial,sans-serif;">TEXEL</div>
+    <div style="flex:1;text-align:center;">
+      <h1>${esc(config.formId || config.title || 'Training Form')}</h1>
+      <div style="margin-top:8px;display:flex;justify-content:center;gap:20px;font-size:0.85rem;opacity:0.9;">
+        ${config.formIssue ? `<span>Issue: ${esc(config.formIssue)}</span>` : ''}
+        ${config.formRevision ? `<span>Rev: ${esc(config.formRevision)}</span>` : ''}
+        ${config.formDate ? `<span>Date: ${esc(config.formDate)}</span>` : ''}
+        ${config.subtitle ? `<span>${esc(config.subtitle)}</span>` : ''}
+      </div>
     </div>
-    <p style="margin:8px 0 0;opacity:0.7;">${esc(config.subtitle || '')}</p>
   </div>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab(0)">Session Details</button>
