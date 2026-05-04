@@ -154,17 +154,13 @@ function generateHtml(config, isPreview = false) {
 </head>
 <body>
 <div class="container">
-  <div class="header" style="display:flex;align-items:center;gap:20px;">
-    <div class="logo" style="font-size:2.5rem;font-weight:900;letter-spacing:3px;color:#fff;text-transform:uppercase;font-family:'Segoe UI',Arial,sans-serif;">TEXEL</div>
-    <div style="flex:1;text-align:center;">
-      <h1>${esc(config.formId || config.title || 'Training Form')}</h1>
-      <div style="margin-top:8px;display:flex;justify-content:center;gap:20px;font-size:0.85rem;opacity:0.9;">
-        ${config.formIssue ? `<span>Issue: ${esc(config.formIssue)}</span>` : ''}
-        ${config.formRevision ? `<span>Rev: ${esc(config.formRevision)}</span>` : ''}
-        ${config.formDate ? `<span>Date: ${esc(config.formDate)}</span>` : ''}
-        ${config.subtitle ? `<span>${esc(config.subtitle)}</span>` : ''}
+  <div class="header" style="text-align:center;">
+      <h1 style="margin:0;font-size:1.5rem;">${esc(config.title || config.formId || 'Training Form')}</h1>
+      <div style="margin-top:8px;font-size:0.9rem;opacity:0.9;">
+        ${config.subtitle || config.formIssue || config.formRevision || config.formDate ? `
+          Form: ${esc(config.subtitle || '-')}${config.formIssue ? ` | Issue: ${esc(config.formIssue)}` : ''}${config.formRevision ? ` | Revision: ${esc(config.formRevision)}` : ''}${config.formDate ? ` | Date: ${esc(config.formDate)}` : ''}
+        ` : ''}
       </div>
-    </div>
   </div>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab(0)">Session Details</button>
@@ -309,7 +305,6 @@ function renderFieldHtml(field) {
       break;
     case 'db_crewName': case 'db_crewId': case 'db_crewLicense': case 'db_crew3lc':
     case 'db_instructorTri': case 'db_examinerTre':
-    case 'db_examinerSfe': case 'db_location': case 'db_trainingType': case 'db_fstdId':
       {
         const dbName = field.dbSource || 'unknown';
         html += `          <select name="${name}" class="db-field" data-db="${esc(dbName)}" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;">\n`;
