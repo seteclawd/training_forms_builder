@@ -154,12 +154,15 @@ function generateHtml(config, isPreview = false) {
 </head>
 <body>
 <div class="container">
-  <div class="header" style="text-align:center;">
-      <h1 style="margin:0;font-size:1.5rem;">${esc(config.title || config.formId || 'Training Form')}</h1>
-      <div style="margin-top:8px;font-size:0.9rem;opacity:0.9;">
-        ${config.subtitle || config.formIssue || config.formRevision || config.formDate ? `
-          Form: ${esc(config.subtitle || '-')}${config.formIssue ? ` | Issue: ${esc(config.formIssue)}` : ''}${config.formRevision ? ` | Revision: ${esc(config.formRevision)}` : ''}${config.formDate ? ` | Date: ${esc(config.formDate)}` : ''}
-        ` : ''}
+  <div class="header" style="display:flex;align-items:center;padding:16px 24px;gap:20px;">
+      <img src="https://images.squarespace-cdn.com/content/v1/6165b53b88f6997eddca094a/0e37a1e7-e183-4bd8-b0c1-f520a6db6639/Texel-logo-001-white.png?format=750w" alt="Texel Air" style="height:50px;width:auto;">
+      <div style="flex:1;text-align:center;">
+        <h1 style="margin:0;font-size:1.5rem;color:#fff;">${esc(config.title || config.formId || 'Training Form')}</h1>
+        <div style="margin-top:6px;font-size:0.9rem;color:#fff;opacity:0.9;">
+          ${config.subtitle || config.formIssue || config.formRevision || config.formDate ? `
+            Form: ${esc(config.subtitle || '-')}${config.formIssue ? ` | Issue: ${esc(config.formIssue)}` : ''}${config.formRevision ? ` | Revision: ${esc(config.formRevision)}` : ''}${config.formDate ? ` | Date: ${esc(config.formDate)}` : ''}
+          ` : ''}
+        </div>
       </div>
   </div>
   <div class="tabs">

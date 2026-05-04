@@ -944,7 +944,7 @@ function updateLivePreview() {
   const sectionNames = ['Session Details', 'Training Details', 'Comments & Signatures'];
   const sectionName = sectionNames[['session', 'training', 'comments'].indexOf(currentSection)] || currentSection;
   document.getElementById('previewSectionNum').textContent = ['session', 'training', 'comments'].indexOf(currentSection) + 1;
-  const html = generateLivePreviewHtml(title, sectionName, formIdCode);
+  const html = generateLivePreviewHtml(title, sectionName, formIdCode, formIssue, formRevision, formDate);
   frame.srcdoc = html;
 }
 
@@ -979,18 +979,24 @@ function generateLivePreviewHtml(title, sectionName, formIdCode, formIssue, form
     bodyHtml += `    </fieldset>\n`;
   });
   return `
-  <div class="preview-header" style="display:flex;align-items:center;gap:16px;">
-    <div style="font-size:1.5rem;font-weight:900;letter-spacing:2px;color:#fff;text-transform:uppercase;font-family:'Segoe UI',Arial,sans-serif;opacity:0.9;">TEXEL</div>
-    <div style="flex:1;text-align:center;">
-      <h1 style="margin:0;font-size:1rem;">👁️ ${esc(formId || 'Draft Preview')}</h1>
-      ${formIssue || formRev || formDate ? `<div style="margin-top:4px;display:flex;justify-content:center;gap:12px;font-size:0.8rem;opacity:0.85;">
-        ${formIssue ? `<span>Issue: ${esc(formIssue)}</span>` : ''}
-        ${formRev ? `<span>Rev: ${esc(formRev)}</span>` : ''}
-        ${formDate ? `<span>Date: ${esc(formDate)}</span>` : ''}
-      </div>` : ''}
-      <p style="margin:4px 0 0;opacity:0.8;font-size:0.8rem;">Live Preview - ${esc(sectionName)}</p>
-    </div>
-  </div>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; padding: 16px; font-size: 14px; }
+  .form-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+  .form-group { flex: 1; min-width: 150px; }
+  .form-group.full { flex: 0 0 100%; max-width: 100%; }
+  fieldset { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  legend { font-weight: 700; color: #1a365d; padding: 0 8px; font-size: 0.9rem; }
+  label { display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 4px; }
+  input, select, textarea { width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.9rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th { background: #1a365d; color: #fff; padding: 6px 8px; text-align: left; }
+  td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; }
+  input[type="radio"] { width: 16px; height: 16px; }
+  canvas { width: 100%; max-width: 250px; height: 60px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; }
+  .db-field { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; width: 100%; }
+  small { color: #94a3b8; font-size: 0.75rem; }
+</style>
   ${bodyHtml || '<p style="color:#94a3b8;text-align:center;padding:40px;">Empty section. Add sub-sections and fields.</p>'}
 
   <script>
