@@ -638,7 +638,14 @@ function renderProperties(field) {
           <option value="number" ${field.columnTypes?.[i] === 'number' ? 'selected' : ''}>Number</option>
           <option value="signature" ${field.columnTypes?.[i] === 'signature' ? 'selected' : ''}>Signature</option>
         </select>
-        <input type="text" value="${field.columnWidths?.[i] || ''}" placeholder="Width" style="width:60px;text-align:center;padding:4px 8px;border:1px solid #e2e8f0;border-radius:4px;" onchange="updateTableColumnWidth(${i}, this.value)" title="e.g. 20%, 150px, auto">
+        <input type="text" value="${field.columnWidths?.[i] || ''}" placeholder="Width" style="width:50px;text-align:center;padding:4px 8px;border:1px solid #e2e8f0;border-radius:4px;" onchange="updateTableColumnWidth(${i}, this.value)" title="e.g. 20%, 150px, auto">
+        <select onchange="updateTableColumnSigHeight(${i}, this.value)" title="Signature height (rows)">
+          <option value="1row" ${(field.columnSigHeights?.[i] || '2row') === '1row' ? 'selected' : ''}>1 row</option>
+          <option value="2row" ${(field.columnSigHeights?.[i] || '2row') === '2row' ? 'selected' : ''}>2 rows</option>
+          <option value="3row" ${field.columnSigHeights?.[i] === '3row' ? 'selected' : ''}>3 rows</option>
+          <option value="4row" ${field.columnSigHeights?.[i] === '4row' ? 'selected' : ''}>4 rows</option>
+          <option value="5row" ${field.columnSigHeights?.[i] === '5row' ? 'selected' : ''}>5 rows</option>
+        </select>
         <button onclick="moveTableColumn(${i}, -1)" title="Move Up">↑</button>
         <button onclick="moveTableColumn(${i}, 1)" title="Move Down">↓</button>
         <button onclick="removeTableColumn(${i})">✕</button>
@@ -811,6 +818,13 @@ function updateTableColumn(idx, value) {
 function updateTableColumnType(idx, value) {
   if (!selectedField || !selectedField.columnTypes) return;
   selectedField.columnTypes[idx] = value;
+  selectField(selectedField);
+}
+
+function updateTableColumnSigHeight(idx, value) {
+  if (!selectedField) return;
+  if (!selectedField.columnSigHeights) selectedField.columnSigHeights = [];
+  selectedField.columnSigHeights[idx] = value;
   selectField(selectedField);
 }
 
@@ -1060,7 +1074,11 @@ function renderPreviewTable(field) {
       else if (colType === 'checkbox') html += `              <td class="radio-cell"><input type="checkbox"></td>\n`;
       else if (colType === 'number') html += `              <td><input type="number" class="notes-input" placeholder="..."></td>\n`;
       else if (colType === 'select') html += `              <td><select><option>Select...</option><option>Yes</option><option>No</option></select></td>\n`;
-      else if (colType === 'signature') html += `              <td><canvas></canvas></td>\n`;
+      else if (colType === 'signature') {
+        const sigHeight = field.columnSigHeights?.[i] || '2row';
+        const sigPx = { '1row': 40, '2row': 60, '3row': 100, '4row': 150, '5row': 200 }[sigHeight] || 60;
+        html += `              <td><canvas style="width:100%;max-width:200px;height:${sigPx}px;border:1px solid #e2e8f0;border-radius:4px;"></canvas></td>\n`;
+      }
       else html += `              <td><input type="text" class="notes-input" placeholder="..."></td>\n`;
     }
     html += `            </tr>\n`;

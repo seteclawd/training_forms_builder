@@ -333,7 +333,9 @@ function renderTableHtml(field) {
       } else if (colType === 'select') {
         html += `                <td><select name="${esc(fieldName)}_${i}"><option value="">Select...</option><option value="yes">Yes</option><option value="no">No</option></select></td>\n`;
       } else if (colType === 'signature') {
-        html += `                <td><canvas id="${esc(fieldName)}_${i}" width="200" height="60" style="border:1px solid #e2e8f0;border-radius:4px;cursor:crosshair;"></canvas></td>\n`;
+        const sigH = fs.columnSigHeights?.[i] || '2row';
+        const sigPx = { '1row': 40, '2row': 60, '3row': 100, '4row': 150, '5row': 200 }[sigH] || 60;
+        html += `                <td><canvas id="${esc(fieldName)}_${i}" width="200" height="${sigPx}" style="border:1px solid #e2e8f0;border-radius:4px;cursor:crosshair;"></canvas></td>\n`;
       } else {
         html += `                <td><input type="text" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></td>\n`;
       }
