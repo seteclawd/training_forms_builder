@@ -57,7 +57,7 @@ body {
 /* Builder */
 .builder-container {
   display: grid;
-  grid-template-columns: 220px 1fr 320px;
+  grid-template-columns: 220px 1fr 370px;
   gap: 16px;
   height: calc(100vh - 56px);
 }
@@ -278,8 +278,8 @@ body {
   padding: 16px;
   overflow-y: auto;
   overflow-x: visible;
-  width: 320px;
-  min-width: 280px;
+  width: 370px;
+  min-width: 370px;
   border-left: 2px solid #e2e8f0;
 }
 .resize-divider {
