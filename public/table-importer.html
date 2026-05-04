@@ -139,58 +139,114 @@ function parseHtml() {
   
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
-  const table = doc.querySelector('table');
-  if (!table) { alert('No table found in HTML'); return; }
+  const tables = doc.querySelectorAll('table');
+  if (!tables.length) { alert('No table found in HTML'); return; }
   
+  // If multiple tables, combine them all into one tableData
+  let allCells = {};
+  let globalRowOffset = 0;
+  
+  tables.forEach((table, tableIdx) => {
+    const rows = table.querySelectorAll('tr');
+    rows.forEach((row, rowIdx) => {
+      const cells = row.querySelectorAll('td, th');
+      const maxCols = cells.length;
+      
+      cells.forEach((cell, colIdx) => {
+        const cellId = `cell_${globalRowOffset + rowIdx}_${colIdx}`;
+        const isHeader = cell.tagName === 'TH';
+        
+        let cleanText = cell.textContent.trim().replace(/\s+/g, ' ');
+        if (!cleanText) cleanText = '';
+        
+        let bgColor = cell.getAttribute('bgcolor') || '';
+        let inlineStyle = cell.getAttribute('style') || '';
+        let cellStyle = '';
+        if (bgColor) cellStyle += 'background-color:' + bgColor + ';';
+        if (inlineStyle) {
+          const sm = {};
+          inlineStyle.split(';').forEach(function(s) { var parts = s.split(':'); var p = parts[0] && parts[0].trim(); var v = parts[1] && parts[1].trim(); if (p && v) sm[p] = v; });
+          if (sm['text-align']) cellStyle += 'text-align:' + sm['text-align'] + ';';
+          if (sm['font-weight']) cellStyle += 'font-weight:' + sm['font-weight'] + ';';
+          if (sm['font-style']) cellStyle += 'font-style:' + sm['font-style'] + ';';
+          if (sm['color']) cellStyle += 'color:' + sm['color'] + ';';
+          if (sm['background-color']) cellStyle += 'background-color:' + sm['background-color'] + ';';
+          if (sm['width']) cellStyle += 'width:' + sm['width'] + ';';
+          if (sm['height']) cellStyle += 'height:' + sm['height'] + ';';
+        }
+        
+        allCells[cellId] = {
+          row: globalRowOffset + rowIdx,
+          col: colIdx,
+          originalContent: cleanText,
+          originalBgcolor: bgColor,
+          originalInlineStyle: inlineStyle,
+          cellStyle: cellStyle,
+          isHeader: isHeader,
+          type: 'text',
+          dbName: '',
+          options: [],
+          label: cleanText || `Cell ${globalRowOffset + rowIdx}_${colIdx}`,
+          fieldName: `cell_${globalRowOffset + rowIdx}_${colIdx}`
+        };
+      });
+    });
+    globalRowOffset += rows.length;
+  });
+  
+  tableData = { cells: allCells };
+  
+  // Render all cells
   const container = document.getElementById('tableContainer');
   container.innerHTML = '';
   const newTable = document.createElement('table');
   newTable.className = 'import-table';
-  tableData = { cells: {} };
   
-  // Clone the table structure
-  const rows = table.querySelectorAll('tr');
-  rows.forEach((row, rowIdx) => {
-    const newRow = document.createElement(row.tagName === 'THEAD' || row.querySelector('th') ? 'tr' : 'tr');
-    const cells = row.querySelectorAll('td, th');
-    cells.forEach((cell, colIdx) => {
-      const cellId = `cell_${rowIdx}_${colIdx}`;
-      const isHeader = cell.tagName === 'TH';
+  // Find max row and column
+  const allCellKeys = Object.keys(allCells);
+  if (!allCellKeys.length) { alert('No cells found'); return; }
+  const maxRow = Math.max(...allCellKeys.map(k => parseInt(k.split('_')[1]))) + 1;
+  const maxCol = Math.max(...allCellKeys.map(k => parseInt(k.split('_')[2]))) + 1;
+  
+  // Build rows
+  for (let r = 0; r < maxRow; r++) {
+    const rowCells = [];
+    let isHeaderRow = true;
+    for (let c = 0; c < maxCol; c++) {
+      const cell = allCells[`cell_${r}_${c}`];
+      rowCells.push(cell || null);
+      if (cell && !cell.isHeader) isHeaderRow = false;
+    }
+    
+    const newRow = document.createElement('tr');
+    rowCells.forEach((cell, c) => {
+      const cellId = `cell_${r}_${c}`;
+      if (!cell) {
+        const empty = document.createElement(isHeaderRow ? 'th' : 'td');
+        empty.innerHTML = '&nbsp;';
+        newRow.appendChild(empty);
+        return;
+      }
       
-      // Extract clean text content
-      let cleanText = cell.textContent.trim().replace(/\s+/g, ' ');
-      if (!cleanText) cleanText = '';
-      
-      const newCell = document.createElement(isHeader ? 'th' : 'td');
-      newCell.textContent = cleanText || '\u00A0';
+      const newCell = document.createElement(cell.isHeader ? 'th' : 'td');
+      if (cell.cellStyle) newCell.style.cssText = cell.cellStyle;
+      newCell.textContent = cell.originalContent || '\u00A0';
       newCell.dataset.cellId = cellId;
-      newCell.dataset.row = rowIdx;
-      newCell.dataset.col = colIdx;
-      newCell.dataset.header = isHeader;
+      newCell.dataset.row = r;
+      newCell.dataset.col = c;
       
-      if (!isHeader) {
+      if (!cell.isHeader) {
         newCell.onclick = () => selectCell(cellId);
         const idBadge = document.createElement('span');
         idBadge.className = 'cell-id';
         idBadge.textContent = cellId;
         newCell.appendChild(idBadge);
-        
-        tableData.cells[cellId] = {
-          row: rowIdx,
-          col: colIdx,
-          originalContent: cleanText,
-          type: 'text',
-          dbName: '',
-          options: [],
-          label: cleanText || `Cell ${rowIdx}_${colIdx}`,
-          fieldName: `cell_${rowIdx}_${colIdx}`
-        };
       }
       
       newRow.appendChild(newCell);
     });
     newTable.appendChild(newRow);
-  });
+  }
   
   container.appendChild(newTable);
 }
@@ -454,7 +510,19 @@ function copyHtmlWithConfig() {
       if (cell.label && cell.label !== cell.originalContent) attrs += ` data-label="${escHtml(cell.label)}"`;
       if (cell.options && cell.options.length) attrs += ` data-options="${escHtml(cell.options.join(','))}"`;
       
-      html += `<${cellTag}${attrs}>${cell.originalContent || ''}</${cellTag}>`;
+      let styleAttr = '';
+      if (cell.originalBgcolor) styleAttr += 'background-color:' + cell.originalBgcolor + ';';
+      if (cell.originalInlineStyle) {
+        var sm = {};
+        cell.originalInlineStyle.split(';').forEach(function(s) { var p = s.split(':')[0] && s.split(':')[0].trim(); var v = s.split(':')[1] && s.split(':')[1].trim(); if (p && v) sm[p] = v; });
+        if (sm['text-align']) styleAttr += 'text-align:' + sm['text-align'] + ';';
+        if (sm['font-weight']) styleAttr += 'font-weight:' + sm['font-weight'] + ';';
+        if (sm['font-style']) styleAttr += 'font-style:' + sm['font-style'] + ';';
+        if (sm['color']) styleAttr += 'color:' + sm['color'] + ';';
+        if (sm['background-color']) styleAttr += 'background-color:' + sm['background-color'] + ';';
+      }
+      var styleStr = styleAttr ? ' style="' + styleAttr.replace(/"/g, '&quot;') + '"' : '';
+      html += `<${cellTag}${attrs}${styleStr}>${cell.originalContent || ''}</${cellTag}>`;
     });
     html += `</tr>\n`;
   }
