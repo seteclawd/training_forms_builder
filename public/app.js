@@ -940,15 +940,16 @@ function updateLivePreview() {
   if (document.getElementById('livePreviewPanel').classList.contains('hidden')) return;
   const frame = document.getElementById('livePreviewFrame');
   if (!frame) return;
-  const formId = document.getElementById('formId').value || '';
+  const formName = document.getElementById('formId').value || '';
+  const formIdCode = document.getElementById('formSubtitle').value || '';
   const formIssue = document.getElementById('formIssue').value || '';
   const formRevision = document.getElementById('formRevision').value || '';
   const formDate = document.getElementById('formDate').value || '';
-  const title = formId || 'Draft Preview';
+  const title = formName || 'Draft Preview';
   const sectionNames = ['Session Details', 'Training Details', 'Comments & Signatures'];
   const sectionName = sectionNames[['session', 'training', 'comments'].indexOf(currentSection)] || currentSection;
   document.getElementById('previewSectionNum').textContent = ['session', 'training', 'comments'].indexOf(currentSection) + 1;
-  const html = generateLivePreviewHtml(title, sectionName);
+  const html = generateLivePreviewHtml(title, sectionName, formIdCode);
   frame.srcdoc = html;
 }
 
