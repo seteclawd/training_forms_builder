@@ -155,8 +155,13 @@ function generateHtml(config, isPreview = false) {
 <body>
 <div class="container">
   <div class="header">
-    <h1>${esc(config.title || 'Training Form')}</h1>
-    <p>${esc(config.subtitle || '')}</p>
+    <h1>${esc(config.formId || config.title || 'Training Form')}</h1>
+    <div style="margin-top:8px;display:flex;justify-content:center;gap:20px;font-size:0.85rem;opacity:0.9;">
+      ${config.formIssue ? `<span>Issue: ${esc(config.formIssue)}</span>` : ''}
+      ${config.formRevision ? `<span>Rev: ${esc(config.formRevision)}</span>` : ''}
+      ${config.formDate ? `<span>Date: ${esc(config.formDate)}</span>` : ''}
+    </div>
+    <p style="margin:8px 0 0;opacity:0.7;">${esc(config.subtitle || '')}</p>
   </div>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab(0)">Session Details</button>

@@ -73,7 +73,7 @@ async function useTemplate(templateId) {
     // Apply template fields to the appropriate section
     currentForm.config.sections[template.section_type] = JSON.parse(JSON.stringify(template.fields));
     showBuilder();
-    document.getElementById('formTitle').value = 'New Form - ' + template.name;
+    document.getElementById('formId').value = template.name;
     // Switch to the section that has the template
     document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
     document.querySelector(`.section-tab[data-section="${template.section_type}"]`).classList.add('active');
@@ -890,7 +890,11 @@ function updateLivePreview() {
   if (document.getElementById('livePreviewPanel').classList.contains('hidden')) return;
   const frame = document.getElementById('livePreviewFrame');
   if (!frame) return;
-  const title = document.getElementById('formTitle').value || 'Draft Preview';
+  const formId = document.getElementById('formId').value || '';
+  const formIssue = document.getElementById('formIssue').value || '';
+  const formRevision = document.getElementById('formRevision').value || '';
+  const formDate = document.getElementById('formDate').value || '';
+  const title = formId || 'Draft Preview';
   const sectionNames = ['Session Details', 'Training Details', 'Comments & Signatures'];
   const sectionName = sectionNames[['session', 'training', 'comments'].indexOf(currentSection)] || currentSection;
   document.getElementById('previewSectionNum').textContent = ['session', 'training', 'comments'].indexOf(currentSection) + 1;
@@ -928,7 +932,7 @@ function generateLivePreviewHtml(title, sectionName) {
     });
     bodyHtml += `    </fieldset>\n`;
   });
-  return `<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<style>\n  * { box-sizing: border-box; }\n  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; margin: 0; padding: 12px; font-size: 14px; }\n  .preview-header { background: #1a365d; color: #fff; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; }\n  .preview-header h1 { margin: 0; font-size: 1rem; }\n  .preview-header p { margin: 4px 0 0; opacity: 0.8; font-size: 0.8rem; }\n  fieldset { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff; }\n  legend { font-weight: 700; color: #1a365d; padding: 0 6px; font-size: 0.85rem; }\n  .form-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; position: relative; z-index: 1; }\n  .form-group { flex: 1; min-width: 140px; }\n  .form-group.full { flex: 0 0 100%; max-width: 100%; }\n  label { display: block; font-size: 0.75rem; font-weight: 600; color: #475569; margin-bottom: 2px; }\n  input, select, textarea { width: 100%; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }\n  input[type="radio"], input[type="checkbox"] { width: auto; }\n  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 4px; }\n  th { background: #1a365d; color: #fff; padding: 6px; text-align: left; font-size: 0.75rem; }\n  td { padding: 6px; border-bottom: 1px solid #e2e8f0; }\n  tr:nth-child(even) { background: #f8fafc; }\n  .radio-cell { text-align: center; width: 50px; }\n  .notes-input { width: 100%; padding: 4px 6px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.75rem; }\n  canvas { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; width: 100%; max-width: 120px; height: 40px; }\n  h2, h3, h4 { margin: 8px 0; color: #1a365d; }\n  .preview-field-wrapper { position: relative; border: 1px dashed transparent; border-radius: 6px; padding: 4px; transition: all 0.2s; display: flex; flex: 1; min-width: 140px; }\n  .preview-field-wrapper:hover { border-color: #cbd5e1; background: #f8fafc; }\n  .preview-field-controls { position: absolute; right: 2px; top: 2px; display: none; gap: 2px; z-index: 10; }\n  .preview-field-wrapper:hover .preview-field-controls { display: flex; }\n  .preview-move-btn { background: #1a365d; color: #fff; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; cursor: pointer; opacity: 0.8; }\n  .preview-move-btn:hover { opacity: 1; }\n  .preview-field-wrapper .form-group { flex: 1; }\n</style>\n</head>\n<body>\n  <div class="preview-header">\n    <h1>👁️ ${esc(title)}</h1>\n    <p>Live Preview - ${esc(sectionName)}</p>\n  </div>\n  ${bodyHtml || '<p style="color:#94a3b8;text-align:center;padding:40px;">Empty section. Add sub-sections and fields.</p>'}\n
+  return `<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<style>\n  * { box-sizing: border-box; }\n  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; margin: 0; padding: 12px; font-size: 14px; }\n  .preview-header { background: #1a365d; color: #fff; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; }\n  .preview-header h1 { margin: 0; font-size: 1rem; }\n  .preview-header p { margin: 4px 0 0; opacity: 0.8; font-size: 0.8rem; }\n  fieldset { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff; }\n  legend { font-weight: 700; color: #1a365d; padding: 0 6px; font-size: 0.85rem; }\n  .form-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; position: relative; z-index: 1; }\n  .form-group { flex: 1; min-width: 140px; }\n  .form-group.full { flex: 0 0 100%; max-width: 100%; }\n  label { display: block; font-size: 0.75rem; font-weight: 600; color: #475569; margin-bottom: 2px; }\n  input, select, textarea { width: 100%; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }\n  input[type="radio"], input[type="checkbox"] { width: auto; }\n  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 4px; }\n  th { background: #1a365d; color: #fff; padding: 6px; text-align: left; font-size: 0.75rem; }\n  td { padding: 6px; border-bottom: 1px solid #e2e8f0; }\n  tr:nth-child(even) { background: #f8fafc; }\n  .radio-cell { text-align: center; width: 50px; }\n  .notes-input { width: 100%; padding: 4px 6px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 0.75rem; }\n  canvas { background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; width: 100%; max-width: 120px; height: 40px; }\n  h2, h3, h4 { margin: 8px 0; color: #1a365d; }\n  .preview-field-wrapper { position: relative; border: 1px dashed transparent; border-radius: 6px; padding: 4px; transition: all 0.2s; display: flex; flex: 1; min-width: 140px; }\n  .preview-field-wrapper:hover { border-color: #cbd5e1; background: #f8fafc; }\n  .preview-field-controls { position: absolute; right: 2px; top: 2px; display: none; gap: 2px; z-index: 10; }\n  .preview-field-wrapper:hover .preview-field-controls { display: flex; }\n  .preview-move-btn { background: #1a365d; color: #fff; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; cursor: pointer; opacity: 0.8; }\n  .preview-move-btn:hover { opacity: 1; }\n  .preview-field-wrapper .form-group { flex: 1; }\n</style>\n</head>\n<body>\n  <div class="preview-header">\n    <h1 style="margin:0;font-size:1rem;">👁️ ${esc(formId || 'Draft Preview')}</h1>\n    ${formIssue || formRev || formDate ? `<div style="margin-top:4px;display:flex;gap:12px;font-size:0.8rem;opacity:0.85;">\n      ${formIssue ? `<span>Issue: ${esc(formIssue)}</span>` : ''}\n      ${formRev ? `<span>Rev: ${esc(formRev)}</span>` : ''}\n      ${formDate ? `<span>Date: ${esc(formDate)}</span>` : ''}\n    </div>` : ''}\n    <p style="margin:4px 0 0;opacity:0.8;font-size:0.8rem;">Live Preview - ${esc(sectionName)}</p>\n  </div>\n  ${bodyHtml || '<p style="color:#94a3b8;text-align:center;padding:40px;">Empty section. Add sub-sections and fields.</p>'}\n
   <script>
   function formatDate(input) {
     const val = input.value.trim();
@@ -1096,7 +1100,10 @@ function resetBuilder() {
   selectedField = null;
   selectedFieldsetId = null;
   fieldCounter = 0;
-  document.getElementById('formTitle').value = '';
+  document.getElementById('formId').value = '';
+  document.getElementById('formIssue').value = '';
+  document.getElementById('formRevision').value = '';
+  document.getElementById('formDate').value = '';
   document.getElementById('formSubtitle').value = '';
   document.querySelectorAll('.field-container').forEach(c => c.innerHTML = '');
   document.getElementById('propertiesContent').innerHTML = '<p class="hint">Select a field or sub-section to edit its properties</p>';
@@ -1109,7 +1116,10 @@ function resetBuilder() {
 }
 
 async function saveForm() {
-  currentForm.config.title = document.getElementById('formTitle').value || 'Untitled Form';
+  currentForm.config.formId = document.getElementById('formId').value || '';
+  currentForm.config.formIssue = document.getElementById('formIssue').value || '';
+  currentForm.config.formRevision = document.getElementById('formRevision').value || '';
+  currentForm.config.formDate = document.getElementById('formDate').value || '';
   currentForm.config.subtitle = document.getElementById('formSubtitle').value;
   currentForm.name = currentForm.config.title;
 
@@ -1133,7 +1143,10 @@ async function saveForm() {
 }
 
 async function previewForm() {
-  currentForm.config.title = document.getElementById('formTitle').value || 'Untitled Form';
+  currentForm.config.formId = document.getElementById('formId').value || '';
+  currentForm.config.formIssue = document.getElementById('formIssue').value || '';
+  currentForm.config.formRevision = document.getElementById('formRevision').value || '';
+  currentForm.config.formDate = document.getElementById('formDate').value || '';
   currentForm.config.subtitle = document.getElementById('formSubtitle').value;
 
   try {
@@ -1200,7 +1213,10 @@ async function editForm(id) {
       }
     });
 
-    document.getElementById('formTitle').value = currentForm.config.title;
+    document.getElementById('formId').value = currentForm.config.formId || '';
+    document.getElementById('formIssue').value = currentForm.config.formIssue || '';
+    document.getElementById('formRevision').value = currentForm.config.formRevision || '';
+    document.getElementById('formDate').value = currentForm.config.formDate || '';
     document.getElementById('formSubtitle').value = currentForm.config.subtitle || '';
 
     ['session', 'training', 'comments'].forEach(sec => {
