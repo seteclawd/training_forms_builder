@@ -114,16 +114,18 @@
         <div class="palette-group">
           <h4>Layout</h4>
           <div class="palette-item" draggable="true" data-type="heading">📌 Heading</div>
+          <div class="palette-item" draggable="true" data-type="infoblock">📝 Info Block</div>
         </div>
 
         <div class="palette-group">
           <h4>🗄️ DATABASE</h4>
           <div class="palette-item" draggable="true" data-type="db_crewName">👤 Crew Name</div>
+          <div class="palette-item" draggable="true" data-type="db_pilotPosition">👤 Pilot Position</div>
           <div class="palette-item" draggable="true" data-type="db_crewId">🪪 Crew ID</div>
-          <div class="palette-item" draggable="true" data-type="db_crewLicense">📜 Crew License</div>
+          <div class="palette-item" draggable="true" data-type="db_crewLicense">📜 License Number</div>
           <div class="palette-item" draggable="true" data-type="db_crew3lc">📋 Crew 3LC</div>
-          <div class="palette-item" draggable="true" data-type="db_instructorTri">🎓 Instructors - TRI</div>
-          <div class="palette-item" draggable="true" data-type="db_examinerTre">📝 Examiners - TRE</div>
+          <div class="palette-item" draggable="true" data-type="db_instructorTri">🎓 Instructors</div>
+          <div class="palette-item" draggable="true" data-type="db_examinerTre">📝 Examiners</div>
           <div class="palette-item" draggable="true" data-type="db_location">📍 Location</div>
           <div class="palette-item" draggable="true" data-type="db_trainingType">✈️ Type of Training</div>
           <div class="palette-item" draggable="true" data-type="db_fstdId">🖥️ FSTD ID</div>
@@ -201,7 +203,10 @@
   <div class="modal-content">
     <div class="modal-header">
       <h2>Form Preview</h2>
-      <button class="close-btn" onclick="closePreview()">✕</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-small" onclick="downloadPreviewForm()" style="background:#1a365d;color:#fff;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;">⬇ Download</button>
+        <button class="close-btn" onclick="closePreview()">✕</button>
+      </div>
     </div>
     <iframe id="previewFrame" src=""></iframe>
   </div>

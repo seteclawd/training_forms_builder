@@ -396,7 +396,7 @@ function createField(type) {
         ...base,
         label: 'Evaluation Table',
         columns: ['Item', 'Pass', 'Fail', 'Notes'],
-        columnTypes: ['text', 'radio', 'radio', 'text'],
+        columnTypes: ['text', 'checkbox', 'checkbox', 'text'],
         rows: [
           { id: 'row_' + Date.now() + '_1', label: 'Item 1', name: 'item_1' },
           { id: 'row_' + Date.now() + '_2', label: 'Item 2', name: 'item_2' }
@@ -406,19 +406,22 @@ function createField(type) {
       return { ...base, label: 'Signature' };
     case 'heading':
       return { ...base, label: 'Section Heading', level: 'h3' };
+    case 'infoblock':
+      return { ...base, label: 'Info Block', content: '<ul><li>Item 1</li><li>Item 2</li></ul>', width: '100' };
     case 'db_crewName':
       return { ...base, label: 'Crew Name', dbSource: 'crewName', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_crewId':
       return { ...base, label: 'Crew ID', dbSource: 'crewId', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_crewLicense':
-      return { ...base, label: 'Crew License', dbSource: 'crewLicense', options: [{value:'', label:'-- Select from database --'}] };
+      return { ...base, label: 'License Number', dbSource: 'crewLicense', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_crew3lc':
       return { ...base, label: 'Crew 3LC', dbSource: 'crew3lc', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_instructorTri':
-      return { ...base, label: 'Instructor - TRI', dbSource: 'instructorTri', options: [{value:'', label:'-- Select from database --'}] };
+      return { ...base, label: 'Instructors', dbSource: 'instructorTri', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_examinerTre':
-      return { ...base, label: 'Examiner - TRE', dbSource: 'examinerTre', options: [{value:'', label:'-- Select from database --'}] };
-      return { ...base, label: 'Examiner - SFE', dbSource: 'examinerSfe', options: [{value:'', label:'-- Select from database --'}] };
+      return { ...base, label: 'Examiners', dbSource: 'examinerTre', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_pilotPosition':
+      return { ...base, label: 'Pilot Position', dbSource: 'pilotPosition', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_location':
       return { ...base, label: 'Location', dbSource: 'location', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_trainingType':
@@ -436,8 +439,8 @@ function getDefaultLabel(type) {
     tel: 'Phone', select: 'Dropdown', radio: 'Radio Group',
     checkbox: 'Checkbox Group', textarea: 'Text Area',
     table: 'Table', signature: 'Signature', heading: 'Heading',
-    db_crewName: 'Crew Name', db_crewId: 'Crew ID', db_crewLicense: 'Crew License',
-    db_crew3lc: 'Crew 3LC', db_instructorTri: 'Instructor - TRI',
+    db_crewName: 'Crew Name', db_crewId: 'Crew ID', db_crewLicense: 'License Number',
+    db_crew3lc: 'Crew 3LC', db_instructorTri: 'Instructors', db_pilotPosition: 'Pilot Position',
     db_trainingType: 'Type of Training', db_fstdId: 'FSTD ID'
   };
   return labels[type] || 'Field';
@@ -605,7 +608,23 @@ function renderProperties(field) {
       </div>
       <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#94a3b8;">
         <span>1 line</span><span id="heightValue">${currentLines} lines</span><span>10 lines</span>
-      </div>`);;
+      </div>`);
+
+    // Font Style
+    const fontStyle = field.fontStyle || 'normal';
+    const fontSize = field.fontSize || 'normal';
+    html += propGroup('Font Style', `<select id="prop_fontStyle" onchange="updateField('fontStyle',this.value)" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;">
+        <option value="normal" ${fontStyle==='normal'?'selected':''}>Regular</option>
+        <option value="bold" ${fontStyle==='bold'?'selected':''}>Bold</option>
+        <option value="italic" ${fontStyle==='italic'?'selected':''}>Italic</option>
+        <option value="bold-italic" ${fontStyle==='bold-italic'?'selected':''}>Bold + Italic</option>
+      </select>`);
+    html += propGroup('Font Size', `<select id="prop_fontSize" onchange="updateField('fontSize',this.value)" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;">
+        <option value="small" ${fontSize==='small'?'selected':''}>Small (12px)</option>
+        <option value="normal" ${fontSize==='normal'?'selected':''}>Normal (14px)</option>
+        <option value="large" ${fontSize==='large'?'selected':''}>Large (16px)</option>
+        <option value="xlarge" ${fontSize==='xlarge'?'selected':''}>X-Large (18px)</option>
+      </select>`);
 
     // Move field between fieldsets
     const currentFieldsets = currentForm.config.sections[currentSection];
@@ -670,6 +689,19 @@ function renderProperties(field) {
           <option value="5row" ${field.columnSigHeights?.[i] === '5row' ? 'selected' : ''}>5 rows</option>
         </select>
         <input type="number" value="${field.columnRows?.[i] || 2}" min="1" max="10" placeholder="Rows" style="width:45px;text-align:center;padding:4px 8px;border:1px solid #e2e8f0;border-radius:4px;" onchange="updateTableColumnRows(${i}, this.value)" title="Multi-line rows (default 2)"
+        <select onchange="updateTableColumnStyle(${i}, 'fontWeight', this.value)" title="Font weight" style="padding:4px;border:1px solid #e2e8f0;border-radius:4px;">
+          <option value="normal" ${(field.columnStyles?.[i]?.fontWeight || 'normal') === 'normal' ? 'selected' : ''}>Regular</option>
+          <option value="bold" ${field.columnStyles?.[i]?.fontWeight === 'bold' ? 'selected' : ''}>Bold</option>
+        </select>
+        <select onchange="updateTableColumnStyle(${i}, 'fontStyle', this.value)" title="Font style" style="padding:4px;border:1px solid #e2e8f0;border-radius:4px;">
+          <option value="normal" ${(field.columnStyles?.[i]?.fontStyle || 'normal') === 'normal' ? 'selected' : ''}>Normal</option>
+          <option value="italic" ${field.columnStyles?.[i]?.fontStyle === 'italic' ? 'selected' : ''}>Italic</option>
+        </select>
+        <select onchange="updateTableColumnStyle(${i}, 'fontSize', this.value)" title="Font size" style="padding:4px;border:1px solid #e2e8f0;border-radius:4px;">
+          <option value="small" ${(field.columnStyles?.[i]?.fontSize || 'normal') === 'small' ? 'selected' : ''}>S</option>
+          <option value="normal" ${(field.columnStyles?.[i]?.fontSize || 'normal') === 'normal' ? 'selected' : ''}>M</option>
+          <option value="large" ${field.columnStyles?.[i]?.fontSize === 'large' ? 'selected' : ''}>L</option>
+        </select>
         <button onclick="moveTableColumn(${i}, -1)" title="Move Up">↑</button>
         <button onclick="moveTableColumn(${i}, 1)" title="Move Down">↓</button>
         <button onclick="removeTableColumn(${i})">✕</button>
@@ -685,8 +717,20 @@ function renderProperties(field) {
     field.rows?.forEach((row, i) => {
       html += `<div class="option-row" draggable="true" data-row-index="${i}">
         <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
-        <input type="text" value="${esc(row.label || row)}" placeholder="Row label" onchange="updateTableRowLabel(${i}, this.value)" style="min-width:150px;">
+        <textarea placeholder="Row label" oninput="updateTableRowLabel(${i}, this.value)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.blur();}" style="min-width:150px;min-height:36px;resize:vertical;">${esc(row.label || row)}</textarea>
         <input type="text" value="${esc(row.name || ('row_' + (i+1)))}" placeholder="Field name" style="width:120px;min-width:120px;" onchange="updateTableRowName(${i}, this.value)">
+        <select onchange="updateTableRowStyle(${i}, 'fontStyle', this.value)" title="Font Style" style="padding:4px;border:1px solid #e2e8f0;border-radius:4px;font-size:0.8rem;">
+          <option value="normal" ${(row.rowStyles?.fontStyle || 'normal') === 'normal' ? 'selected' : ''}>Regular</option>
+          <option value="bold" ${row.rowStyles?.fontStyle === 'bold' ? 'selected' : ''}>Bold</option>
+          <option value="italic" ${row.rowStyles?.fontStyle === 'italic' ? 'selected' : ''}>Italic</option>
+          <option value="bold-italic" ${row.rowStyles?.fontStyle === 'bold-italic' ? 'selected' : ''}>B+I</option>
+        </select>
+        <select onchange="updateTableRowStyle(${i}, 'fontSize', this.value)" title="Font Size" style="padding:4px;border:1px solid #e2e8f0;border-radius:4px;font-size:0.8rem;">
+          <option value="small" ${(row.rowStyles?.fontSize || 'normal') === 'small' ? 'selected' : ''}>S</option>
+          <option value="normal" ${(row.rowStyles?.fontSize || 'normal') === 'normal' ? 'selected' : ''}>M</option>
+          <option value="large" ${row.rowStyles?.fontSize === 'large' ? 'selected' : ''}>L</option>
+          <option value="xlarge" ${row.rowStyles?.fontSize === 'xlarge' ? 'selected' : ''}>XL</option>
+        </select>
         <button onclick="moveTableRow(${i}, -1)">↑</button>
         <button onclick="moveTableRow(${i}, 1)">↓</button>
         <button onclick="removeTableRow(${i})">✕</button>
@@ -708,6 +752,9 @@ function renderProperties(field) {
       <option value="h4" ${field.level === 'h4' ? 'selected' : ''}>H4</option>
     </select>`);
   }
+  if (field.type === 'infoblock') {
+    html += propGroup('Content (HTML)', `<textarea id="prop_content" rows="8" oninput="updateField('content', this.value)" style="font-family:monospace;font-size:0.85rem;">${esc(field.content || '')}</textarea>`);
+  }
 
   panel.innerHTML = html;
 }
@@ -723,6 +770,11 @@ function updateField(key, value) {
     const el = document.querySelector(`.builder-field[data-id="${selectedField.id}"] .field-label`);
     if (el) el.textContent = value;
   }
+}
+
+function highlightStyleBtn(btn, prop) {
+  btn.parentElement.querySelectorAll('.style-btn').forEach(b => { b.style.background = '#f8fafc'; b.style.color = '#475569'; });
+  btn.style.background = '#1a365d'; btn.style.color = '#fff';
 }
 
 function incrementRowGroup() {
@@ -863,6 +915,22 @@ function updateTableColumnWidth(idx, value) {
   if (!selectedField) return;
   if (!selectedField.columnWidths) selectedField.columnWidths = [];
   selectedField.columnWidths[idx] = value;
+  selectField(selectedField);
+}
+
+function updateTableColumnStyle(idx, prop, value) {
+  if (!selectedField) return;
+  if (!selectedField.columnStyles) selectedField.columnStyles = [];
+  if (!selectedField.columnStyles[idx]) selectedField.columnStyles[idx] = {};
+  selectedField.columnStyles[idx][prop] = value;
+  selectField(selectedField);
+}
+
+function updateTableRowStyle(idx, prop, value) {
+  if (!selectedField) return;
+  if (!selectedField.rowStyles) selectedField.rowStyles = [];
+  if (!selectedField.rowStyles[idx]) selectedField.rowStyles[idx] = {};
+  selectedField.rowStyles[idx][prop] = value;
   selectField(selectedField);
 }
 
@@ -1069,6 +1137,11 @@ function renderPreviewField(field) {
     html += `    </div>\n`;
     return html;
   }
+  if (field.type === 'infoblock') {
+    html += `      <div style="padding:8px;font-size:0.9rem;">${field.content || ''}</div>\n`;
+    html += `    </div>\n`;
+    return html;
+  }
   html += `      <div class="form-group${field.width === '100' ? ' full' : ''}">\n`;
   if (field.type !== 'radio' && field.type !== 'checkbox') {
     html += `        <label>${esc(field.label)}${field.required ? ' *' : ''}</label>\n`;
@@ -1104,20 +1177,14 @@ function renderPreviewField(field) {
 `;
       break;
     case 'db_crewName': case 'db_crewId': case 'db_crewLicense': case 'db_crew3lc':
-    case 'db_instructorTri': case 'db_examinerTre':
+    case 'db_instructorTri': case 'db_examinerTre': case 'db_pilotPosition':
       {
-        const dbOpts = field.options || [{value:'', label:'-- Select from database --'}];
         const dbName = field.dbSource || 'unknown';
-        html += `        <select class="db-field" data-db="${esc(dbName)}" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;">
-`;
-        dbOpts.forEach(opt => {
-          html += `          <option value="${esc(opt.value)}" disabled>${esc(opt.label)}</option>
-`;
-        });
-        html += `        </select>
-`;
-        html += `        <small style="color:#94a3b8;font-size:0.75rem;">🔗 ${esc(dbName)} - database linked</small>
-`;
+        const selId = 'db_' + field.id + '_' + Math.random().toString(36).substr(2,5);
+        html += `        <select class="db-field" id="${selId}" data-db="${esc(dbName)}" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;">\n`;
+        html += `          <option value="">-- Loading... --</option>\n`;
+        html += `        </select>\n`;
+        html += `<script>setTimeout(function(){fetch('/api/crew?source=${dbName}').then(r=>r.json()).then(rows=>{var s=document.getElementById('${selId}');if(!s)return;s.innerHTML='<option value="">-- Select --</option>';rows.forEach(r=>{var v='${dbName}'==='crewName'?r.name:'${dbName}'==='crew3lc'||'${dbName}'==='crewId'?r.three_lc:'${dbName}'==='crewLicense'?(r.license_number||''):r.name;var l='${dbName}'==='crew3lc'||'${dbName}'==='crewId'?r.three_lc+' - '+r.name:r.name+(r.position?' ('+r.position+')':'');s.innerHTML+='<option value="'+v+'">'+l+'</option>';});}).catch(e=>{var s=document.getElementById('${selId}');if(s)s.innerHTML='<option value="">-- Error --</option>';});},100);</script>\n`;
       }
       break;
   }
@@ -1130,14 +1197,28 @@ function renderPreviewTable(field) {
   let html = `        <table>\n          <thead>\n            <tr>\n`;
   field.columns?.forEach((col, i) => {
     const colWidth = field.columnWidths?.[i];
-    const widthStyle = colWidth ? ` style="width:${esc(colWidth)}"` : '';
-    html += `              <th${widthStyle}>${esc(col)}</th>
+    const colStyle = field.columnStyles?.[i] || {};
+    let styleAttr = '';
+    if (colWidth) styleAttr += `width:${esc(colWidth)};`;
+    if (colStyle.fontWeight === 'bold') styleAttr += 'font-weight:bold;';
+    if (colStyle.fontStyle === 'italic') styleAttr += 'font-style:italic;';
+    if (colStyle.fontSize === 'small') styleAttr += 'font-size:0.8rem;';
+    if (colStyle.fontSize === 'large') styleAttr += 'font-size:1rem;';
+    html += `              <th style="${styleAttr}text-align:center;">${esc(col)}</th>
 `;
   });
   html += `            </tr>\n          </thead>\n          <tbody>\n`;
   field.rows?.forEach((row, idx) => {
     const rowLabel = typeof row === 'object' ? row.label : row;
-    html += `            <tr>\n              <td><strong>${esc(rowLabel)}</strong></td>\n`;
+    const rowStyle = (typeof row === 'object' && row.rowStyles) ? row.rowStyles : {};
+    let rowTdStyle = 'white-space:pre-line;';
+    if (rowStyle.fontStyle === 'bold') rowTdStyle += 'font-weight:bold;';
+    else if (rowStyle.fontStyle === 'italic') rowTdStyle += 'font-style:italic;';
+    else if (rowStyle.fontStyle === 'bold-italic') rowTdStyle += 'font-weight:bold;font-style:italic;';
+    if (rowStyle.fontSize === 'small') rowTdStyle += 'font-size:0.8rem;';
+    else if (rowStyle.fontSize === 'large') rowTdStyle += 'font-size:1.05rem;';
+    else if (rowStyle.fontSize === 'xlarge') rowTdStyle += 'font-size:1.15rem;';
+    html += `            <tr>\n              <td style="${rowTdStyle}">${esc(rowLabel)}</td>\n`;
     for (let i = 1; i < (field.columns?.length || 1); i++) {
       const colType = field.columnTypes?.[i] || 'text';
       if (colType === 'radio') html += `              <td class="radio-cell"><input type="radio"></td>\n`;
@@ -1257,11 +1338,40 @@ async function previewForm() {
   }
 }
 
+function downloadPreviewForm() {
+  try {
+    const frame = document.getElementById('previewFrame');
+    const html = frame.contentDocument.documentElement.outerHTML;
+    const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (currentForm.config.title || currentForm.config.formId || 'training-form') + '.html';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+  } catch(e) {
+    console.error('Download error:', e);
+    alert('Error downloading form');
+  }
+}
+
 function closePreview() {
   document.getElementById('previewModal').classList.remove('active');
 }
 
 // ===== LOAD FORMS =====
+async function deleteForm(id, name) {
+  if (!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+  try {
+    await fetch('/api/forms/' + id, { method: 'DELETE' });
+    loadForms();
+  } catch (err) {
+    console.error(err);
+    alert('Error deleting form');
+  }
+}
+
 async function loadForms() {
   try {
     const res = await fetch('/api/forms');
@@ -1273,7 +1383,10 @@ async function loadForms() {
     }
     grid.innerHTML = forms.map(f => `
       <div class="form-card" onclick="editForm(${f.id})">
-        <h3>${esc(f.name)}</h3>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <h3>${esc(f.name)}</h3>
+          <button class="delete-btn" onclick="event.stopPropagation();deleteForm(${f.id},'${esc(f.name)}')" title="Delete form" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1.2rem;padding:4px 8px;border-radius:4px;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='none'">🗑</button>
+        </div>
         <div class="meta">${f.form_type} · ${new Date(f.created_at).toLocaleDateString()}</div>
       </div>
     `).join('');
