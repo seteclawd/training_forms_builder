@@ -606,6 +606,11 @@ function esc(str) {
     .replace(/"/g, '&quot;');
 }
 
+// HTML Cleaner route
+app.get('/html-cleaner', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'texthtml.html'));
+});
+
 const PORT = process.env.PORT || 8999;
 app.listen(PORT, () => {
   console.log('Training Forms Builder running on port', PORT);

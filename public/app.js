@@ -52,6 +52,40 @@ function showView(view) {
 
 function showDashboard() { showView('dashboard'); loadForms(); }
 function showTemplates() { showView('templates'); loadTemplates(); }
+
+function createNewTemplate() {
+  const section = document.getElementById('newTemplateSection').value;
+  currentSection = section;
+  currentForm = {
+    name: 'New Template',
+    form_type: 'simulator',
+    description: '',
+    config: {
+      title: 'New Template',
+      subtitle: '',
+      formId: '',
+      formIssue: '',
+      formRevision: '',
+      formDate: '',
+      sections: { session: [], training: [], comments: [] }
+    }
+  };
+  currentForm.config.sections[section] = [
+    {
+      id: 'fieldset_' + Date.now(),
+      type: 'fieldset',
+      title: 'New Section',
+      fields: []
+    }
+  ];
+  showView('builder');
+  resetBuilder();
+  renderCurrentSection();
+  startPreviewSync();
+  // Override save to save as template
+  window._saveAsTemplate = true;
+  window._templateSection = section;
+}
 function showBuilder() { showView('builder'); resetBuilder(); startPreviewSync(); }
 
 // ===== TEMPLATE MANAGEMENT =====
@@ -1836,6 +1870,11 @@ function resetBuilder() {
 }
 
 async function saveForm() {
+  // Check if saving as template
+  if (window._saveAsTemplate) {
+    return saveTemplate();
+  }
+  
   currentForm.config.formId = document.getElementById('formId').value || '';
   currentForm.config.formIssue = document.getElementById('formIssue').value || '';
   currentForm.config.formRevision = document.getElementById('formRevision').value || '';
@@ -1859,6 +1898,43 @@ async function saveForm() {
   } catch (err) {
     console.error(err);
     alert('Error saving form');
+  }
+}
+
+async function saveTemplate() {
+  const name = prompt('Template name:', 'New Template');
+  if (!name) return;
+  
+  const section = window._templateSection || 'session';
+  const description = prompt('Description (optional):', '');
+  
+  // Collect fields from all fieldsets in current section
+  const fieldsets = currentForm.config.sections[section] || [];
+  const fields = [];
+  fieldsets.forEach(fs => {
+    (fs.fields || []).forEach(f => fields.push(f));
+  });
+  
+  try {
+    const res = await fetch('/api/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name,
+        section_type: section,
+        description: description || '',
+        fields: fields
+      })
+    });
+    const data = await res.json();
+    if (data.id) {
+      alert('Template saved! ✅');
+      window._saveAsTemplate = false;
+      showTemplates();
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error saving template');
   }
 }
 

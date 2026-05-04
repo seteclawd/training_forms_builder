@@ -34,13 +34,19 @@
   <!-- TEMPLATES VIEW -->
   <div id="templatesView" class="view">
     <div class="toolbar">
-      <div style="display:flex;gap:10px;align-items:center;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
         <select id="templateSectionFilter" onchange="loadTemplates()">
           <option value="">All Sections</option>
           <option value="session">Session Details</option>
           <option value="training">Training Details</option>
           <option value="comments">Comments & Signatures</option>
         </select>
+        <select id="newTemplateSection">
+          <option value="session">Session Details</option>
+          <option value="training">Training Details</option>
+          <option value="comments">Comments & Signatures</option>
+        </select>
+        <button class="btn btn-success" onclick="createNewTemplate()">📝 New Template</button>
         <button class="btn btn-primary" onclick="showBuilderWithTemplate()">🛠️ New Form from Template</button>
       </div>
     </div>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text to HTML Converter</title>
+<link rel="stylesheet" href="texthtml.css">
+</head>
+<body>
+  <div id="wrapTop">
+    <div class="centered">
+      <h2><span class="logo-text">TEXEL</span> Text <span>-</span> HTML</h2>
+      
+      <div class="sourceCtrl">
+        <div class="htmlCleanList">
+          <div>
+            <div class="htmlCo active" id="Clean001" data-option="1">Inline styles</div>
+            <div data-option="1" class="doOptionNow" title="Remove inline styles now"></div>
+          </div>
+          <div>
+            <div class="htmlCo active" id="Clean002" data-option="2">Classes & IDs</div>
+            <div data-option="2" class="doOptionNow" title="Delete classes and IDs now"></div>
+          </div>
+          <div>
+            <div class="htmlCo active" id="Clean003" data-option="3">Empty tags</div>
+            <div data-option="3" class="doOptionNow" title="Delete empty tags now"></div>
+          </div>
+          <div>
+            <div class="htmlCo active" id="Clean004" data-option="4">Tags with 1 space</div>
+            <div data-option="4" class="doOptionNow" title="Delete tags with one space now"></div>
+          </div>
+          <div>
+            <div class="htmlCo active" id="Clean005" data-option="5">Successive spaces</div>
+            <div data-option="5" class="doOptionNow" title="Delete successive spaces now"></div>
+          </div>
+          <div>
+            <div class="htmlCo active" id="Clean006" data-option="6">Comments</div>
+            <div data-option="6" class="doOptionNow" title="Delete all comments now"></div>
+          </div>
+          <div>
+            <div class="htmlCo active" id="Clean007" data-option="7">Tag attributes</div>
+            <div data-option="7" class="doOptionNow" title="Delete every tag attribute now"></div>
+          </div>
+          <div>
+            <div class="htmlCo active" id="Clean008" data-option="8">All tags</div>
+            <div data-option="8" class="doOptionNow" title="Delete all tags now"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="textEditorWrapper">
+        <textarea id="textEditor" placeholder="Paste your text or HTML here..."></textarea>
+      </div>
+
+      <div id="htmlWrapper">
+        <div id="htmlInsideWrapper">
+          <div id="codemirrorEditor">
+            <textarea id="sourceEditor" placeholder="HTML output will appear here..."></textarea>
+          </div>
+          <div class="belowSourceEditor">
+            <div class="inline">
+              <div id="inputLength">Characters: 0</div>
+              <a class="loadDemoText" onclick="loadDemo()">Load Demo</a>
+              <a class="loremIpsum" onclick="loadLorem()">Lorem Ipsum</a>
+            </div>
+            <div class="sourceIcons">
+              <a title="Undo" id="undo" onclick="undoText()">Undo</a>
+              <a title="New page" id="clearPage" onclick="clearPage()">Clear page</a>
+              <a title="Set code indentation" id="intentationSet" onclick="formatHtml()">Visualize tag hierarchy</a>
+              <a title="Compress HTML" class="sourceMinimizer" onclick="compressHtml()">Compress</a>
+              <a title="Encoding On/Off" id="characterEscaping" onclick="toggleEncoding()">Enable / disable character encoding</a>
+            </div>
+            <div id="mainCleanerButton">
+              <div class="mainButtonStyle doSourceClean" onclick="cleanAll()">
+                Clean
+                <div id="hourglassAnimation"></div>
+              </div>
+            </div>
+            <div class="clearBoth"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer">
+      <strong>&copy; Texel Air - Text to HTML Converter</strong>
+    </div>
+  </footer>
+
+  <script src="texthtml.js"></script>
+</body>
+</html>
