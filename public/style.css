@@ -534,3 +534,148 @@ body {
   .field-palette, .properties-panel { display: none; }
   .live-preview-panel { max-height: 300px; }
 }
+
+/* ===== WYSIWYG Editor Menu System ===== */
+.editor-menubar {
+  display: flex;
+  gap: 0;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px 6px 0 0;
+  padding: 2px 4px;
+  position: relative;
+  z-index: 10;
+}
+
+.editor-menu-item {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border-radius: 4px;
+  user-select: none;
+}
+
+.editor-menu-item:hover {
+  background: #e2e8f0;
+}
+
+.editor-dropdown-container {
+  position: relative;
+}
+
+.editor-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  min-width: 180px;
+  z-index: 100;
+  padding: 4px 0;
+}
+
+.editor-dropdown-item {
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.editor-dropdown-item:hover {
+  background: #f1f5f9;
+}
+
+.editor-dropdown-separator {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 4px 0;
+}
+
+.editor-dropdown-submenu {
+  position: relative;
+}
+
+.editor-dropdown-submenu > .editor-dropdown {
+  display: none;
+}
+
+.editor-dropdown-submenu:hover > .editor-dropdown {
+  display: block;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  background: #f8fafc;
+}
+
+.editor-toolbar .style-btn {
+  padding: 4px 8px;
+  cursor: pointer;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 0.8rem;
+  min-width: 28px;
+}
+
+.editor-toolbar .style-btn:hover {
+  background: #e2e8f0;
+}
+
+.toolbar-sep {
+  width: 1px;
+  height: 16px;
+  background: #d1d5db;
+  margin: 0 4px;
+}
+
+.table-grid-dropdown {
+  padding: 8px;
+}
+
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 16px);
+  gap: 1px;
+}
+
+.table-grid-cell {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  cursor: pointer;
+}
+
+.table-grid-cell:hover,
+.table-grid-cell.active {
+  background: #3b82f6;
+  border-color: #2563eb;
+}
+
+.table-grid-info {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.editor-dropdown.show-blocks [contenteditable] * {
+  outline: 1px solid #3b82f6 !important;
+}
+
+.editor-dropdown.visual-aids td, .editor-dropdown.visual-aids th {
+  outline: 1px solid #e2e8f0;
+}
+
+.prop-group .fullscreen {
+  z-index: 9999 !important;
+}

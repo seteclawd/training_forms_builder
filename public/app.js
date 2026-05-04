@@ -16,6 +16,34 @@ let fieldCounter = 0;
 let previewInterval = null;
 
 // ===== VIEW MANAGEMENT =====
+async function loadSavedTables() {
+  try {
+    const res = await fetch('/api/saved-tables');
+    const tables = await res.json();
+    const list = document.getElementById('savedTablesList');
+    if (!tables.length) {
+      list.innerHTML = '<p class="hint" style="font-size:0.75rem;">No saved tables yet. Use Table Importer to create.</p>';
+      return;
+    }
+    list.innerHTML = tables.map(t => `
+      <div class="palette-item" draggable="true" data-type="saved_table" data-table-id="${t.id}" style="font-size:0.75rem;padding:6px 8px;margin-bottom:4px;">
+        📊 ${esc(t.name)}
+      </div>
+    `).join('');
+    // Add drag handlers
+    list.querySelectorAll('.palette-item').forEach(item => {
+      item.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('fieldType', item.dataset.type);
+        if (item.dataset.tableId) {
+          e.dataTransfer.setData('tableId', item.dataset.tableId);
+        }
+      });
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 function showView(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(view + 'View').classList.add('active');
@@ -153,6 +181,9 @@ document.querySelectorAll('.section-tab').forEach(tab => {
 document.querySelectorAll('.palette-item').forEach(item => {
   item.addEventListener('dragstart', e => {
     e.dataTransfer.setData('fieldType', item.dataset.type);
+    if (item.dataset.tableId) {
+      e.dataTransfer.setData('tableId', item.dataset.tableId);
+    }
   });
   item.addEventListener('click', () => {
     // If a fieldset is selected, add field to it; otherwise add to the first fieldset or create one
@@ -511,7 +542,23 @@ function renderFieldset(fs) {
   fieldsDiv.addEventListener('drop', e => {
     e.preventDefault();
     const type = e.dataTransfer.getData('fieldType');
-    if (type) {
+    const tableId = e.dataTransfer.getData('tableId');
+    if (tableId) {
+      // Load saved table and add it
+      fetch(`/api/saved-tables/${tableId}`)
+        .then(r => r.json())
+        .then(data => {
+          const tableField = data.config;
+          tableField.id = 'table_' + Date.now();
+          const fieldset = currentForm.config.sections[currentSection].find(f => f.id === fs.id);
+          if (fieldset) {
+            fieldset.fields.push(tableField);
+            renderFieldset(fieldset);
+            updateLivePreview();
+          }
+        })
+        .catch(err => console.error(err));
+    } else if (type) {
       selectedFieldsetId = fs.id;
       addField(type);
     }
@@ -753,7 +800,154 @@ function renderProperties(field) {
     </select>`);
   }
   if (field.type === 'infoblock') {
-    html += propGroup('Content (HTML)', `<textarea id="prop_content" rows="8" oninput="updateField('content', this.value)" style="font-family:monospace;font-size:0.85rem;">${esc(field.content || '')}</textarea>`);
+    const contentType = field.contentType || 'text';
+    html += propGroup('Content Type', `<select id="prop_contentType" onchange="updateField('contentType',this.value);showContentType('${field.id}',this.value)">
+        <option value="text" ${contentType==='text'?'selected':''}>Visual Editor</option>
+        <option value="html" ${contentType==='html'?'selected':''}>HTML Code</option>
+      </select>`);
+    if (contentType === 'html') {
+      html += propGroup('Content (HTML)', `<textarea id="prop_content" rows="8" oninput="updateField('content', this.value)" style="font-family:monospace;font-size:0.85rem;">${esc(field.content || '')}</textarea>`);
+    } else {
+      const toolbarId = 'toolbar_' + field.id;
+      const editorId = 'editor_' + field.id;
+      html += `<div class="prop-group">
+        <label>Content</label>
+        <div id="${toolbarId}_bar" class="editor-menubar">
+          <div class="editor-menu-item" data-menu="file">File ▾</div>
+          <div class="editor-menu-item" data-menu="edit">Edit ▾</div>
+          <div class="editor-menu-item" data-menu="insert">Insert ▾</div>
+          <div class="editor-menu-item" data-menu="view">View ▾</div>
+          <div class="editor-menu-item" data-menu="format">Format ▾</div>
+          <div class="editor-menu-item" data-menu="table">Table ▾</div>
+          <div class="editor-menu-item" data-menu="tools">Tools ▾</div>
+        </div>
+        <div class="editor-dropdown-container" id="${toolbarId}_menus">
+          <div class="editor-dropdown" data-menu="file">
+            <div class="editor-dropdown-item" data-cmd="new">📄 New document</div>
+            <div class="editor-dropdown-item" data-cmd="source">📄 Source code</div>
+          </div>
+          <div class="editor-dropdown" data-menu="edit">
+            <div class="editor-dropdown-item" data-cmd="undo">↩ Undo</div>
+            <div class="editor-dropdown-item" data-cmd="redo">↪ Redo</div>
+            <div class="editor-dropdown-separator"></div>
+            <div class="editor-dropdown-item" data-cmd="cut">✂ Cut</div>
+            <div class="editor-dropdown-item" data-cmd="copy">📋 Copy</div>
+            <div class="editor-dropdown-item" data-cmd="paste">📄 Paste</div>
+            <div class="editor-dropdown-separator"></div>
+            <div class="editor-dropdown-item" data-cmd="selectAll">☑ Select all</div>
+            <div class="editor-dropdown-item" data-cmd="find">🔍 Find and replace</div>
+          </div>
+          <div class="editor-dropdown" data-menu="insert">
+            <div class="editor-dropdown-item" data-cmd="link">🔗 Insert/edit link</div>
+            <div class="editor-dropdown-item" data-cmd="image">🖼️ Insert/edit image</div>
+            <div class="editor-dropdown-item" data-cmd="video">🎬 Insert/edit video</div>
+            <div class="editor-dropdown-separator"></div>
+            <div class="editor-dropdown-item" data-cmd="specialChar">Ω Special character</div>
+            <div class="editor-dropdown-item" data-cmd="hr">— Horizontal line</div>
+            <div class="editor-dropdown-item" data-cmd="nbsp">␣ Nonbreaking space</div>
+            <div class="editor-dropdown-item" data-cmd="anchor">⚓ Anchor</div>
+            <div class="editor-dropdown-item" data-cmd="datetime">🕐 Insert date/time</div>
+          </div>
+          <div class="editor-dropdown" data-menu="view">
+            <div class="editor-dropdown-item" data-cmd="showBlocks">▢ Show invisible characters</div>
+            <div class="editor-dropdown-item" data-cmd="showBlocks">▢ Show blocks</div>
+            <div class="editor-dropdown-item" data-cmd="visualAids">✓ Visual aids</div>
+            <div class="editor-dropdown-separator"></div>
+            <div class="editor-dropdown-item" data-cmd="preview">👁 Preview</div>
+            <div class="editor-dropdown-item" data-cmd="fullscreen">⛶ Fullscreen</div>
+          </div>
+          <div class="editor-dropdown" data-menu="format">
+            <div class="editor-dropdown-item" data-cmd="bold"><b>B</b> Bold</div>
+            <div class="editor-dropdown-item" data-cmd="italic"><i>I</i> Italic</div>
+            <div class="editor-dropdown-item" data-cmd="underline"><u>U</u> Underline</div>
+            <div class="editor-dropdown-item" data-cmd="strikeThrough"><s>S</s> Strikethrough</div>
+            <div class="editor-dropdown-separator"></div>
+            <div class="editor-dropdown-item" data-cmd="superscript">X² Superscript</div>
+            <div class="editor-dropdown-item" data-cmd="subscript">X₂ Subscript</div>
+            <div class="editor-dropdown-separator"></div>
+            <div class="editor-dropdown-submenu">
+              <div class="editor-dropdown-item">▸ Formats ▾</div>
+              <div class="editor-dropdown" style="left:100%;top:0;">
+                <div class="editor-dropdown-item" data-cmd="formatBlock" data-val="H3">H3 Heading</div>
+                <div class="editor-dropdown-item" data-cmd="formatBlock" data-val="H4">H4 Heading</div>
+                <div class="editor-dropdown-item" data-cmd="formatBlock" data-val="P">P Paragraph</div>
+              </div>
+            </div>
+            <div class="editor-dropdown-separator"></div>
+            <div class="editor-dropdown-item" data-cmd="insertUnorderedList">• Bullet list</div>
+            <div class="editor-dropdown-item" data-cmd="insertOrderedList">1. Numbered list</div>
+            <div class="editor-dropdown-separator"></div>
+            <div class="editor-dropdown-item" data-cmd="removeFormat">Ix Clear formatting</div>
+          </div>
+          <div class="editor-dropdown" data-menu="table">
+            <div class="editor-dropdown-submenu">
+              <div class="editor-dropdown-item">⊞ Insert table ▾</div>
+              <div class="editor-dropdown table-grid-dropdown" style="left:100%;top:0;display:none;">
+                <div class="table-grid-info">1 × 1</div>
+                <div class="table-grid"></div>
+              </div>
+            </div>
+            <div class="editor-dropdown-item" data-cmd="tableProp">Table properties</div>
+            <div class="editor-dropdown-item" data-cmd="deleteTable">🗑 Delete table</div>
+            <div class="editor-dropdown-separator"></div>
+            <div class="editor-dropdown-submenu">
+              <div class="editor-dropdown-item">Cell ▾</div>
+              <div class="editor-dropdown" style="left:100%;top:0;">
+                <div class="editor-dropdown-item" data-cmd="cellProp">Cell properties</div>
+                <div class="editor-dropdown-item" data-cmd="mergeCells">Merge cells</div>
+                <div class="editor-dropdown-item" data-cmd="splitCell">Split cell</div>
+              </div>
+            </div>
+            <div class="editor-dropdown-submenu">
+              <div class="editor-dropdown-item">Row ▾</div>
+              <div class="editor-dropdown" style="left:100%;top:0;">
+                <div class="editor-dropdown-item" data-cmd="insertRowAbove">Insert row before</div>
+                <div class="editor-dropdown-item" data-cmd="insertRowBelow">Insert row after</div>
+                <div class="editor-dropdown-item" data-cmd="deleteRow">Delete row</div>
+                <div class="editor-dropdown-item" data-cmd="rowProp">Row properties</div>
+                <div class="editor-dropdown-separator"></div>
+                <div class="editor-dropdown-item" data-cmd="cutRow">Cut row</div>
+                <div class="editor-dropdown-item" data-cmd="copyRow">Copy row</div>
+                <div class="editor-dropdown-item" data-cmd="pasteRowAbove">Paste row before</div>
+                <div class="editor-dropdown-item" data-cmd="pasteRowBelow">Paste row after</div>
+              </div>
+            </div>
+            <div class="editor-dropdown-submenu">
+              <div class="editor-dropdown-item">Column ▾</div>
+              <div class="editor-dropdown" style="left:100%;top:0;">
+                <div class="editor-dropdown-item" data-cmd="insertColBefore">Insert column before</div>
+                <div class="editor-dropdown-item" data-cmd="insertColAfter">Insert column after</div>
+                <div class="editor-dropdown-item" data-cmd="deleteCol">Delete column</div>
+              </div>
+            </div>
+          </div>
+          <div class="editor-dropdown" data-menu="tools">
+            <div class="editor-dropdown-item" data-cmd="source"><> Source code</div>
+          </div>
+        </div>
+        <div class="editor-toolbar">
+          <button data-cmd="bold" title="Bold" class="style-btn"><b>B</b></button>
+          <button data-cmd="italic" title="Italic" class="style-btn"><i>I</i></button>
+          <button data-cmd="underline" title="Underline" class="style-btn"><u>U</u></button>
+          <span class="toolbar-sep"></span>
+          <button data-cmd="insertUnorderedList" title="Bullet list" class="style-btn">•</button>
+          <button data-cmd="insertOrderedList" title="Numbered list" class="style-btn">1.</button>
+          <span class="toolbar-sep"></span>
+          <button data-cmd="formatBlock" data-val="H3" title="H3" class="style-btn">H3</button>
+          <button data-cmd="formatBlock" data-val="H4" title="H4" class="style-btn">H4</button>
+          <span class="toolbar-sep"></span>
+          <button data-cmd="justifyLeft" title="Align left" class="style-btn">⫷</button>
+          <button data-cmd="justifyCenter" title="Center" class="style-btn">☰</button>
+          <button data-cmd="justifyRight" title="Align right" class="style-btn">⫸</button>
+          <span class="toolbar-sep"></span>
+          <button data-cmd="table" title="Insert table" class="style-btn">⊞</button>
+          <button data-cmd="link" title="Insert link" class="style-btn">🔗</button>
+          <button data-cmd="image" title="Insert image" class="style-btn">🖼</button>
+        </div>
+        <div id="${editorId}" contenteditable="true" style="min-height:120px;padding:8px;border:2px solid #e2e8f0;border-radius:6px;background:#fff;">${field.content || ''}</div>
+        <textarea id="prop_content" style="display:none;">${esc(field.content || '')}</textarea>
+      </div>`;
+    }
   }
 
   panel.innerHTML = html;
@@ -775,6 +969,350 @@ function updateField(key, value) {
 function highlightStyleBtn(btn, prop) {
   btn.parentElement.querySelectorAll('.style-btn').forEach(b => { b.style.background = '#f8fafc'; b.style.color = '#475569'; });
   btn.style.background = '#1a365d'; btn.style.color = '#fff';
+}
+
+function execCmd(command, value) {
+  document.execCommand(command, false, value || null);
+}
+
+// ===== WYSIWYG EDITOR MENU SYSTEM =====
+let currentEditorMenu = null;
+
+document.addEventListener('click', function(e) {
+  const menuItem = e.target.closest('.editor-menu-item');
+  if (menuItem && menuItem.dataset.menu) {
+    e.stopPropagation();
+    const menuName = menuItem.dataset.menu;
+    const bar = menuItem.closest('.editor-menubar') || menuItem.closest('.editor-toolbar');
+    if (!bar) return;
+    const container = bar.parentElement.querySelector('.editor-dropdown-container');
+    if (!container) return;
+    const dropdown = container.querySelector(`.editor-dropdown[data-menu="${menuName}"]`);
+    if (!dropdown) return;
+    // Close all other menus
+    container.querySelectorAll('.editor-dropdown').forEach(d => { if (d !== dropdown) d.style.display = 'none'; });
+    if (dropdown.style.display === 'block') {
+      dropdown.style.display = 'none';
+    } else {
+      dropdown.style.display = 'block';
+    }
+    return;
+  }
+  
+  const item = e.target.closest('.editor-dropdown-item');
+  if (item && item.dataset.cmd) {
+    e.stopPropagation();
+    const cmd = item.dataset.cmd;
+    const val = item.dataset.val || null;
+    const editor = item.closest('.prop-group').querySelector('[contenteditable]');
+    if (!editor) return;
+    editor.focus();
+    
+    // Close all menus
+    document.querySelectorAll('.editor-dropdown').forEach(d => d.style.display = 'none');
+    
+    switch(cmd) {
+      case 'bold': case 'italic': case 'underline': case 'strikeThrough':
+      case 'superscript': case 'subscript':
+      case 'insertUnorderedList': case 'insertOrderedList':
+      case 'justifyLeft': case 'justifyCenter': case 'justifyRight':
+      case 'undo': case 'redo': case 'cut': case 'copy':
+      case 'selectAll': case 'removeFormat':
+      case 'insertHorizontalRule':
+        document.execCommand(cmd, false, null);
+        break;
+      case 'formatBlock':
+        document.execCommand('formatBlock', false, val || 'P');
+        break;
+      case 'new':
+        if (confirm('Clear all content?')) {
+          editor.innerHTML = '';
+          editor.dispatchEvent(new Event('input'));
+        }
+        break;
+      case 'source':
+        toggleSourceCode(editor.id);
+        break;
+      case 'link':
+        insertLink(editor.id);
+        break;
+      case 'image':
+        insertImage(editor.id);
+        break;
+      case 'video':
+        insertVideo(editor.id);
+        break;
+      case 'hr':
+        document.execCommand('insertHorizontalRule', false, null);
+        break;
+      case 'specialChar':
+        insertSpecialChar(editor.id);
+        break;
+      case 'nbsp':
+        document.execCommand('insertText', false, '\u00A0');
+        break;
+      case 'datetime':
+        const now = new Date();
+        document.execCommand('insertText', false, now.toLocaleString());
+        break;
+      case 'anchor':
+        const name = prompt('Anchor name:');
+        if (name) document.execCommand('insertHTML', false, `<a name="${esc(name)}"></a>`);
+        break;
+      case 'find':
+        showFindReplace(editor.id);
+        break;
+      case 'preview':
+        togglePreview(editor.id);
+        break;
+      case 'fullscreen':
+        toggleFullscreen(editor.id);
+        break;
+      case 'showBlocks':
+        editor.classList.toggle('show-blocks');
+        break;
+      case 'visualAids':
+        editor.classList.toggle('visual-aids');
+        break;
+      // Table operations
+      case 'insertRowAbove': tableAction('addRowAbove'); break;
+      case 'insertRowBelow': tableAction('addRowBelow'); break;
+      case 'deleteRow': tableAction('deleteRow'); break;
+      case 'insertColBefore': tableAction('addColBefore'); break;
+      case 'insertColAfter': tableAction('addColAfter'); break;
+      case 'deleteCol': tableAction('deleteCol'); break;
+      case 'mergeCells': tableAction('mergeCells'); break;
+      case 'splitCell': tableAction('splitCell'); break;
+      case 'deleteTable': tableAction('deleteTable'); break;
+      case 'table':
+        showInsertTable(editor.id);
+        break;
+    }
+    // Update field content
+    editor.dispatchEvent(new Event('input'));
+    return;
+  }
+  
+  // Close menus on click elsewhere
+  if (!e.target.closest('.editor-menubar') && !e.target.closest('.editor-dropdown')) {
+    document.querySelectorAll('.editor-dropdown').forEach(d => d.style.display = 'none');
+  }
+});
+
+function toggleEditorMenu(menuName) {
+  // legacy, unused now
+}
+
+function closeEditorMenus() {
+  document.querySelectorAll('.editor-dropdown').forEach(d => d.style.display = 'none');
+}
+
+function showInsertTable(editorId) {
+  // Find the toolbar bar and show table grid
+  const editor = document.getElementById(editorId);
+  if (!editor) return;
+  const propGroup = editor.closest('.prop-group');
+  const tableMenu = propGroup.querySelector('.editor-dropdown[data-menu="table"]');
+  const grid = tableMenu?.querySelector('.table-grid-dropdown');
+  if (!grid) {
+    // Simple prompt fallback
+    const rows = prompt('Number of rows:', '3');
+    if (!rows) return;
+    const cols = prompt('Number of columns:', '3');
+    if (!cols) return;
+    editor.focus();
+    const tableHtml = '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;margin:8px 0;">' + Array(parseInt(rows)).fill().map(() => '<tr>' + Array(parseInt(cols)).fill('<td>&nbsp;</td>').join('') + '</tr>').join('') + '</table><p></p>';
+    document.execCommand('insertHTML', false, tableHtml);
+    editor.dispatchEvent(new Event('input'));
+    return;
+  }
+  grid.style.display = grid.style.display === 'block' ? 'none' : 'block';
+}
+
+let currentEditorId = null;
+
+tableAction = function(action) {
+  const activeEl = document.activeElement;
+  const editor = activeEl?.closest('.prop-group')?.querySelector('[contenteditable]') || activeEl;
+  if (!editor || !editor.contentEditable) return;
+  editor.focus();
+  currentEditorId = editor.id;
+  
+  const sel = window.getSelection();
+  let cell = sel?.anchorNode;
+  while (cell && cell.nodeName !== 'TD' && cell.nodeName !== 'TH') {
+    cell = cell.parentNode;
+  }
+  let row = cell?.parentNode;
+  let table = cell?.closest('table');
+  
+  switch(action) {
+    case 'addRowAbove':
+      if (!row || !table) return;
+      const newRowAbove = table.insertRow(row.rowIndex);
+      for (let i = 0; i < row.cells.length; i++) {
+        const newCell = newRowAbove.insertCell();
+        newCell.innerHTML = '&nbsp;';
+      }
+      break;
+    case 'addRowBelow':
+      if (!row || !table) return;
+      const newRowBelow = table.insertRow(row.rowIndex + 1);
+      for (let i = 0; i < row.cells.length; i++) {
+        const newCell = newRowBelow.insertCell();
+        newCell.innerHTML = '&nbsp;';
+      }
+      break;
+    case 'deleteRow':
+      if (!row || !table) return;
+      table.deleteRow(row.rowIndex);
+      break;
+    case 'addColBefore':
+      if (!cell || !table) return;
+      const colIdx = cell.cellIndex;
+      table.querySelectorAll('tr').forEach(r => {
+        const newCell = r.insertCell(colIdx);
+        newCell.innerHTML = '&nbsp;';
+      });
+      break;
+    case 'addColAfter':
+      if (!cell || !table) return;
+      const colIdxAfter = cell.cellIndex + 1;
+      table.querySelectorAll('tr').forEach(r => {
+        const newCell = r.insertCell(colIdxAfter);
+        newCell.innerHTML = '&nbsp;';
+      });
+      break;
+    case 'deleteCol':
+      if (!cell || !table) return;
+      const delIdx = cell.cellIndex;
+      table.querySelectorAll('tr').forEach(r => {
+        if (r.cells[delIdx]) r.deleteCell(delIdx);
+      });
+      break;
+    case 'mergeCells':
+      // Simple: merge selected cells (would need more complex handling)
+      alert('Select cells and use Table > Merge cells');
+      break;
+    case 'splitCell':
+      if (!cell) return;
+      // Just split by inserting a break
+      cell.innerHTML = '<div>&nbsp;</div><div>&nbsp;</div>';
+      break;
+    case 'deleteTable':
+      if (!table) return;
+      table.remove();
+      break;
+  }
+  editor.dispatchEvent(new Event('input'));
+};
+
+function toggleSourceCode(editorId) {
+  const editor = document.getElementById(editorId);
+  if (!editor) return;
+  const propGroup = editor.closest('.prop-group');
+  let textarea = propGroup.querySelector('.source-code-area');
+  if (textarea && textarea.style.display !== 'none') {
+    // Switch back to visual
+    editor.innerHTML = textarea.value;
+    textarea.style.display = 'none';
+    editor.style.display = 'block';
+    editor.dispatchEvent(new Event('input'));
+  } else {
+    // Show source
+    if (!textarea) {
+      textarea = document.createElement('textarea');
+      textarea.className = 'source-code-area';
+      textarea.rows = 10;
+      textarea.style.cssText = 'width:100%;font-family:monospace;font-size:0.85rem;padding:8px;border:2px solid #e2e8f0;border-radius:6px;background:#f8fafc;';
+      propGroup.appendChild(textarea);
+    }
+    textarea.value = editor.innerHTML;
+    textarea.style.display = 'block';
+    editor.style.display = 'none';
+  }
+}
+
+function insertLink(editorId) {
+  const url = prompt('URL:', 'https://');
+  if (!url) return;
+  const text = prompt('Link text:', url);
+  document.execCommand('insertHTML', false, `<a href="${esc(url)}">${esc(text || url)}</a>`);
+}
+
+function insertImage(editorId) {
+  const url = prompt('Image URL:', 'https://');
+  if (!url) return;
+  const alt = prompt('Alt text:', '');
+  document.execCommand('insertHTML', false, `<img src="${esc(url)}" alt="${esc(alt || '')}" style="max-width:100%;">`);
+}
+
+function insertVideo(editorId) {
+  const url = prompt('Video URL (YouTube embed or direct):', 'https://');
+  if (!url) return;
+  let embedUrl = url;
+  if (url.includes('youtube.com/watch')) {
+    embedUrl = url.replace('watch?v=', 'embed/');
+  } else if (url.includes('youtu.be/')) {
+    embedUrl = url.replace('youtu.be/', 'youtube.com/embed/');
+  }
+  document.execCommand('insertHTML', false, `<iframe src="${esc(embedUrl)}" width="560" height="315" style="max-width:100%;border:0;" allowfullscreen></iframe>`);
+}
+
+function insertSpecialChar(editorId) {
+  const chars = '©®™°±²³µ×÷≠≤≥£¥€§¶¡¿«»·–—†‡•…′″€₢₣₤₥₦₧₵₶₷₸₹'.split('');
+  const char = prompt('Type a character or paste from here:\n\n' + chars.join(' '), '');
+  if (char) document.execCommand('insertText', false, char);
+}
+
+function showFindReplace(editorId) {
+  const find = prompt('Find:');
+  if (!find) return;
+  const replace = prompt('Replace with:');
+  if (replace === null) return;
+  const editor = document.getElementById(editorId);
+  if (!editor) return;
+  editor.innerHTML = editor.innerHTML.replace(new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), replace);
+  editor.dispatchEvent(new Event('input'));
+}
+
+function togglePreview(editorId) {
+  const editor = document.getElementById(editorId);
+  if (!editor) return;
+  const propGroup = editor.closest('.prop-group');
+  let preview = propGroup.querySelector('.preview-area');
+  if (preview && preview.style.display !== 'none') {
+    preview.style.display = 'none';
+    editor.style.display = 'block';
+  } else {
+    if (!preview) {
+      preview = document.createElement('div');
+      preview.className = 'preview-area';
+      preview.style.cssText = 'min-height:120px;padding:8px;border:2px solid #e2e8f0;border-radius:6px;background:#fff;';
+      propGroup.appendChild(preview);
+    }
+    preview.innerHTML = '<div style="font-size:0.7rem;color:#94a3b8;margin-bottom:4px;">Preview:</div>' + editor.innerHTML;
+    preview.style.display = 'block';
+    editor.style.display = 'none';
+  }
+}
+
+function toggleFullscreen(editorId) {
+  const editor = document.getElementById(editorId);
+  if (!editor) return;
+  const propGroup = editor.closest('.prop-group');
+  if (propGroup.classList.contains('fullscreen')) {
+    propGroup.classList.remove('fullscreen');
+    propGroup.style.cssText = '';
+  } else {
+    propGroup.classList.add('fullscreen');
+    propGroup.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:#fff;padding:16px;overflow:auto;';
+  }
+}
+
+function showContentType(fieldId, type) {
+  // Re-render properties panel
+  selectField(selectedField);
 }
 
 function incrementRowGroup() {
@@ -1138,7 +1676,16 @@ function renderPreviewField(field) {
     return html;
   }
   if (field.type === 'infoblock') {
-    html += `      <div style="padding:8px;font-size:0.9rem;">${field.content || ''}</div>\n`;
+    let ibStyle = 'padding:8px;';
+    if (field.fontStyle === 'bold') ibStyle += 'font-weight:bold;';
+    else if (field.fontStyle === 'italic') ibStyle += 'font-style:italic;';
+    else if (field.fontStyle === 'bold-italic') ibStyle += 'font-weight:bold;font-style:italic;';
+    if (field.fontSize === 'small') ibStyle += 'font-size:0.85rem;';
+    else if (field.fontSize === 'large') ibStyle += 'font-size:1.05rem;';
+    else if (field.fontSize === 'xlarge') ibStyle += 'font-size:1.15rem;';
+    else ibStyle += 'font-size:0.9rem;';
+    const ibContent = field.contentType === 'html' ? (field.content || '') : (field.content || '').replace(/\n/g, '<br>');
+    html += `      <div style="${ibStyle}">${ibContent}</div>\n`;
     html += `    </div>\n`;
     return html;
   }
@@ -1546,3 +2093,4 @@ function changeFieldRowGroup(fieldId, direction) {
 // ===== INIT =====
 showDashboard();
 loadTemplates();
+loadSavedTables();

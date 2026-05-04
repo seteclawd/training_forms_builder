@@ -124,6 +124,40 @@ app.put('/api/templates/:id', (req, res) => {
     });
 });
 
+// API: Saved Tables
+app.get('/api/saved-tables', (req, res) => {
+  db.all('SELECT id, name, description, created_at FROM saved_tables ORDER BY updated_at DESC', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.get('/api/saved-tables/:id', (req, res) => {
+  db.get('SELECT * FROM saved_tables WHERE id = ?', [req.params.id], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!row) return res.status(404).json({ error: 'Table not found' });
+    row.config = JSON.parse(row.config_json);
+    res.json(row);
+  });
+});
+
+app.post('/api/saved-tables', (req, res) => {
+  const { name, description, config } = req.body;
+  db.run('INSERT INTO saved_tables (name, description, config_json) VALUES (?, ?, ?)',
+    [name, description || '', JSON.stringify(config)],
+    function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ id: this.lastID });
+    });
+});
+
+app.delete('/api/saved-tables/:id', (req, res) => {
+  db.run('DELETE FROM saved_tables WHERE id = ?', [req.params.id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ ok: true });
+  });
+});
+
 app.delete('/api/templates/:id', (req, res) => {
   db.run('DELETE FROM section_templates WHERE id = ?', [req.params.id], (err) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -168,7 +202,10 @@ async function generateHtml(config, isPreview = false) {
   input[type="radio"] { width: 22px; height: 22px; }
   .notes-input { width: 100%; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }
   .signature-box { border: 2px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; text-align: center; padding: 10px; }
-  canvas { background: #fff; border-radius: 6px; cursor: crosshair; touch-action: none; width: 100%; max-width: 400px; height: 120px; }
+  canvas { background: #fff; border-radius: 6px; cursor: crosshair; touch-action: none; -webkit-user-select: none; user-select: none; }
+  input[type="date"].has-date::-webkit-calendar-picker-indicator { display: none; }
+  input[type="date"].has-date::-webkit-inner-spin-button,
+  input[type="date"].has-date::-webkit-outer-spin-button { display: none; }
   .form-footer { padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: center; }
   .btn { padding: 14px 28px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; }
   .btn-primary { background: #1a365d; color: #fff; }
@@ -227,7 +264,7 @@ async function generateHtml(config, isPreview = false) {
     document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===n));
   }
   function saveDraft() { localStorage.setItem('form_draft', JSON.stringify(Object.fromEntries(new FormData(document.getElementById('trainingForm'))))); alert('Draft saved'); }
-  function submitForm() { console.log('Submit:', Object.fromEntries(new FormData(document.getElementById('trainingForm'))))); alert('Submitted!'); }
+  function submitForm() { console.log('Submit:', Object.fromEntries(new FormData(document.getElementById('trainingForm')))); alert('Submitted!'); }
   function downloadForm() { var html = document.documentElement.outerHTML; var blob = new Blob([html], {type: 'text/html;charset=utf-8'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (document.title || 'training-form') + '.html'; document.body.appendChild(a); a.click(); setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100); }
 </script>
 <script>
@@ -257,7 +294,6 @@ async function generateHtml(config, isPreview = false) {
         sel.appendChild(opt);
       });
     });
-  });
     // Auto-fill Pilot Position when Crew Name changes
     document.querySelectorAll('select[data-db="crewName"]').forEach(function(crewSel) {
       crewSel.addEventListener('change', function() {
@@ -270,6 +306,88 @@ async function generateHtml(config, isPreview = false) {
             posSel.value = pilot.position;
           }
         }
+      });
+    
+    // Signature canvas drawing
+    function initCanvas(canvas) {
+      if (canvas._sigInit) return;
+      canvas._sigInit = true;
+      var ctx = canvas.getContext('2d');
+      var drawing = false;
+      var lastX, lastY;
+
+      
+      function getPos(e) {
+        var rect = canvas.getBoundingClientRect();
+        var clientX, clientY;
+        if (e.touches && e.touches.length) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+        return {
+          x: (clientX - rect.left) * (canvas.width / rect.width),
+          y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+      }
+      
+      function startDraw(e) {
+        e.preventDefault();
+        drawing = true;
+        var p = getPos(e);
+        lastX = p.x; lastY = p.y;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.strokeStyle = '#1a365d';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+      }
+      
+      function draw(e) {
+        if (!drawing) return;
+        e.preventDefault();
+        var p = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(p.x, p.y);
+        ctx.strokeStyle = '#1a365d';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        lastX = p.x; lastY = p.y;
+      }
+      
+      function stopDraw(e) {
+        if (e) e.preventDefault();
+        drawing = false;
+      }
+      
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDraw);
+      canvas.addEventListener('mouseleave', stopDraw);
+      canvas.addEventListener('touchstart', startDraw, {passive: false});
+      canvas.addEventListener('touchmove', draw, {passive: false});
+      canvas.addEventListener('touchend', stopDraw, {passive: false});
+      canvas.addEventListener('touchcancel', stopDraw, {passive: false});
+    }
+    
+    // Delay canvas init slightly to ensure layout is settled
+    setTimeout(function() {
+      document.querySelectorAll('canvas').forEach(initCanvas);
+    }, 100);
+    
+    // Clear signature buttons
+    document.querySelectorAll('.sig-clear-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var c = document.getElementById(btn.getAttribute('data-canvas'));
+        if (c) { var ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height); }
+  });
       });
     });
   });
@@ -347,7 +465,16 @@ function renderFieldHtml(field) {
     return html;
   }
   if (field.type === 'infoblock') {
-    html += `        <div style="padding:8px;font-size:0.9rem;">${field.content || ''}</div>\n`;
+    let ibStyle = 'padding:8px;';
+    if (field.fontStyle === 'bold') ibStyle += 'font-weight:bold;';
+    else if (field.fontStyle === 'italic') ibStyle += 'font-style:italic;';
+    else if (field.fontStyle === 'bold-italic') ibStyle += 'font-weight:bold;font-style:italic;';
+    if (field.fontSize === 'small') ibStyle += 'font-size:0.85rem;';
+    else if (field.fontSize === 'large') ibStyle += 'font-size:1.05rem;';
+    else if (field.fontSize === 'xlarge') ibStyle += 'font-size:1.15rem;';
+    else ibStyle += 'font-size:0.9rem;';
+    const ibContent = field.contentType === 'html' ? (field.content || '') : (field.content || '').replace(/\n/g, '<br>');
+    html += `        <div style="${ibStyle}">${ibContent}</div>\n`;
     return html;
   }
 
@@ -447,13 +574,18 @@ function renderTableHtml(field) {
         html += `                <td><input type="number" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></td>\n`;
       } else if (colType === 'select') {
         html += `                <td><select name="${esc(fieldName)}_${i}"><option value="">Select...</option><option value="yes">Yes</option><option value="no">No</option></select></td>\n`;
+      } else if (colType === 'date') {
+        html += `                <td><input type="date" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" onchange="if(this.value){this.classList.add('has-date');}"></td>\n`;
+      } else if (colType === 'db_crewName' || colType === 'db_crewId' || colType === 'db_crewLicense' || colType === 'db_crew3lc' || colType === 'db_instructorTri' || colType === 'db_examinerTre' || colType === 'db_pilotPosition') {
+        html += `                <td><select class="db-field" data-db="${colType.replace('db_','')}" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option value="">-- Loading... --</option></select></td>\n`;
       } else if (colType === 'multiline') {
         const mlRows = field.columnRows?.[i] || 2;
         html += `                <td><textarea rows="${mlRows}" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></textarea></td>\n`;
       } else if (colType === 'signature') {
         const sigH = field.columnSigHeights?.[i] || '2row';
         const sigPx = { '1row': 40, '2row': 60, '3row': 100, '4row': 150, '5row': 200 }[sigH] || 60;
-        html += `                <td><canvas id="${esc(fieldName)}_${i}" width="200" height="${sigPx}" style="border:1px solid #e2e8f0;border-radius:4px;cursor:crosshair;"></canvas></td>\n`;
+        const canvasId = `${esc(fieldName)}_${i}`;
+        html += `                <td><div class="signature-box" style="position:relative;display:inline-block;width:100%;"><canvas id="${canvasId}" width="200" height="${sigPx}" style="border:1px solid #e2e8f0;border-radius:4px;cursor:crosshair;display:block;width:100%;"></canvas><button type="button" class="sig-clear-btn" data-canvas="${canvasId}" style="position:absolute;top:4px;right:4px;background:#ef4444;color:#fff;border:none;border-radius:3px;padding:2px 8px;font-size:0.7rem;cursor:pointer;pointer-events:auto;z-index:10;">Clear</button></div></td>\n`;
       } else {
         html += `                <td><input type="text" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></td>\n`;
       }

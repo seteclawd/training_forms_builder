@@ -13,6 +13,8 @@
     <div class="logo" style="display:flex;align-items:center;gap:12px;">
       <img src="https://images.squarespace-cdn.com/content/v1/6165b53b88f6997eddca094a/fb29de89-979a-472f-b4dc-2d9004173bcb/Texel-logo-001.png" alt="Texel Air" style="height:40px;width:auto;filter:brightness(0) invert(1);">
       <span>Training Forms Builder</span>
+      <a href="/converter.html" style="color:#93c5fd;font-size:0.85rem;margin-left:16px;text-decoration:none;" title="Text ⇄ HTML Converter">📝 Converter</a>
+      <a href="/table-importer.html" style="color:#93c5fd;font-size:0.85rem;margin-left:12px;text-decoration:none;" title="Table Importer">📊 Import Table</a>
     </div>
     <nav class="nav-tabs">
       <button class="nav-btn active" data-view="dashboard">📋 Forms</button>
@@ -129,6 +131,12 @@
           <div class="palette-item" draggable="true" data-type="db_location">📍 Location</div>
           <div class="palette-item" draggable="true" data-type="db_trainingType">✈️ Type of Training</div>
           <div class="palette-item" draggable="true" data-type="db_fstdId">🖥️ FSTD ID</div>
+        </div>
+        <div class="palette-group">
+          <h4>📊 SAVED TABLES</h4>
+          <div id="savedTablesList">
+            <p class="hint" style="font-size:0.75rem;">No saved tables yet. Use Table Importer to create.</p>
+          </div>
         </div>
       </aside>
 

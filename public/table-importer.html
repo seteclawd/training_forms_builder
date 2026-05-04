@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Table Importer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+  
+  .header { background: #1a365d; padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+  .header h1 { color: #fff; font-size: 1.3rem; }
+  .header a { color: #93c5fd; text-decoration: none; font-size: 0.9rem; }
+  
+  .container { max-width: 1600px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
+  
+  .panel { background: #1e293b; border-radius: 10px; overflow: hidden; }
+  .panel-header { background: #334155; padding: 12px 16px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .panel-body { padding: 16px; }
+  
+  .btn { padding: 8px 16px; border: 1px solid #475569; border-radius: 6px; background: #334155; color: #e2e8f0; cursor: pointer; font-size: 0.85rem; }
+  .btn:hover { background: #475569; }
+  .btn-primary { background: #1a365d; border-color: #2563eb; }
+  .btn-primary:hover { background: #1e40af; }
+  .btn-success { background: #166534; border-color: #22c55e; }
+  .btn-success:hover { background: #15803d; }
+  
+  textarea#htmlInput { width: 100%; height: 200px; padding: 12px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; font-family: monospace; font-size: 13px; resize: vertical; }
+  
+  .table-container { overflow: auto; max-height: calc(100vh - 300px); padding: 16px; }
+  
+  .import-table { border-collapse: collapse; width: 100%; }
+  .import-table th, .import-table td { border: 1px solid #475569; padding: 8px; min-width: 100px; position: relative; }
+  .import-table th { background: #334155; text-align: center; font-weight: 600; }
+  .import-table td { background: #1e293b; cursor: pointer; transition: all 0.15s; vertical-align: top; }
+  .import-table td:hover { background: #334155; }
+  .import-table td.selected { outline: 3px solid #3b82f6; outline-offset: -3px; }
+  .import-table td.has-config { background: #1e3a5f; }
+  
+  .cell-id { position: absolute; top: 2px; right: 2px; font-size: 0.65rem; color: #64748b; background: #1e293b; padding: 1px 4px; border-radius: 3px; }
+  .cell-type-badge { display: inline-block; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
+  .badge-text { background: #334155; color: #94a3b8; }
+  .badge-date { background: #4c1d95; color: #c4b5fd; }
+  .badge-select { background: #065f46; color: #6ee7b7; }
+  .badge-signature { background: #92400e; color: #fcd34d; }
+  .badge-db { background: #1e40af; color: #93c5fd; }
+  .badge-number { background: #7c2d12; color: #fdba74; }
+  
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px; }
+  .form-group select, .form-group input { width: 100%; padding: 8px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; font-size: 0.9rem; }
+  
+  .cell-preview { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; margin-bottom: 16px; }
+  .cell-preview .label { font-size: 0.8rem; color: #64748b; margin-bottom: 4px; }
+  .cell-preview .value { font-size: 0.95rem; }
+  
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #94a3b8; }
+  .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+  
+  .section-title { font-size: 0.85rem; color: #64748b; margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  
+  .db-options { max-height: 150px; overflow-y: auto; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 Table Importer</h1>
+  <a href="/converter.html">← Converter</a>
+  <a href="/">← Forms</a>
+</div>
+
+<div class="container">
+  <div>
+    <div class="panel">
+      <div class="panel-header">
+        <span>Import HTML Table</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="parseHtml()">Parse HTML</button>
+          <button class="btn" onclick="copyHtmlWithConfig()">📋 Copy HTML with Config</button>
+          <button class="btn btn-success" onclick="saveTable()">📊 Generate Table</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <textarea id="htmlInput" placeholder="Paste HTML table here...
+
+Example:
+<table>
+  <thead>
+    <tr><th>Name</th><th>Date</th><th>Result</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>John</td><td>01/01/2026</td><td>Pass</td></tr>
+    <tr><td>Jane</td><td>02/01/2026</td><td>Fail</td></tr>
+  </tbody>
+</table>"></textarea>
+        
+        <div class="legend">
+          <div class="legend-item"><div class="legend-color" style="background:#334155;"></div> Text</div>
+          <div class="legend-item"><div class="legend-color" style="background:#4c1d95;"></div> Date</div>
+          <div class="legend-item"><div class="legend-color" style="background:#065f46;"></div> Dropdown</div>
+          <div class="legend-item"><div class="legend-color" style="background:#92400e;"></div> Signature</div>
+          <div class="legend-item"><div class="legend-color" style="background:#1e40af;"></div> Database</div>
+          <div class="legend-item"><div class="legend-color" style="background:#7c2d12;"></div> Number</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="panel" style="margin-top:16px;">
+      <div class="panel-header">
+        <span>Table Preview</span>
+        <span style="font-size:0.8rem;color:#94a3b8;">Click a cell to configure</span>
+      </div>
+      <div class="table-container" id="tableContainer">
+        <p style="color:#64748b;text-align:center;padding:40px;">Paste HTML table and click "Parse HTML"</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Right Sidebar: Cell Configuration -->
+  <div>
+    <div class="panel" style="position:sticky;top:20px;">
+      <div class="panel-header">Cell Configuration</div>
+      <div class="panel-body" id="configPanel">
+        <p style="color:#64748b;text-align:center;padding:20px;font-size:0.9rem;">Click a cell to configure it</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let tableData = { cells: {} };
+let selectedCell = null;
+
+function parseHtml() {
+  const html = document.getElementById('htmlInput').value;
+  if (!html.trim()) { alert('Please paste HTML table first'); return; }
+  
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const table = doc.querySelector('table');
+  if (!table) { alert('No table found in HTML'); return; }
+  
+  const container = document.getElementById('tableContainer');
+  container.innerHTML = '';
+  const newTable = document.createElement('table');
+  newTable.className = 'import-table';
+  tableData = { cells: {} };
+  
+  // Clone the table structure
+  const rows = table.querySelectorAll('tr');
+  rows.forEach((row, rowIdx) => {
+    const newRow = document.createElement(row.tagName === 'THEAD' || row.querySelector('th') ? 'tr' : 'tr');
+    const cells = row.querySelectorAll('td, th');
+    cells.forEach((cell, colIdx) => {
+      const cellId = `cell_${rowIdx}_${colIdx}`;
+      const isHeader = cell.tagName === 'TH';
+      
+      // Extract clean text content
+      let cleanText = cell.textContent.trim().replace(/\s+/g, ' ');
+      if (!cleanText) cleanText = '';
+      
+      const newCell = document.createElement(isHeader ? 'th' : 'td');
+      newCell.textContent = cleanText || '\u00A0';
+      newCell.dataset.cellId = cellId;
+      newCell.dataset.row = rowIdx;
+      newCell.dataset.col = colIdx;
+      newCell.dataset.header = isHeader;
+      
+      if (!isHeader) {
+        newCell.onclick = () => selectCell(cellId);
+        const idBadge = document.createElement('span');
+        idBadge.className = 'cell-id';
+        idBadge.textContent = cellId;
+        newCell.appendChild(idBadge);
+        
+        tableData.cells[cellId] = {
+          row: rowIdx,
+          col: colIdx,
+          originalContent: cleanText,
+          type: 'text',
+          dbName: '',
+          options: [],
+          label: cleanText || `Cell ${rowIdx}_${colIdx}`,
+          fieldName: `cell_${rowIdx}_${colIdx}`
+        };
+      }
+      
+      newRow.appendChild(newCell);
+    });
+    newTable.appendChild(newRow);
+  });
+  
+  container.appendChild(newTable);
+}
+
+function selectCell(cellId) {
+  // Deselect previous
+  document.querySelectorAll('.import-table td.selected').forEach(el => el.classList.remove('selected'));
+  
+  const cellEl = document.querySelector(`[data-cell-id="${cellId}"]`);
+  if (!cellEl) return;
+  cellEl.classList.add('selected');
+  selectedCell = cellId;
+  
+  const data = tableData.cells[cellId];
+  renderConfigPanel(data);
+}
+
+function renderConfigPanel(data) {
+  const panel = document.getElementById('configPanel');
+  const cellEl = document.querySelector(`[data-cell-id="${data.row}_${data.col}"]`);
+  
+  panel.innerHTML = `
+    <div class="cell-preview">
+      <div class="label">Cell Content</div>
+      <div class="value">${data.originalContent || '<em style="color:#64748b;">Empty</em>'}</div>
+      <div style="color:#64748b;font-size:0.75rem;margin-top:4px;">Row ${data.row} · Col ${data.col} · ID: ${data.fieldName}</div>
+    </div>
+    
+    <div class="form-group">
+      <label>Field Label</label>
+      <input type="text" id="cfg_label" value="${escAttr(data.label)}" onchange="updateCell('label', this.value)">
+    </div>
+    
+    <div class="form-group">
+      <label>Field Name (for form data)</label>
+      <input type="text" id="cfg_fieldName" value="${escAttr(data.fieldName)}" onchange="updateCell('fieldName', this.value)">
+    </div>
+    
+    <div class="form-group">
+      <label>Cell Type</label>
+      <select id="cfg_type" onchange="updateCellType(this.value)">
+        <option value="text" ${data.type === 'text' ? 'selected' : ''}>📝 Text Input</option>
+        <option value="number" ${data.type === 'number' ? 'selected' : ''}>🔢 Number</option>
+        <option value="date" ${data.type === 'date' ? 'selected' : ''}>📅 Date</option>
+        <option value="select" ${data.type === 'select' ? 'selected' : ''}>🔽 Dropdown</option>
+        <option value="radio" ${data.type === 'radio' ? 'selected' : ''}>⭕ Radio</option>
+        <option value="checkbox" ${data.type === 'checkbox' ? 'selected' : ''}>☑️ Checkbox</option>
+        <option value="textarea" ${data.type === 'textarea' ? 'selected' : ''}>📄 Text Area</option>
+        <option value="signature" ${data.type === 'signature' ? 'selected' : ''}>✍️ Signature</option>
+        <option value="db_crewName" ${data.type === 'db_crewName' ? 'selected' : ''}>👤 Crew Name (DB)</option>
+        <option value="db_pilotPosition" ${data.type === 'db_pilotPosition' ? 'selected' : ''}>👤 Pilot Position (DB)</option>
+        <option value="db_crewId" ${data.type === 'db_crewId' ? 'selected' : ''}>🪪 Crew ID (DB)</option>
+        <option value="db_crewLicense" ${data.type === 'db_crewLicense' ? 'selected' : ''}>📜 License Number (DB)</option>
+        <option value="db_instructorTri" ${data.type === 'db_instructorTri' ? 'selected' : ''}>🎓 Instructors (DB)</option>
+        <option value="db_examinerTre" ${data.type === 'db_examinerTre' ? 'selected' : ''}>📝 Examiners (DB)</option>
+        <option value="static" ${data.type === 'static' ? 'selected' : ''}>📌 Static Text (no input)</option>
+        <option value="heading" ${data.type === 'heading' ? 'selected' : ''}>📌 Heading</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label>Font Style</label>
+      <select id="cfg_fontStyle" onchange="updateCell('fontStyle', this.value)">
+        <option value="normal" ${(data.fontStyle || 'normal') === 'normal' ? 'selected' : ''}>Regular</option>
+        <option value="bold" ${data.fontStyle === 'bold' ? 'selected' : ''}>Bold</option>
+        <option value="italic" ${data.fontStyle === 'italic' ? 'selected' : ''}>Italic</option>
+        <option value="bold-italic" ${data.fontStyle === 'bold-italic' ? 'selected' : ''}>Bold + Italic</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label>Font Size</label>
+      <select id="cfg_fontSize" onchange="updateCell('fontSize', this.value)">
+        <option value="small" ${(data.fontSize || 'normal') === 'small' ? 'selected' : ''}>Small (12px)</option>
+        <option value="normal" ${(data.fontSize || 'normal') === 'normal' ? 'selected' : ''}>Normal (14px)</option>
+        <option value="large" ${data.fontSize === 'large' ? 'selected' : ''}>Large (16px)</option>
+        <option value="xlarge" ${data.fontSize === 'xlarge' ? 'selected' : ''}>X-Large (18px)</option>
+      </select>
+    </div>
+    
+    <div id="optionsSection" style="display:${data.type === 'select' || data.type === 'radio' ? 'block' : 'none'};">
+      <div class="form-group">
+        <label>Options (one per line)</label>
+        <textarea id="cfg_options" rows="4" onchange="updateCell('options', this.value.split('\\n').filter(o=>o.trim()))" style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;font-size:0.9rem;">${(data.options || []).join('\n')}</textarea>
+      </div>
+    </div>
+    
+    <div style="margin-top:16px;display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="applyConfig()">Apply</button>
+      <button class="btn" onclick="resetCell()">Reset</button>
+    </div>
+  `;
+}
+
+function escAttr(str) {
+  return (str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function updateCell(key, value) {
+  if (!selectedCell) return;
+  tableData.cells[selectedCell][key] = value;
+}
+
+function updateCellType(type) {
+  if (!selectedCell) return;
+  tableData.cells[selectedCell].type = type;
+  
+  const optionsSection = document.getElementById('optionsSection');
+  optionsSection.style.display = (type === 'select' || type === 'radio') ? 'block' : 'none';
+  
+  // Update cell display
+  const cellEl = document.querySelector(`[data-cell-id="${selectedCell}"]`);
+  if (cellEl) {
+    cellEl.classList.toggle('has-config', type !== 'text');
+    // Update or add type badge
+    let badge = cellEl.querySelector('.cell-type-badge');
+    if (!badge) {
+      badge = document.createElement('div');
+      cellEl.insertBefore(badge, cellEl.querySelector('.cell-id'));
+    }
+    const typeNames = {
+      text: 'Text', number: 'Number', date: 'Date', select: 'Dropdown',
+      radio: 'Radio', checkbox: 'Checkbox', textarea: 'Text Area',
+      signature: 'Signature', db_crewName: 'DB: Crew', db_pilotPosition: 'DB: Position',
+      db_crewId: 'DB: ID', db_crewLicense: 'DB: License',
+      db_instructorTri: 'DB: Instructors', db_examinerTre: 'DB: Examiners',
+      static: 'Static', heading: 'Heading'
+    };
+    const badgeClass = type.startsWith('db_') ? 'badge-db' : `badge-${type}`;
+    badge.className = `cell-type-badge ${badgeClass}`;
+    badge.textContent = typeNames[type] || type;
+  }
+}
+
+
+
+function applyConfig() {
+  if (!selectedCell) return;
+  const data = tableData.cells[selectedCell];
+  const cellEl = document.querySelector(`[data-cell-id="${selectedCell}"]`);
+  if (!cellEl) return;
+  
+  // Build cell content
+  let content = data.originalContent || "";
+  let inputHtml = "";
+  
+  if (data.type === "date") {
+    inputHtml = `<input type="text" placeholder="dd/mmm/yyyy" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;">`;
+  } else if (data.type === "signature") {
+    inputHtml = `<canvas style="width:100%;max-width:100%;height:40px;border:1px solid #475569;border-radius:4px;background:#0f172a;cursor:crosshair;"></canvas>`;
+  } else if (data.type === "select" || data.type === "radio" || data.type === "checkbox") {
+    const opts = (data.options || []).map(o => `<option>${o}</option>`).join("");
+    inputHtml = `<select style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;"><option value="">Select...</option>${opts}</select>`;
+  } else if (data.type.startsWith("db_")) {
+    inputHtml = `<select class="db-field" data-db="${data.type.replace("db_","")}" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;"><option value="">-- Loading... --</option></select>`;
+  } else if (data.type === "textarea") {
+    inputHtml = `<textarea rows="3" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;resize:vertical;" placeholder="..."></textarea>`;
+  } else if (data.type === "number") {
+    inputHtml = `<input type="number" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;" placeholder="...">`;
+  } else if (data.type === "static" || data.type === "heading") {
+    content = data.label || content;
+    inputHtml = "";
+  } else if (data.type === "heading") {
+    content = `<strong>${data.label || content}</strong>`;
+    inputHtml = "";
+  }
+  
+  // Render cell
+  let style = "";
+  if (data.fontStyle === "bold") style += "font-weight:bold;";
+  else if (data.fontStyle === "italic") style += "font-style:italic;";
+  else if (data.fontStyle === "bold-italic") style += "font-weight:bold;font-style:italic;";
+  if (data.fontSize === "small") style += "font-size:0.75rem;";
+  else if (data.fontSize === "large") style += "font-size:0.95rem;";
+  else if (data.fontSize === "xlarge") style += "font-size:1.1rem;";
+  
+  cellEl.innerHTML = `<div style="${style}">${content}</div>${inputHtml}<span class="cell-id">${selectedCell}</span>`;
+  cellEl.classList.add("has-config");
+  
+  // Load DB data if needed
+  if (data.type.startsWith("db_")) {
+    const sel = cellEl.querySelector(".db-field");
+    if (sel) {
+      fetch(`/api/crew?source=${data.type.replace("db_","")}`)
+        .then(r => r.json())
+        .then(rows => {
+          sel.innerHTML = "<option value=\"\">-- Select --</option>";
+          rows.forEach(r => {
+            const val = data.type === "db_crewName" ? r.name : data.type === "db_crew3lc" || data.type === "db_crewId" ? r.three_lc : data.type === "db_pilotPosition" ? r.position : r.name;
+            const lbl = data.type === "db_crew3lc" || data.type === "db_crewId" ? r.three_lc + " - " + r.name : r.name;
+            sel.innerHTML += `<option value="${val}">${lbl}</option>`;
+          });
+        });
+    }
+  }
+  
+  alert(`Cell ${selectedCell} configured as: ${data.type}`);
+}
+
+function resetCell() {
+  if (!selectedCell) return;
+  const data = tableData.cells[selectedCell];
+  data.type = 'text';
+  data.dbName = '';
+  data.options = [];
+  data.fontStyle = 'normal';
+  data.fontSize = 'normal';
+  
+  const cellEl = document.querySelector(`[data-cell-id="${selectedCell}"]`);
+  if (cellEl) {
+    cellEl.classList.remove('has-config');
+    cellEl.querySelector('.cell-type-badge')?.remove();
+  }
+  
+  renderConfigPanel(data);
+}
+
+function copyHtmlWithConfig() {
+  const cells = Object.values(tableData.cells);
+  if (!cells.length) { alert('No table parsed yet'); return; }
+  
+  // Group cells by row
+  const rows = {};
+  cells.forEach(cell => {
+    if (!rows[cell.row]) rows[cell.row] = [];
+    rows[cell.row].push(cell);
+  });
+  
+  // Build enriched HTML with config as data attributes
+  let html = '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;">\n';
+  
+  // Get max columns
+  const maxCol = Math.max(...cells.map(c => c.col)) + 1;
+  const maxRow = Math.max(...cells.map(c => c.row)) + 1;
+  
+  // Build header row (row 0 if all cells in row 0 are headers)
+  for (let r = 0; r < maxRow; r++) {
+    const rowCells = [];
+    for (let c = 0; c < maxCol; c++) {
+      const cell = tableData.cells[`cell_${r}_${c}`];
+      if (cell) rowCells.push(cell); else rowCells.push(null);
+    }
+    
+    const isHeaderRow = rowCells.every(c => c === null || (c && c.originalContent && c.type === 'text' && !c.type.startsWith('db_')));
+    const cellTag = r === 0 ? 'th' : 'td';
+    
+    html += `  <tr>`;
+    rowCells.forEach(cell => {
+      if (!cell) {
+        html += `<${cellTag}></${cellTag}>`;
+        return;
+      }
+      
+      // Build data attributes from config
+      let attrs = '';
+      if (cell.type !== 'text') attrs += ` data-type="${cell.type}"`;
+      if (cell.dbName) attrs += ` data-db="${cell.dbName}"`;
+      if (cell.fontStyle && cell.fontStyle !== 'normal') attrs += ` data-font-style="${cell.fontStyle}"`;
+      if (cell.fontSize && cell.fontSize !== 'normal') attrs += ` data-font-size="${cell.fontSize}"`;
+      if (cell.fieldName) attrs += ` data-field-name="${cell.fieldName}"`;
+      if (cell.label && cell.label !== cell.originalContent) attrs += ` data-label="${escHtml(cell.label)}"`;
+      if (cell.options && cell.options.length) attrs += ` data-options="${escHtml(cell.options.join(','))}"`;
+      
+      html += `<${cellTag}${attrs}>${cell.originalContent || ''}</${cellTag}>`;
+    });
+    html += `</tr>\n`;
+  }
+  
+  html += '</table>';
+  
+  // Also copy a JSON config summary
+  const config = {
+    cells: cells.map(c => ({
+      id: `cell_${c.row}_${c.col}`,
+      field: c.fieldName,
+      label: c.label,
+      type: c.type,
+      dbSource: c.type.startsWith('db_') ? c.type.replace('db_', '') : undefined,
+      fontStyle: c.fontStyle,
+      fontSize: c.fontSize,
+      options: c.options?.length ? c.options : undefined
+    })).filter(c => c.type !== 'text' || c.fontStyle !== 'normal' || c.fontSize !== 'normal')
+  };
+  
+  const fullOutput = `<!-- Cell Config JSON -->\n<!-- ${JSON.stringify(config)} -->\n\n${html}`;
+  
+  navigator.clipboard.writeText(fullOutput).then(() => {
+    alert('HTML with config copied to clipboard!');
+  });
+}
+
+function escHtml(str) {
+  return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function saveTable() {
+  const cells = Object.values(tableData.cells);
+  if (!cells.length) { alert('No table parsed yet'); return; }
+  
+  const maxCol = Math.max(...cells.map(c => c.col)) + 1;
+  const maxRow = Math.max(...cells.map(c => c.row)) + 1;
+  
+  // Build columns array (first col = row labels)
+  const columns = ['Area'];
+  for (let c = 1; c < maxCol; c++) {
+    const headerCell = tableData.cells[`cell_0_${c}`];
+    columns.push(headerCell ? headerCell.originalContent : `Col ${c}`);
+  }
+  
+  // Build column types
+  const columnTypes = ['text'];
+  for (let c = 1; c < maxCol; c++) {
+    let colType = 'text';
+    for (let r = 1; r < maxRow; r++) {
+      const cell = tableData.cells[`cell_${r}_${c}`];
+      if (cell && cell.type !== 'text') {
+        colType = cell.type === 'date' ? 'date' : cell.type === 'signature' ? 'signature' : cell.type === 'select' ? 'select' : cell.type === 'checkbox' ? 'checkbox' : cell.type === 'radio' ? 'radio' : 'text';
+        break;
+      }
+    }
+    columnTypes.push(colType);
+  }
+  
+  // Build rows (skip header row 0)
+  const tableRows = [];
+  for (let r = 1; r < maxRow; r++) {
+    const labelCell = tableData.cells[`cell_${r}_0`];
+    const rowLabel = labelCell ? labelCell.originalContent : `Row ${r}`;
+    const fieldName = labelCell ? labelCell.fieldName : `row_${r}`;
+    const fontStyle = labelCell ? (labelCell.fontStyle || 'normal') : 'normal';
+    const fontSize = labelCell ? (labelCell.fontSize || 'normal') : 'normal';
+    
+    tableRows.push({
+      id: fieldName,
+      label: rowLabel,
+      name: fieldName,
+      rowStyles: { fontStyle, fontSize }
+    });
+  }
+  
+  // Build column styles
+  const columnStyles = [];
+  for (let c = 0; c < maxCol; c++) {
+    const headerCell = tableData.cells[`cell_0_${c}`];
+    columnStyles.push({
+      fontStyle: headerCell?.fontStyle || 'normal',
+      fontSize: headerCell?.fontSize || 'normal'
+    });
+  }
+  
+  // Build config
+  const config = {
+    title: 'Imported Form',
+    subtitle: '',
+    formId: '',
+    formIssue: '',
+    formRevision: '',
+    formDate: '',
+    sections: {
+      session: [{
+        id: 'fieldset_imported_' + Date.now(),
+        type: 'fieldset',
+        title: 'Imported Table',
+        fields: [{
+          id: 'imported_table',
+          type: 'table',
+          label: 'Table',
+          name: 'imported_table',
+          required: false,
+          width: '100',
+          rowGroup: 1,
+          columns: columns,
+          columnTypes: columnTypes,
+          columnStyles: columnStyles,
+          rows: tableRows
+        }]
+      }],
+      training: [],
+      comments: []
+    }
+  };
+  
+  // Build table field config
+  const tableField = {
+    id: 'imported_table_' + Date.now(),
+    type: 'table',
+    label: 'Imported Table',
+    name: 'imported_table',
+    required: false,
+    width: '100',
+    rowGroup: 1,
+    columns: columns,
+    columnTypes: columnTypes,
+    columnStyles: columnStyles,
+    rows: tableRows
+  };
+  
+  // Save to DB
+  const tableName = prompt('Name this table:', 'Imported Table');
+  if (!tableName) return;
+  
+  fetch('/api/saved-tables', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: tableName,
+      description: 'Generated from HTML table import',
+      config: tableField
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    alert(`Table saved! ID: ${data.id}\nYou can now add it from "Saved Tables" in the Forms Builder Field Types.`);
+  })
+  .catch(err => {
+    console.error(err);
+    alert('Error saving table');
+  });
+}
+</script>
+
+</body>
+</html>

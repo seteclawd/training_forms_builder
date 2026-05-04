@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Canvas Test</title>
+<style>
+body { background: #0f172a; color: #fff; padding: 20px; }
+canvas { background: #fff; border: 2px solid #e2e8f0; cursor: crosshair; display: block; width: 400px; height: 150px; }
+#log { margin-top: 10px; font-family: monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+<h2>Canvas Signature Test</h2>
+<canvas id="testCanvas" width="400" height="150"></canvas>
+<div id="log"></div>
+<script>
+const canvas = document.getElementById('testCanvas');
+const ctx = canvas.getContext('2d');
+const log = document.getElementById('log');
+let drawing = false;
+let lastX, lastY;
+
+function addLog(msg) {
+  log.textContent += msg + '\n';
+}
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: (clientX - rect.left) * (canvas.width / rect.width),
+    y: (clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+canvas.addEventListener('mousedown', function(e) {
+  drawing = true;
+  const p = getPos(e);
+  lastX = p.x; lastY = p.y;
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+  ctx.strokeStyle = '#1a365d';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  addLog('mousedown at ' + p.x.toFixed(0) + ',' + p.y.toFixed(0));
+});
+
+canvas.addEventListener('mousemove', function(e) {
+  if (!drawing) return;
+  const p = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(p.x, p.y);
+  ctx.strokeStyle = '#1a365d';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  lastX = p.x; lastY = p.y;
+});
+
+canvas.addEventListener('mouseup', function() {
+  drawing = false;
+  addLog('mouseup');
+});
+
+canvas.addEventListener('mouseleave', function() {
+  drawing = false;
+});
+
+addLog('Ready - try drawing on the canvas');
+</script>
+</body>
+</html>
