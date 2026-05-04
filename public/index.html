@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Forms Builder</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+  <header class="app-header">
+    <div class="logo" style="display:flex;align-items:center;gap:12px;">
+      <img src="https://images.squarespace-cdn.com/content/v1/6165b53b88f6997eddca094a/fb29de89-979a-472f-b4dc-2d9004173bcb/Texel-logo-001.png" alt="Texel Air" style="height:40px;width:auto;filter:brightness(0) invert(1);">
+      <span>Training Forms Builder</span>
+    </div>
+    <nav class="nav-tabs">
+      <button class="nav-btn active" data-view="dashboard">📋 Forms</button>
+      <button class="nav-btn" data-view="templates">📑 Templates</button>
+      <button class="nav-btn" data-view="builder">🛠️ Builder</button>
+    </nav>
+  </header>
+
+  <!-- DASHBOARD VIEW -->
+  <div id="dashboardView" class="view active">
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="showBuilder()">➕ New Form</button>
+    </div>
+    <div id="formsList" class="forms-grid"></div>
+  </div>
+
+  <!-- TEMPLATES VIEW -->
+  <div id="templatesView" class="view">
+    <div class="toolbar">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <select id="templateSectionFilter" onchange="loadTemplates()">
+          <option value="">All Sections</option>
+          <option value="session">Session Details</option>
+          <option value="training">Training Details</option>
+          <option value="comments">Comments & Signatures</option>
+        </select>
+        <button class="btn btn-primary" onclick="showBuilderWithTemplate()">🛠️ New Form from Template</button>
+      </div>
+    </div>
+    <div id="templatesList" class="forms-grid"></div>
+    
+    <!-- Template Builder Modal -->
+    <div id="templateBuilderModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:12px;width:90vw;height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+          <h2>Create Section Template</h2>
+          <button class="close-btn" onclick="closeTemplateBuilder()">✕</button>
+        </div>
+        <div style="padding:20px;overflow-y:auto;flex:1;">
+          <div style="margin-bottom:16px;">
+            <label>Template Name:</label>
+            <input type="text" id="templateName" placeholder="e.g. Standard Session Details" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;margin-top:4px;">
+          </div>
+          <div style="margin-bottom:16px;">
+            <label>For Section:</label>
+            <select id="templateSectionType" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;margin-top:4px;">
+              <option value="session">Session Details</option>
+              <option value="training">Training Details</option>
+              <option value="comments">Comments & Signatures</option>
+            </select>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label>Description:</label>
+            <textarea id="templateDescription" rows="2" placeholder="Brief description..." style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;margin-top:4px;"></textarea>
+          </div>
+          <div id="templateBuilderCanvas" style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;min-height:300px;">
+            <p class="hint">Design your template section here. Add sub-sections and fields.</p>
+          </div>
+        </div>
+        <div style="padding:20px;border-top:1px solid #e2e8f0;display:flex;gap:10px;justify-content:center;">
+          <button class="btn btn-primary" onclick="saveTemplate()">💾 Save Template</button>
+          <button class="btn btn-secondary" onclick="closeTemplateBuilder()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUILDER VIEW -->
+  <div id="builderView" class="view">
+    <div class="builder-container">
+      
+      <!-- Left sidebar: Field palette -->
+      <aside class="field-palette">
+        <h3>🧱 Field Types</h3>
+        
+        <div class="palette-group">
+          <h4>Text Inputs</h4>
+          <div class="palette-item" draggable="true" data-type="text">📝 Text</div>
+          <div class="palette-item" draggable="true" data-type="number">🔢 Number</div>
+          <div class="palette-item" draggable="true" data-type="email">📧 Email</div>
+          <div class="palette-item" draggable="true" data-type="date">📅 Date</div>
+          <div class="palette-item" draggable="true" data-type="tel">📞 Phone</div>
+        </div>
+
+        <div class="palette-group">
+          <h4>Selection</h4>
+          <div class="palette-item" draggable="true" data-type="select">🔽 Dropdown</div>
+          <div class="palette-item" draggable="true" data-type="radio">⭕ Radio</div>
+          <div class="palette-item" draggable="true" data-type="checkbox">☑️ Checkbox</div>
+        </div>
+
+        <div class="palette-group">
+          <h4>Special</h4>
+          <div class="palette-item" draggable="true" data-type="textarea">📄 Text Area</div>
+          <div class="palette-item" draggable="true" data-type="table">📊 Table</div>
+          <div class="palette-item" draggable="true" data-type="signature">✍️ Signature</div>
+        </div>
+
+        <div class="palette-group">
+          <h4>Layout</h4>
+          <div class="palette-item" draggable="true" data-type="heading">📌 Heading</div>
+        </div>
+      </aside>
+
+      <!-- Center: Builder canvas -->
+      <div class="builder-canvas">
+        <div class="form-meta">
+          <input type="text" id="formTitle" placeholder="Form Title" class="form-title-input">
+          <input type="text" id="formSubtitle" placeholder="Subtitle" class="form-subtitle-input">
+        </div>
+
+        <div class="section-tabs">
+          <button class="section-tab active" data-section="session">SECTION 1: Session Details</button>
+          <button class="section-tab" data-section="training">SECTION 2: Training Details</button>
+          <button class="section-tab" data-section="comments">SECTION 3: Comments & Signatures</button>
+        </div>
+
+        <div id="builderSections">
+          <div id="section-session" class="builder-section active">
+            <button class="add-fieldset-btn" onclick="addFieldset()">➕ Add Sub-section</button>
+            <div class="field-container"></div>
+          </div>
+          <div id="section-training" class="builder-section">
+            <button class="add-fieldset-btn" onclick="addFieldset()">➕ Add Sub-section</button>
+            <div class="field-container"></div>
+          </div>
+          <div id="section-comments" class="builder-section">
+            <button class="add-fieldset-btn" onclick="addFieldset()">➕ Add Sub-section</button>
+            <div class="field-container"></div>
+          </div>
+        </div>
+
+        <div id="livePreviewPanel" class="live-preview-panel">
+          <div class="live-preview-header">
+            <span>👁️ Live Preview - SECTION <span id="previewSectionNum">1</span></span>
+            <button class="btn-small" onclick="toggleLivePreview()">Hide</button>
+          </div>
+          <iframe id="livePreviewFrame" src=""></iframe>
+        </div>
+
+        <div class="builder-actions">
+          <button class="btn btn-secondary" onclick="saveCurrentSectionAsTemplate()">📑 Save as Template</button>
+          <button class="btn btn-secondary" onclick="updateLivePreview()">🔄 Refresh Preview</button>
+          <button class="btn btn-secondary" onclick="previewForm()">👁️ Full Preview</button>
+          <button class="btn btn-primary" onclick="saveForm()">💾 Save Form</button>
+          <button class="btn btn-secondary" onclick="showDashboard()">← Cancel</button>
+        </div>
+      </div>
+
+      <!-- Right sidebar: Properties -->
+      <aside class="properties-panel">
+        <h3>⚙️ Properties</h3>
+        <div id="propertiesContent">
+          <p class="hint">Select a field to edit its properties</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Form Preview</h2>
+      <button class="close-btn" onclick="closePreview()">✕</button>
+    </div>
+    <iframe id="previewFrame" src=""></iframe>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
