@@ -304,6 +304,18 @@ function renderFieldHtml(field) {
       const sigH = getSignatureHeight(field);
       html += `          <div class="signature-box">\n            <p style="margin:0 0 8px;color:#64748b;font-size:0.85rem;">${esc(field.label)}</p>\n            <canvas id="${name}" width="400" height="${sigH}"></canvas>\n          </div>\n`;
       break;
+    case 'db_crewName': case 'db_crewId': case 'db_crewLicense': case 'db_crew3lc':
+    case 'db_instructorTri': case 'db_instructorSfi': case 'db_examinerTre':
+    case 'db_examinerSfe': case 'db_location': case 'db_trainingType': case 'db_fstdId':
+      {
+        const dbName = field.dbSource || 'unknown';
+        html += `          <select name="${name}" class="db-field" data-db="${esc(dbName)}" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;">\n`;
+        html += `            <option value="">-- Select from ${esc(dbName)} --</option>\n`;
+        html += `            <option value="" disabled>🔗 Database link (no data yet)</option>\n`;
+        html += `          </select>\n`;
+        html += `          <small style="color:#94a3b8;font-size:0.75rem;">${esc(dbName)} - database linked</small>\n`;
+      }
+      break;
   }
 
   html += `        </div>\n`;

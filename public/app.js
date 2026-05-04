@@ -406,6 +406,28 @@ function createField(type) {
       return { ...base, label: 'Signature' };
     case 'heading':
       return { ...base, label: 'Section Heading', level: 'h3' };
+    case 'db_crewName':
+      return { ...base, label: 'Crew Name', dbSource: 'crewName', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_crewId':
+      return { ...base, label: 'Crew ID', dbSource: 'crewId', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_crewLicense':
+      return { ...base, label: 'Crew License', dbSource: 'crewLicense', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_crew3lc':
+      return { ...base, label: 'Crew 3LC', dbSource: 'crew3lc', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_instructorTri':
+      return { ...base, label: 'Instructor - TRI', dbSource: 'instructorTri', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_instructorSfi':
+      return { ...base, label: 'Instructor - SFI', dbSource: 'instructorSfi', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_examinerTre':
+      return { ...base, label: 'Examiner - TRE', dbSource: 'examinerTre', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_examinerSfe':
+      return { ...base, label: 'Examiner - SFE', dbSource: 'examinerSfe', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_location':
+      return { ...base, label: 'Location', dbSource: 'location', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_trainingType':
+      return { ...base, label: 'Type of Training', dbSource: 'trainingType', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_fstdId':
+      return { ...base, label: 'FSTD ID', dbSource: 'fstdId', options: [{value:'', label:'-- Select from database --'}] };
     default:
       return base;
   }
@@ -416,7 +438,12 @@ function getDefaultLabel(type) {
     text: 'Text Field', email: 'Email', number: 'Number', date: 'Date',
     tel: 'Phone', select: 'Dropdown', radio: 'Radio Group',
     checkbox: 'Checkbox Group', textarea: 'Text Area',
-    table: 'Table', signature: 'Signature', heading: 'Heading'
+    table: 'Table', signature: 'Signature', heading: 'Heading',
+    db_crewName: 'Crew Name', db_crewId: 'Crew ID', db_crewLicense: 'Crew License',
+    db_crew3lc: 'Crew 3LC', db_instructorTri: 'Instructor - TRI',
+    db_instructorSfi: 'Instructor - SFI', db_examinerTre: 'Examiner - TRE',
+    db_examinerSfe: 'Examiner - SFE', db_location: 'Location',
+    db_trainingType: 'Type of Training', db_fstdId: 'FSTD ID'
   };
   return labels[type] || 'Field';
 }
@@ -1057,7 +1084,26 @@ function renderPreviewField(field) {
       break;
     case 'signature':
       const sigH = getSignatureHeight(field);
-      html += `        <canvas style="width:100%;max-width:200px;height:${sigH}px;border:1px solid #e2e8f0;border-radius:4px;"></canvas>\n`;
+      html += `        <canvas style="width:100%;max-width:200px;height:${sigH}px;border:1px solid #e2e8f0;border-radius:4px;"></canvas>
+`;
+      break;
+    case 'db_crewName': case 'db_crewId': case 'db_crewLicense': case 'db_crew3lc':
+    case 'db_instructorTri': case 'db_instructorSfi': case 'db_examinerTre':
+    case 'db_examinerSfe': case 'db_location': case 'db_trainingType': case 'db_fstdId':
+      {
+        const dbOpts = field.options || [{value:'', label:'-- Select from database --'}];
+        const dbName = field.dbSource || 'unknown';
+        html += `        <select class="db-field" data-db="${esc(dbName)}" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;">
+`;
+        dbOpts.forEach(opt => {
+          html += `          <option value="${esc(opt.value)}" disabled>${esc(opt.label)}</option>
+`;
+        });
+        html += `        </select>
+`;
+        html += `        <small style="color:#94a3b8;font-size:0.75rem;">🔗 ${esc(dbName)} - database linked</small>
+`;
+      }
       break;
   }
   html += `      </div>\n`;
