@@ -30,7 +30,17 @@ app.get("/api/crew", (req, res) => {
   if (source !== "pilotPosition") query += " ORDER BY name";
   db.all(query, params, (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
+    if (source === 'location') {
+      db.all('SELECT DISTINCT name FROM locations ORDER BY name', [], (e, locs) => res.json(locs || []));
+    } else if (source === 'fstdId') {
+      const locParam = req.query.location;
+      let q = 'SELECT DISTINCT fstd_id as name FROM fstd_ids';
+      let p = [];
+      if (locParam) { q += ' WHERE location_name = ?'; p = [locParam]; }
+      db.all(q, p, (e, fstds) => res.json(fstds || []));
+    } else {
+      res.json(rows);
+    }
   });
 });
 
