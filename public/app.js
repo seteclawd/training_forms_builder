@@ -1,4 +1,4 @@
-let currentForm = {
+currentForm = {
   id: null,
   name: '',
   form_type: 'simulator',
