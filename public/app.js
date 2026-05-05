@@ -638,9 +638,9 @@ function createField(type) {
     case 'db_crew3lc':
       return { ...base, label: 'Crew 3LC', dbSource: 'crew3lc', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_instructorTri':
-      return { ...base, label: 'Instructors', dbSource: 'instructorTri', options: [{value:'', label:'-- Select from database --'}] };
+      return { ...base, label: 'Instructor', dbSource: 'instructorTri', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_examinerTre':
-      return { ...base, label: 'Examiners', dbSource: 'examinerTre', options: [{value:'', label:'-- Select from database --'}] };
+      return { ...base, label: 'Examiner', dbSource: 'examinerTre', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_pilotPosition':
       return { ...base, label: 'Pilot Position', dbSource: 'pilotPosition', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_location':
@@ -661,7 +661,7 @@ function getDefaultLabel(type) {
     checkbox: 'Checkbox Group', textarea: 'Text Area',
     table: 'Table', signature: 'Signature', heading: 'Heading',
     db_crewName: 'Crew Name', db_crewId: 'Crew ID', db_crewLicense: 'License Number',
-    db_crew3lc: 'Crew 3LC', db_instructorTri: 'Instructors', db_pilotPosition: 'Pilot Position',
+    db_crew3lc: 'Crew 3LC', db_instructorTri: 'Instructor', db_pilotPosition: 'Pilot Position',
     db_trainingType: 'Type of Training', db_fstdId: 'FSTD ID'
   };
   return labels[type] || 'Field';
