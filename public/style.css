@@ -839,3 +839,137 @@ body {
 .template-actions .btn-delete:hover {
   background: #fecaca;
 }
+/* ============================================
+   FORMS TABLE - Dark Theme (matching reference)
+   ============================================ */
+
+.forms-table-container {
+  padding: 0;
+  overflow-x: auto;
+}
+
+.forms-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  background: linear-gradient(180deg, #1a2744 0%, #0f1a2e 100%);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.forms-table thead {
+  background: linear-gradient(180deg, #1e3a5f 0%, #152a4a 100%);
+}
+
+.forms-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94c4f7;
+  border-bottom: 2px solid #2a4a6f;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.forms-table th:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.05);
+}
+
+.forms-table th::after {
+  content: ' ▼';
+  font-size: 0.6rem;
+  opacity: 0.5;
+}
+
+.forms-table td {
+  padding: 14px 16px;
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(42, 74, 111, 0.4);
+  vertical-align: middle;
+}
+
+.forms-table tbody tr {
+  transition: background 0.15s;
+}
+
+.forms-table tbody tr:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.forms-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Action Buttons in Table */
+.btn-action {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-action.pdf {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.btn-action.pdf:hover {
+  background: rgba(59, 130, 246, 0.25);
+}
+
+.btn-action.edit {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.btn-action.edit:hover {
+  background: rgba(16, 185, 129, 0.25);
+}
+
+.btn-action.track {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  border-color: rgba(139, 92, 246, 0.3);
+  padding: 6px 16px;
+}
+
+.btn-action.track:hover {
+  background: rgba(139, 92, 246, 0.25);
+}
+
+/* Dashboard toolbar */
+.dashboard-toolbar {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: flex-end;
+  background: transparent;
+}
+
+/* Empty state */
+.forms-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+.forms-empty p::before {
+  content: '📋 ';
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 12px;
+}

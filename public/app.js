@@ -2066,20 +2066,62 @@ async function loadForms() {
   try {
     const res = await fetch('/api/forms');
     const forms = await res.json();
-    const grid = document.getElementById('formsList');
+    const tbody = document.getElementById('formsList');
+    const emptyState = document.getElementById('formsEmptyState');
     if (!forms.length) {
-      grid.innerHTML = '<p class="hint">No forms yet. Click "New Form" to create one.</p>';
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
       return;
     }
-    grid.innerHTML = forms.map(f => `
-      <div class="form-card" onclick="editForm(${f.id})">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <h3>${esc(f.name)}</h3>
-          <button class="delete-btn" onclick="event.stopPropagation();deleteForm(${f.id},'${esc(f.name)}')" title="Delete form" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1.2rem;padding:4px 8px;border-radius:4px;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='none'">🗑</button>
-        </div>
-        <div class="meta">${f.form_type} · ${new Date(f.created_at).toLocaleDateString()}</div>
-      </div>
-    `).join('');
+    emptyState.style.display = 'none';
+    tbody.innerHTML = forms.map(f => {
+      const cfg = typeof f.config_json === 'string' ? JSON.parse(f.config_json) : (f.config || {});
+      const formId = cfg.formId || cfg.subtitle || f.name || '';
+      const title = cfg.title || f.name || '';
+      const rev = cfg.formRevision || '';
+      const date = cfg.formDate || '';
+      return `
+        <tr onclick="editForm(${f.id})" style="cursor:pointer;">
+          <td>${esc(formId)}</td>
+          <td>${esc(title)}</td>
+          <td>${esc(rev)}</td>
+          <td>${esc(date)}</td>
+          <td>Luis Rivas Robles</td>
+          <td><button class="btn-action pdf" onclick="event.stopPropagation();downloadFormPdf(${f.id})" title="Download PDF">📄 PDF</button></td>
+          <td><button class="btn-action edit" onclick="event.stopPropagation();editForm(${f.id})" title="Edit">✏️ Edit</button></td>
+          <td><button class="btn-action track" onclick="event.stopPropagation();trackForm(${f.id})" title="Track">Track</button></td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function downloadFormPdf(formId) {
+  try {
+    const res = await fetch(`/api/forms/${formId}`);
+    const form = await res.json();
+    const config = typeof form.config_json === 'string' ? JSON.parse(form.config_json) : (form.config || {});
+    const html = generateHtml(config);
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${config.formId || form.name || 'form'}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(err);
+    alert('Error generating PDF');
+  }
+}
+
+async function trackForm(formId) {
+  try {
+    const res = await fetch(`/api/forms/${formId}`);
+    const form = await res.json();
+    alert(`Form Tracking:\n\nID: ${form.id}\nName: ${form.name}\nCreated: ${new Date(form.created_at).toLocaleString()}\nUpdated: ${new Date(form.updated_at).toLocaleString()}\nType: ${form.form_type}`);
   } catch (err) {
     console.error(err);
   }

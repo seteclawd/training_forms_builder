@@ -25,10 +25,29 @@
 
   <!-- DASHBOARD VIEW -->
   <div id="dashboardView" class="view active">
-    <div class="toolbar">
-      <button class="btn btn-primary" onclick="showBuilder()">➕ New Form</button>
+    <div class="dashboard-toolbar">
+      <button class="btn btn-new-form" onclick="showBuilder()"><span class="icon">➕</span> New Form</button>
     </div>
-    <div id="formsList" class="templates-grid"></div>
+    <div class="forms-table-container">
+      <table class="forms-table" id="formsTable">
+        <thead>
+          <tr>
+            <th>Number</th>
+            <th>Title</th>
+            <th>Revision</th>
+            <th>Date</th>
+            <th>Owner</th>
+            <th>Download</th>
+            <th>Actions</th>
+            <th>Track</th>
+          </tr>
+        </thead>
+        <tbody id="formsList"></tbody>
+      </table>
+      <div id="formsEmptyState" class="forms-empty" style="display:none;">
+        <p>No forms yet. Click "New Form" to create one.</p>
+      </div>
+    </div>
   </div>
 
   <!-- TEMPLATES VIEW -->
