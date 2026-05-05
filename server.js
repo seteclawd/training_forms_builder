@@ -324,9 +324,11 @@ async function generateHtml(config, isPreview = false) {
           var posSel = row.querySelector('select[data-db="pilotPosition"]');
           var licSel = row.querySelector('select[data-db="crewLicense"]');
           var tlcSel = row.querySelector('select[data-db="crew3lc"]');
-          if (posSel && pilot.position) posSel.value = pilot.position;
-          if (licSel && pilot.license_number) licSel.value = pilot.license_number;
-          if (tlcSel && pilot.three_lc) tlcSel.value = pilot.three_lc;
+          setTimeout(function(){
+            if (posSel && pilot.position) posSel.value = pilot.position;
+            if (licSel && pilot.license_number) licSel.value = pilot.license_number;
+            if (tlcSel && pilot.three_lc) tlcSel.value = pilot.three_lc;
+          }, 200);
         }
       });
     
