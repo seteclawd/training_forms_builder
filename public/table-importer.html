@@ -300,8 +300,8 @@ function renderConfigPanel(data) {
         <option value="db_pilotPosition" ${data.type === 'db_pilotPosition' ? 'selected' : ''}>👤 Pilot Position (DB)</option>
         <option value="db_crewId" ${data.type === 'db_crewId' ? 'selected' : ''}>🪪 Crew ID (DB)</option>
         <option value="db_crewLicense" ${data.type === 'db_crewLicense' ? 'selected' : ''}>📜 License Number (DB)</option>
-        <option value="db_instructorTri" ${data.type === 'db_instructorTri' ? 'selected' : ''}>🎓 Instructors (DB)</option>
-        <option value="db_examinerTre" ${data.type === 'db_examinerTre' ? 'selected' : ''}>📝 Examiners (DB)</option>
+        <option value="db_instructorTri" ${data.type === 'db_instructorTri' ? 'selected' : ''}>🎓 Instructor (DB)</option>
+        <option value="db_examinerTre" ${data.type === 'db_examinerTre' ? 'selected' : ''}>📝 Examiner (DB)</option>
         <option value="static" ${data.type === 'static' ? 'selected' : ''}>📌 Static Text (no input)</option>
         <option value="heading" ${data.type === 'heading' ? 'selected' : ''}>📌 Heading</option>
       </select>
@@ -372,7 +372,7 @@ function updateCellType(type) {
       radio: 'Radio', checkbox: 'Checkbox', textarea: 'Text Area',
       signature: 'Signature', db_crewName: 'DB: Crew', db_pilotPosition: 'DB: Position',
       db_crewId: 'DB: ID', db_crewLicense: 'DB: License',
-      db_instructorTri: 'DB: Instructors', db_examinerTre: 'DB: Examiners',
+      db_instructorTri: 'DB: Instructor', db_examinerTre: 'DB: Examiner',
       static: 'Static', heading: 'Heading'
     };
     const badgeClass = type.startsWith('db_') ? 'badge-db' : `badge-${type}`;
