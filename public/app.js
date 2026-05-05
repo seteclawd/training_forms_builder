@@ -53,6 +53,11 @@ function showView(view) {
 function showDashboard() { showView('dashboard'); loadForms(); }
 function showTemplates() { showView('templates'); loadTemplates(); }
 
+function closeTemplateBuilder() {
+  document.getElementById('templateBuilderModal').style.display = 'none';
+  _editingTemplateId = null;
+}
+
 function createNewTemplate() {
   _editingTemplateId = null;
   document.getElementById('editingTemplateId').value = '';
@@ -237,10 +242,16 @@ async function saveCurrentSectionAsTemplate() {
     return;
   }
   
-  const fields = currentForm.config.sections[currentSection] || [];
+  // Use currentSection or default to 'session'
+  const section = currentSection || 'session';
+  const fieldsets = currentForm.config.sections[section] || [];
   
-  if (!fields || !fields.length) {
-    alert('Current section is empty. Add some fields first.');
+  // Count all fields across all fieldsets
+  let totalFields = 0;
+  fieldsets.forEach(fs => { totalFields += (fs.fields || []).length; });
+  
+  if (totalFields === 0) {
+    alert('Current section (' + section + ') has no fields. Add some fields first.');
     return;
   }
 
@@ -249,6 +260,7 @@ async function saveCurrentSectionAsTemplate() {
   document.getElementById('templateModalTitle').textContent = 'Save as Template';
   document.getElementById('templateName').value = '';
   document.getElementById('templateDescription').value = '';
+  document.getElementById('templateSectionType').value = section;
   
   // Render the current section fields in the modal canvas
   renderTemplateBuilderCanvasFromCurrentSection();

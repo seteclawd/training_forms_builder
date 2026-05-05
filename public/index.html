@@ -70,42 +70,6 @@
       </div>
     </div>
     <div id="templatesList" class="templates-grid"></div>
-    
-    <!-- Template Builder Modal -->
-    <div id="templateBuilderModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
-      <div style="background:#fff;border-radius:12px;width:90vw;height:90vh;display:flex;flex-direction:column;overflow:hidden;">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e2e8f0;">
-          <h2 id="templateModalTitle">Create Section Template</h2>
-          <button class="close-btn" onclick="closeTemplateBuilder()">✕</button>
-        </div>
-        <div style="padding:20px;overflow-y:auto;flex:1;">
-          <input type="hidden" id="editingTemplateId" value="">
-          <div style="margin-bottom:16px;">
-            <label>Template Name:</label>
-            <input type="text" id="templateName" placeholder="e.g. Standard Session Details" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;margin-top:4px;">
-          </div>
-          <div style="margin-bottom:16px;">
-            <label>For Section:</label>
-            <select id="templateSectionType" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;margin-top:4px;">
-              <option value="session">Session Details</option>
-              <option value="training">Training Details</option>
-              <option value="comments">Comments & Signatures</option>
-            </select>
-          </div>
-          <div style="margin-bottom:16px;">
-            <label>Description:</label>
-            <textarea id="templateDescription" rows="2" placeholder="Brief description..." style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;margin-top:4px;"></textarea>
-          </div>
-          <div id="templateBuilderCanvas" style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;min-height:300px;">
-            <p class="hint">Design your template section here. Add sub-sections and fields.</p>
-          </div>
-        </div>
-        <div style="padding:20px;border-top:1px solid #e2e8f0;display:flex;gap:10px;justify-content:center;">
-          <button class="btn btn-primary" onclick="saveTemplate()">💾 Save Template</button>
-          <button class="btn btn-secondary" onclick="closeTemplateBuilder()">Cancel</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- BUILDER VIEW -->
@@ -213,7 +177,7 @@
         </div>
 
         <div class="builder-actions">
-          <button class="btn btn-secondary" onclick="alert('1'); console.log('2'); saveCurrentSectionAsTemplate();">📑 Save as Template</button>
+          <button class="btn btn-secondary" onclick="saveCurrentSectionAsTemplate()">📑 Save as Template</button>
           <button class="btn btn-secondary" onclick="updateLivePreview()">🔄 Refresh Preview</button>
           <button class="btn btn-secondary" onclick="previewForm()">👁️ Full Preview</button>
           <button class="btn btn-primary" onclick="saveForm()">💾 Save Form</button>
@@ -243,6 +207,42 @@
       </div>
     </div>
     <iframe id="previewFrame" src=""></iframe>
+  </div>
+</div>
+
+<!-- Template Builder Modal (outside any .view to work with position:fixed) -->
+<div id="templateBuilderModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;width:90vw;height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+      <h2 id="templateModalTitle">Create Section Template</h2>
+      <button class="close-btn" onclick="closeTemplateBuilder()">✕</button>
+    </div>
+    <div style="padding:20px;overflow-y:auto;flex:1;">
+      <input type="hidden" id="editingTemplateId" value="">
+      <div style="margin-bottom:16px;">
+        <label>Template Name:</label>
+        <input type="text" id="templateName" placeholder="e.g. Standard Session Details" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;margin-top:4px;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label>For Section:</label>
+        <select id="templateSectionType" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;margin-top:4px;">
+          <option value="session">Session Details</option>
+          <option value="training">Training Details</option>
+          <option value="comments">Comments & Signatures</option>
+        </select>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label>Description:</label>
+        <textarea id="templateDescription" rows="2" placeholder="Brief description..." style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;margin-top:4px;"></textarea>
+      </div>
+      <div id="templateBuilderCanvas" style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;min-height:300px;">
+        <p class="hint">Design your template section here. Add sub-sections and fields.</p>
+      </div>
+    </div>
+    <div style="padding:20px;border-top:1px solid #e2e8f0;display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-primary" onclick="saveTemplate()">💾 Save Template</button>
+      <button class="btn btn-secondary" onclick="closeTemplateBuilder()">Cancel</button>
+    </div>
   </div>
 </div>
 
