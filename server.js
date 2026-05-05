@@ -451,65 +451,7 @@ async function generateHtml(config, isPreview = false) {
     setTimeout(initLocFstdFilter, 300);
     setTimeout(initLocFstdFilter, 1000);
 
-    // Simple signature canvas - direct initialization
-    document.querySelectorAll('canvas').forEach(function(canvas) {
-      var ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      
-      var drawing = false;
-      var lastX, lastY;
-      
-      function getXY(e) {
-        var rect = canvas.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return {x: 0, y: 0};
-        var cx, cy;
-        if (e.touches && e.touches.length > 0) {
-          cx = e.touches[0].clientX;
-          cy = e.touches[0].clientY;
-        } else {
-          cx = e.clientX;
-          cy = e.clientY;
-        }
-        return {
-          x: (cx - rect.left) * (canvas.width / rect.width),
-          y: (cy - rect.top) * (canvas.height / rect.height)
-        };
-      }
-      
-      canvas.addEventListener('mousedown', function(e) {
-        e.preventDefault();
-        drawing = true;
-        var p = getXY(e);
-        lastX = p.x; lastY = p.y;
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-      });
-      
-      canvas.addEventListener('mousemove', function(e) {
-        if (!drawing) return;
-        e.preventDefault();
-        var p = getXY(e);
-        ctx.lineTo(p.x, p.y);
-        ctx.strokeStyle = '#1a365d';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-        lastX = p.x; lastY = p.y;
-      });
-      
-      function stopDrawing(e) {
-        if (e) e.preventDefault();
-        drawing = false;
-      }
-      
-      canvas.addEventListener('mouseup', stopDrawing);
-      canvas.addEventListener('mouseleave', stopDrawing);
-      canvas.addEventListener('touchstart', function(e) { e.preventDefault(); drawing = true; var p = getXY(e); lastX = p.x; lastY = p.y; ctx.beginPath(); ctx.moveTo(p.x, p.y); }, {passive: false});
-      canvas.addEventListener('touchmove', function(e) { if (!drawing) return; e.preventDefault(); var p = getXY(e); ctx.lineTo(p.x, p.y); ctx.strokeStyle = '#1a365d'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); lastX = p.x; lastY = p.y; }, {passive: false});
-      canvas.addEventListener('touchend', stopDrawing, {passive: false});
-      canvas.addEventListener('touchcancel', stopDrawing, {passive: false});
-    });
+
     
     // Clear signature buttons
     document.querySelectorAll('.sig-clear-btn').forEach(function(btn) {
@@ -719,7 +661,7 @@ function renderTableHtml(field) {
         const sigH = field.columnSigHeights?.[i] || '2row';
         const sigPx = { '1row': 40, '2row': 60, '3row': 100, '4row': 150, '5row': 200 }[sigH] || 60;
         const canvasId = `${esc(fieldName)}_${i}`;
-        html += `                <td><div class="signature-box" style="position:relative;display:inline-block;width:100%;"><canvas id="${canvasId}" width="200" height="${sigPx}" style="border:1px solid #e2e8f0;border-radius:4px;cursor:crosshair;display:block;width:100%;height:${sigPx}px;"></canvas><button type="button" class="sig-clear-btn" data-canvas="${canvasId}" style="position:absolute;top:4px;right:4px;background:#ef4444;color:#fff;border:none;border-radius:3px;padding:2px 8px;font-size:0.7rem;cursor:pointer;pointer-events:auto;z-index:10;">Clear</button></div></td>\n`;
+        html += `                <td><div class="signature-box" style="position:relative;display:inline-block;width:100%;"><canvas id="${canvasId}" width="200" height="${sigPx}" style="border:1px solid #e2e8f0;border-radius:4px;cursor:crosshair;display:block;width:100%;height:${sigPx}px;touch-action:none;-webkit-touch-callout:none;" onmousedown="event.preventDefault();this._drawing=true;var r=this.getBoundingClientRect();this._lx=(event.clientX-r.left)*(this.width/r.width);this._ly=(event.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.beginPath();c.moveTo(this._lx,this._ly);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';" onmousemove="if(!this._drawing)return;event.preventDefault();var r=this.getBoundingClientRect();var x=(event.clientX-r.left)*(this.width/r.width);var y=(event.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.lineTo(x,y);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';c.stroke();this._lx=x;this._ly=y;" onmouseup="this._drawing=false" onmouseleave="this._drawing=false" ontouchstart="event.preventDefault();this._drawing=true;var r=this.getBoundingClientRect();var t=event.touches[0];this._lx=(t.clientX-r.left)*(this.width/r.width);this._ly=(t.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.beginPath();c.moveTo(this._lx,this._ly);" ontouchmove="if(!this._drawing)return;event.preventDefault();var r=this.getBoundingClientRect();var t=event.touches[0];var x=(t.clientX-r.left)*(this.width/r.width);var y=(t.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.lineTo(x,y);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';c.stroke();this._lx=x;this._ly=y;" ontouchend="this._drawing=false" ontouchcancel="this._drawing=false"></canvas><button type="button" class="sig-clear-btn" data-canvas="${canvasId}" style="position:absolute;top:4px;right:4px;background:#ef4444;color:#fff;border:none;border-radius:3px;padding:2px 8px;font-size:0.7rem;cursor:pointer;pointer-events:auto;z-index:10;">Clear</button></div></td>\n`;
       } else {
         html += `                <td><input type="text" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></td>\n`;
       }
