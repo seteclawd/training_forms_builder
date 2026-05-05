@@ -376,21 +376,31 @@ async function generateHtml(config, isPreview = false) {
         }
       });
     
-    // Populate Location and FSTD ID dropdowns
-    document.querySelectorAll('select[data-role="location"]').forEach(function(sel){
-      (__locationsData || []).forEach(function(loc){
-        var opt = document.createElement('option');
-        opt.value = loc; opt.textContent = loc;
-        sel.appendChild(opt);
+    // Populate Location and FSTD ID dropdowns (runs after DOM ready)
+    function populateLocFstd() {
+      document.querySelectorAll('select[data-role="location"]').forEach(function(sel){
+        if (sel.options.length > 1) return; // already populated
+        sel.innerHTML = '<option value="">-- Select --</option>';
+        (__locationsData || []).forEach(function(loc){
+          var opt = document.createElement('option');
+          opt.value = loc; opt.textContent = loc;
+          sel.appendChild(opt);
+        });
       });
-    });
-    document.querySelectorAll('select[data-role="fstdId"]').forEach(function(sel){
-      (__fstdData || []).forEach(function(f){
-        var opt = document.createElement('option');
-        opt.value = f.fstd_id; opt.textContent = f.fstd_id;
-        sel.appendChild(opt);
+      document.querySelectorAll('select[data-role="fstdId"]').forEach(function(sel){
+        if (sel.options.length > 1) return;
+        sel.innerHTML = '<option value="">-- Select --</option>';
+        (__fstdData || []).forEach(function(f){
+          var opt = document.createElement('option');
+          opt.value = f.fstd_id; opt.textContent = f.fstd_id;
+          sel.appendChild(opt);
+        });
       });
-    });
+    }
+    populateLocFstd();
+    setTimeout(populateLocFstd, 200);
+    setTimeout(populateLocFstd, 500);
+    setTimeout(populateLocFstd, 1000);
     // When Location changes, filter FSTD ID dropdown
     function filterFstdForLoc(locSel, fstdSel) {
       var selectedLoc = locSel.value;
