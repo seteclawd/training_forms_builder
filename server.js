@@ -213,11 +213,11 @@ app.delete('/api/templates/:id', (req, res) => {
 
 function formatFormDate(dateStr) {
   if (!dateStr) return '';
-  if (/^\d{2}\/\w{3}\/\d{4}$/.test(dateStr)) return dateStr;
+  if (/^\d{2}-\w{3}-\d{4}$/.test(dateStr)) return dateStr;
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const parts = dateStr.split('-');
   if (parts.length !== 3) return dateStr;
-  return parts[2] + '/' + months[parseInt(parts[1]) - 1] + '/' + parts[0];
+  return parts[2] + '-' + months[parseInt(parts[1]) - 1] + '-' + parts[0];
 }
 
 let __locationsDataGlobal = [];
