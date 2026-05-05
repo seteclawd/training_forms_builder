@@ -149,23 +149,51 @@ async function loadTemplates() {
       grid.innerHTML = '<p class="hint">No templates yet. Create one from the Builder.</p>';
       return;
     }
-    grid.innerHTML = templates.map(t => `
-      <div class="template-card">
-        <h3>${esc(t.name)}</h3>
-        <div class="meta">${t.section_type} · ${new Date(t.created_at).toLocaleDateString()}</div>
-        <p style="color:#64748b;font-size:0.8rem;margin:8px 0;">${esc(t.description || '')}</p>
-        <div class="template-actions">
-          <button class="btn-use" onclick="useTemplate(${t.id})">
-            <span>📋</span> Use
-          </button>
-          <button class="btn-edit" onclick="editTemplate(${t.id})">
-            <span>✏️</span> Edit
-          </button>
-          <button class="btn-delete" onclick="deleteTemplate(${t.id})">🗑️</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (err) {
+    grid.innerHTML = '';
+    
+    // Group by section
+    const sectionOrder = ['session', 'training', 'comments'];
+    const sectionLabels = {
+      session: '📋 Session Details',
+      training: '📚 Training Details', 
+      comments: '✍️ Comments & Signatures'
+    };
+    
+    const grouped = {};
+    templates.forEach(t => {
+      const s = t.section_type || 'session';
+      if (!grouped[s]) grouped[s] = [];
+      grouped[s].push(t);
+    });
+    
+    sectionOrder.forEach(section => {
+      const items = grouped[section];
+      if (!items || !items.length) return;
+      
+      const sectionDiv = document.createElement('div');
+      sectionDiv.style.cssText = 'margin-bottom:24px;';
+      sectionDiv.innerHTML = '<h3 style="font-size:1rem;color:#475569;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;">' + (sectionLabels[section] || section) + '</h3>';
+      
+      const cardsGrid = document.createElement('div');
+      cardsGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;';
+      
+      items.forEach(t => {
+        const card = document.createElement('div');
+        card.className = 'template-card';
+        card.innerHTML = '<h3>' + esc(t.name) + '</h3>' +
+          '<div class="meta">' + t.section_type + ' · ' + new Date(t.created_at).toLocaleDateString() + '</div>' +
+          '<p style="color:#64748b;font-size:0.8rem;margin:8px 0;">' + esc(t.description || '') + '</p>' +
+          '<div class="template-actions">' +
+            '<button class="btn-use" onclick="useTemplate(' + t.id + ')"><span>📋</span> Use</button>' +
+            '<button class="btn-edit" onclick="editTemplate(' + t.id + ')"><span>✏️</span> Edit</button>' +
+            '<button class="btn-delete" onclick="deleteTemplate(' + t.id + ')">🗑️</button>' +
+          '</div>';
+        cardsGrid.appendChild(card);
+      });
+      
+      sectionDiv.appendChild(cardsGrid);
+      grid.appendChild(sectionDiv);
+    });} catch (err) {
     console.error(err);
   }
 }
