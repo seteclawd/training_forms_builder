@@ -32,7 +32,7 @@ app.get("/api/crew", (req, res) => {
 
 // API: List all forms
 app.get('/api/forms', (req, res) => {
-  db.all('SELECT id, name, form_type, description, created_at FROM forms ORDER BY updated_at DESC', [], (err, rows) => {
+  db.all('SELECT id, name, form_type, description, config_json, created_at FROM forms ORDER BY updated_at DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
