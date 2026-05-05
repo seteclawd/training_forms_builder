@@ -859,3 +859,12 @@ const PORT = process.env.PORT || 8999;
 app.listen(PORT, () => {
   console.log('Training Forms Builder running on port', PORT);
 });
+
+// API: Download form as self-contained HTML (offline-ready)
+app.post('/api/download-html', async (req, res) => {
+  const { config } = req.body;
+  const html = await generateHtml(config, false);
+  res.setHeader('Content-Type', 'text/html');
+  res.setHeader('Content-Disposition', `attachment; filename="${(config.title || config.formId || 'training-form').replace(/[^a-zA-Z0-9 _-]/g, '')}.html"`);
+  res.send(html);
+});

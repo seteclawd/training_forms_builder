@@ -2141,11 +2141,20 @@ async function previewForm() {
   }
 }
 
-function downloadPreviewForm() {
+async function downloadPreviewForm() {
   try {
-    const frame = document.getElementById('previewFrame');
-    const html = frame.contentDocument.documentElement.outerHTML;
-    const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+    currentForm.config.formId = document.getElementById('formId').value || '';
+    currentForm.config.formIssue = document.getElementById('formIssue').value || '';
+    currentForm.config.formRevision = document.getElementById('formRevision').value || '';
+    currentForm.config.formDate = document.getElementById('formDate').value || '';
+    currentForm.config.subtitle = document.getElementById('formSubtitle').value;
+    const res = await fetch('/api/download-html', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: currentForm.config })
+    });
+    const html = await res.text();
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
