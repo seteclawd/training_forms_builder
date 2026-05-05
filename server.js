@@ -331,9 +331,9 @@ async function generateHtml(config = {}, isPreview = false) {
 
   html += `
     <div class="form-footer">
-      <button type="button" class="btn btn-secondary" id="saveDraftBtn">Save Draft</button>
-      <button type="button" class="btn btn-secondary" id="draftsBtn" style="background:#6366f1;color:#fff;">Draft Forms</button>
-      <button type="button" class="btn btn-primary" id="submitFormBtn">Submit</button>
+      <button type="button" class="btn btn-secondary" onclick="saveDraft()">Save Draft</button>
+      <button type="button" class="btn btn-secondary" onclick="showDrafts()" style="background:#6366f1;color:#fff;">Draft Forms</button>
+      <button type="button" class="btn btn-primary" onclick="submitForm()">Submit</button>
     </div>
   </form>
   <div id="draftsModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;justify-content:center;align-items:center;">
@@ -443,9 +443,6 @@ async function generateHtml(config = {}, isPreview = false) {
     setTimeout(function(){ window.location.href = mailto; }, 500);
   }
   window.downloadForm = function() { var html = document.documentElement.outerHTML; var blob = new Blob([html], {type: 'text/html;charset=utf-8'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (document.title || 'training-form') + '.html'; document.body.appendChild(a); a.click(); setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100); };
-  document.getElementById('saveDraftBtn').addEventListener('click', window.saveDraft);
-  document.getElementById('submitFormBtn').addEventListener('click', window.submitForm);
-  document.getElementById('draftsBtn').addEventListener('click', showDrafts);
 
   function showDrafts() {
     document.getElementById('draftsModal').style.display = 'flex';
