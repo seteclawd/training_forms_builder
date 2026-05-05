@@ -220,16 +220,21 @@ function formatFormDate(dateStr) {
   return parts[2] + '/' + months[parseInt(parts[1]) - 1] + '/' + parts[0];
 }
 
+let __locationsDataGlobal = [];
+let __fstdDataGlobal = [];
+
 async function generateHtml(config, isPreview = false) {
   const crewData = await new Promise((resolve) => {
     db.all('SELECT * FROM crew ORDER BY name', [], (err, rows) => resolve(rows || []));
   });
   const locationsData = await new Promise((resolve) => {
-    db.all('SELECT DISTINCT name FROM locations ORDER BY name', [], (err, rows) => resolve(rows ? rows.map(r => r.name) : []));
+    db.all('SELECT DISTINCT name FROM locations ORDER BY name', [], (err, rows) => { resolve(rows ? rows.map(r => r.name) : []); });
   });
+  __locationsDataGlobal = locationsData;
   const fstdData = await new Promise((resolve) => {
-    db.all('SELECT fstd_id, location_name FROM fstd_ids', [], (err, rows) => resolve(rows || []));
+    db.all('SELECT fstd_id, location_name FROM fstd_ids', [], (err, rows) => { resolve(rows || []); });
   });
+  __fstdDataGlobal = fstdData;
   let html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -671,15 +676,7 @@ function renderFieldHtml(field) {
         const extraAttr = isLocation ? ' data-role="location"' : (isFstdId ? ' data-role="fstdId"' : '');
         html += `          <select name="${name}" class="db-field" data-db="${esc(dbName)}"${extraAttr} style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;">\n`;
         html += `            <option value="">-- Select --</option>\n`;
-        if (isLocation) {
-          (locationsData || []).forEach(function(loc) {
-            html += `            <option value="${esc(loc)}">${esc(loc)}</option>\n`;
-          });
-        } else if (isFstdId) {
-          (fstdData || []).forEach(function(f) {
-            html += `            <option value="${esc(f.fstd_id)}">${esc(f.fstd_id)}</option>\n`;
-          });
-        }
+
         html += `          </select>\n`;
       }
       break;
