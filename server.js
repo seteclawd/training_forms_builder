@@ -224,6 +224,12 @@ async function generateHtml(config, isPreview = false) {
   const crewData = await new Promise((resolve) => {
     db.all('SELECT * FROM crew ORDER BY name', [], (err, rows) => resolve(rows || []));
   });
+  const locationsData = await new Promise((resolve) => {
+    db.all('SELECT DISTINCT name FROM locations ORDER BY name', [], (err, rows) => resolve(rows ? rows.map(r => r.name) : []));
+  });
+  const fstdData = await new Promise((resolve) => {
+    db.all('SELECT fstd_id, location_name FROM fstd_ids', [], (err, rows) => resolve(rows || []));
+  });
   let html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -324,6 +330,8 @@ async function generateHtml(config, isPreview = false) {
 </script>
 <script>
   var __crewData = ${JSON.stringify(crewData)};
+  var __locationsData = ${JSON.stringify(locationsData)};
+  var __fstdData = ${JSON.stringify(fstdData)};
   document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.db-field').forEach(function(sel) {
       var source = sel.getAttribute('data-db');
@@ -369,36 +377,30 @@ async function generateHtml(config, isPreview = false) {
       });
     
     // Populate Location and FSTD ID dropdowns
-    fetch('/api/locations').then(function(r){return r.json();}).then(function(locs){
-      document.querySelectorAll('select[data-role="location"]').forEach(function(sel){
-        locs.forEach(function(loc){
-          var opt = document.createElement('option');
-          opt.value = loc; opt.textContent = loc;
-          sel.appendChild(opt);
-        });
+    document.querySelectorAll('select[data-role="location"]').forEach(function(sel){
+      (__locationsData || []).forEach(function(loc){
+        var opt = document.createElement('option');
+        opt.value = loc; opt.textContent = loc;
+        sel.appendChild(opt);
       });
     });
-    fetch('/api/fstd-ids').then(function(r){return r.json();}).then(function(fstds){
-      window.__fstdData = fstds;
-      document.querySelectorAll('select[data-role="fstdId"]').forEach(function(sel){
-        fstds.forEach(function(f){
-          var opt = document.createElement('option');
-          opt.value = f.fstd_id; opt.textContent = f.fstd_id + ' - ' + f.location_name;
-          sel.appendChild(opt);
-        });
+    document.querySelectorAll('select[data-role="fstdId"]').forEach(function(sel){
+      (__fstdData || []).forEach(function(f){
+        var opt = document.createElement('option');
+        opt.value = f.fstd_id; opt.textContent = f.fstd_id + ' - ' + f.location_name;
+        sel.appendChild(opt);
       });
     });
     // When Location changes, filter FSTD ID dropdown
     document.querySelectorAll('select[data-role="location"]').forEach(function(locSel){
       locSel.addEventListener('change', function(){
         var selectedLoc = locSel.value;
-        var row = locSel.closest('.form-row') || locSel.closest('fieldset');
-        if (!row) return;
-        var fstdSel = row.querySelector('select[data-role="fstdId"]');
+        var form = locSel.closest('form') || locSel.closest('.container') || document.body;
+        var fstdSel = form.querySelector('select[data-role="fstdId"]');
         if (!fstdSel) return;
         fstdSel.innerHTML = '<option value="">-- Select --</option>';
-        if (!window.__fstdData) return;
-        var filtered = selectedLoc ? window.__fstdData.filter(function(f){return f.location_name === selectedLoc;}) : window.__fstdData;
+        if (!__fstdData) return;
+        var filtered = selectedLoc ? __fstdData.filter(function(f){return f.location_name === selectedLoc;}) : __fstdData;
         filtered.forEach(function(f){
           var opt = document.createElement('option');
           opt.value = f.fstd_id; opt.textContent = f.fstd_id;
