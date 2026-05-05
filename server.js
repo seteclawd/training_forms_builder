@@ -16,7 +16,7 @@ app.get("/api/crew", (req, res) => {
   let query = "SELECT * FROM crew";
   let params = [];
   if (source === "instructorTri") {
-    query += " WHERE is_tri = 1";
+    query += " WHERE is_tri = 1 OR is_sfi = 1";
   } else if (source === "examinerTre") {
     query += " WHERE is_tre = 1";
   } else if (source === "examinerSfe") {
@@ -296,7 +296,7 @@ async function generateHtml(config, isPreview = false) {
       var source = sel.getAttribute('data-db');
       var data = __crewData;
       var filtered = [];
-      if (source === 'instructorTri') filtered = data.filter(function(r){return r.is_tri;});
+      if (source === 'instructorTri') filtered = data.filter(function(r){return r.is_tri || r.is_sfi;});
       else if (source === 'examinerTre') filtered = data.filter(function(r){return r.is_tre;});
       else if (source === 'examinerSfe') filtered = data.filter(function(r){return r.is_sfe;});
       else if (source === 'crewSfi') filtered = data.filter(function(r){return r.is_sfi;});
@@ -310,8 +310,8 @@ async function generateHtml(config, isPreview = false) {
         else if (source === 'crew3lc' || source === 'crewId') { opt.value = r.three_lc; opt.textContent = r.three_lc; }
         else if (source === 'crewLicense') { opt.value = r.license_number || ''; opt.textContent = r.license_number || 'N/A'; }
         else if (source === 'pilotPosition') { opt.value = r.name; opt.textContent = r.name; }
-        else if (source === 'instructorTri') { var prefix = (r.name === 'GFO' || r.is_sfi) ? 'SFI' : 'TRI'; opt.value = r.name; opt.textContent = prefix + ' - ' + r.name + (r.position ? ' (' + r.position + ')' : ''); }
-        else if (source === 'examinerTre') { var prefix = (r.name === 'GFO' || r.is_sfe) ? 'SFE' : 'TRE'; opt.value = r.name; opt.textContent = prefix + ' - ' + r.name + (r.position ? ' (' + r.position + ')' : ''); }
+        else if (source === 'instructorTri') { var prefix = (r.name === 'GFO' || r.is_sfi) ? 'SFI' : 'TRI'; opt.value = r.name; opt.textContent = prefix + ' - ' + r.name; }
+        else if (source === 'examinerTre') { var prefix = (r.name === 'GFO' || r.is_sfe) ? 'SFE' : 'TRE'; opt.value = r.name; opt.textContent = prefix + ' - ' + r.name; }
         else { opt.value = r.name; opt.textContent = r.name + (r.position ? ' (' + r.position + ')' : ''); }
         sel.appendChild(opt);
       });
