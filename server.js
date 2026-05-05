@@ -518,62 +518,89 @@ async function generateHtml(config = {}, isPreview = false) {
         customOpt.value = '-Custom-';
         customOpt.textContent = '-Custom-';
         sel.appendChild(customOpt);
-        var origName = sel.name;
+        var originalName = sel.name;
         sel.addEventListener('change', function() {
           if (sel.value === '-Custom-') {
             var input = document.createElement('input');
             input.type = 'text';
             input.placeholder = 'Enter custom AD ICAO';
-            input.name = origName;
+            input.name = originalName;
             input.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;';
-            var savedSel = sel;
             sel.parentNode.replaceChild(input, sel);
             input.focus();
-            var revertBtn = document.createElement('button');
-            revertBtn.type = 'button';
-            revertBtn.textContent = '← Back to list';
-            revertBtn.style.cssText = 'margin-top:4px;background:none;border:none;color:#6366f1;cursor:pointer;font-size:0.8rem;padding:0;';
-            revertBtn.onclick = function() {
-              var newSel = document.createElement('select');
-              newSel.name = origName;
-              newSel.className = 'db-field';
-              newSel.setAttribute('data-db', 'adIcao');
-              newSel.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;';
-              var defOpt = document.createElement('option');
-              defOpt.value = '';
-              defOpt.textContent = '-- Select --';
-              newSel.appendChild(defOpt);
-              var seen2 = {};
-              __crewData.forEach(function(r) {
-                if (r.ad_icao && !seen2[r.ad_icao]) {
-                  seen2[r.ad_icao] = true;
-                  var o = document.createElement('option');
-                  o.value = r.ad_icao;
-                  o.textContent = r.ad_icao;
-                  newSel.appendChild(o);
-                }
-              });
-              var cOpt = document.createElement('option');
-              cOpt.value = '-Custom-';
-              cOpt.textContent = '-Custom-';
-              newSel.appendChild(cOpt);
-              if (input.value) {
-                var sv = input.value;
-                setTimeout(function() {
-                  var co = document.createElement('option');
-                  co.value = sv;
-                  co.textContent = sv;
-                  newSel.insertBefore(co, newSel.querySelector('option[value="-Custom-"]'));
-                  newSel.value = sv;
-                }, 0);
-              }
-              newSel.dispatchEvent(new Event('change'));
-              revertBtn.remove();
-            };
-            input.parentNode.insertBefore(revertBtn, input.nextSibling);
           }
         });
       }
+    });
+    // Auto-fill Pilot Position, License, 3LC when Crew Name changes
+    document.querySelectorAll('select[data-db="crewName"]').forEach(function(crewSel) {
+      crewSel.addEventListener('change', function() {
+        var selected = crewSel.value;
+        var pilot = __crewData.find(function(r) { return r.name === selected; });
+        var row = crewSel.closest('.form-row') || crewSel.closest('fieldset');
+        if (row && pilot) {
+          var posSel = row.querySelector('select[data-db="pilotPosition"]');
+          var licSel = row.querySelector('select[data-db="crewLicense"]');
+          var tlcSel = row.querySelector('select[data-db="crew3lc"]');
+          setTimeout(function(){
+            if (posSel && pilot.position) posSel.value = pilot.position;
+            if (licSel && pilot.license_number) licSel.value = pilot.license_number;
+            if (tlcSel && pilot.three_lc) tlcSel.value = pilot.three_lc;
+          }, 200);
+        }
+      });
+    
+    // Populate Location and FSTD ID dropdowns (runs after DOM ready)
+    function populateLocFstd() {
+      document.querySelectorAll('select[data-role="location"]').forEach(function(sel){
+        if (sel.options.length > 1) return; // already populated
+        sel.innerHTML = '<option value="">-- Select --</option>';
+        (__locationsData || []).forEach(function(loc){
+          var opt = document.createElement('option');
+          opt.value = loc; opt.textContent = loc;
+          sel.appendChild(opt);
+        });
+      });
+      document.querySelectorAll('select[data-role="fstdId"]').forEach(function(sel){
+        if (sel.options.length > 1) return;
+        sel.innerHTML = '<option value="">-- Select --</option>';
+        (__fstdData || []).forEach(function(f){
+          var opt = document.createElement('option');
+          opt.value = f.fstd_id; opt.textContent = f.fstd_id;
+          sel.appendChild(opt);
+        });
+      });
+    }
+    // Run immediately and on window load
+    populateLocFstd();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', populateLocFstd);
+    }
+    window.addEventListener('load', populateLocFstd);
+    
+    // Cascading TYPE -> A/C REG filter
+    document.querySelectorAll('select[data-db="acType"]').forEach(function(typeSel) {
+      typeSel.addEventListener('change', function() {
+        var selectedType = typeSel.value;
+        // Find A/C REG select anywhere in the same form
+        var form = typeSel.closest('form') || typeSel.closest('.builder-canvas') || document;
+        var regSelect = form.querySelector('select[data-db="acReg"]');
+        if (regSelect) {
+          regSelect.innerHTML = '<option value="">-- Select --</option>';
+          var filtered = selectedType ? __crewData.filter(function(r) { return r.ac_type === selectedType; }) : __crewData;
+          var seen = {};
+          filtered.forEach(function(r) {
+            if (r.ac_reg && !seen[r.ac_reg]) {
+              seen[r.ac_reg] = true;
+              var opt = document.createElement('option');
+              opt.value = r.ac_reg;
+              opt.textContent = r.ac_reg;
+              regSelect.appendChild(opt);
+            }
+          });
+        }
+      });
+    });
     setTimeout(populateLocFstd, 200);
     setTimeout(populateLocFstd, 500);
     setTimeout(populateLocFstd, 1500);
@@ -638,10 +665,8 @@ async function generateHtml(config = {}, isPreview = false) {
           });
         }
       });
-      // Initialize A/C Reg on load if A/C Type already selected
-      if (typeSel.value) {
-        typeSel.dispatchEvent(new Event('change'));
-      }
+      // Trigger on load if A/C Type already selected
+      if (typeSel.value) typeSel.dispatchEvent(new Event('change'));
     });
 
     
@@ -914,9 +939,6 @@ app.post('/api/update-database', upload.single('file'), (req, res) => {
       else if (lower === 'tre' || lower.includes('tre')) colMap.is_tre = h;
       else if (lower === 'location' || lower.includes('location')) colMap.location = h;
       else if (lower === 'fstd id' || lower.includes('fstd')) colMap.fstd_id = h;
-      else if (lower.includes('type') && !lower.includes('training')) colMap.ac_type = h;
-      else if (lower.includes('reg') || lower.includes('registration')) colMap.ac_reg = h;
-      else if (lower.includes('icao')) colMap.ad_icao = h;
     });
 
     let inserted = 0, updated = 0, skipped = 0;
@@ -928,16 +950,14 @@ app.post('/api/update-database', upload.single('file'), (req, res) => {
 
         db.get('SELECT id FROM crew WHERE name = ?', [name], (err, existing) => {
           if (existing) {
-            db.run('UPDATE crew SET three_lc=?, position=?, license_number=?, email=?, is_sfi=?, is_tri=?, is_sfe=?, is_tre=?, ac_type=?, ac_reg=?, ad_icao=? WHERE name=?',
+            db.run('UPDATE crew SET three_lc=?, position=?, license_number=?, email=?, is_sfi=?, is_tri=?, is_sfe=?, is_tre=? WHERE name=?',
               [three_lc, row[colMap.position] || '', row[colMap.license_number] || '', row[colMap.email] || '',
-               row[colMap.is_sfi] ? 1 : 0, row[colMap.is_tri] ? 1 : 0, row[colMap.is_sfe] ? 1 : 0, row[colMap.is_tre] ? 1 : 0,
-               row[colMap.ac_type] || '', row[colMap.ac_reg] || '', row[colMap.ad_icao] || '', name],
+               row[colMap.is_sfi] ? 1 : 0, row[colMap.is_tri] ? 1 : 0, row[colMap.is_sfe] ? 1 : 0, row[colMap.is_tre] ? 1 : 0, name],
               () => { updated++; resolve(); });
           } else {
-            db.run('INSERT INTO crew (three_lc, name, position, license_number, email, is_sfi, is_tri, is_sfe, is_tre, ac_type, ac_reg, ad_icao) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+            db.run('INSERT INTO crew (three_lc, name, position, license_number, email, is_sfi, is_tri, is_sfe, is_tre) VALUES (?,?,?,?,?,?,?,?,?)',
               [three_lc, name, row[colMap.position] || '', row[colMap.license_number] || '', row[colMap.email] || '',
-               row[colMap.is_sfi] ? 1 : 0, row[colMap.is_tri] ? 1 : 0, row[colMap.is_sfe] ? 1 : 0, row[colMap.is_tre] ? 1 : 0,
-               row[colMap.ac_type] || '', row[colMap.ac_reg] || '', row[colMap.ad_icao] || ''],
+               row[colMap.is_sfi] ? 1 : 0, row[colMap.is_tri] ? 1 : 0, row[colMap.is_sfe] ? 1 : 0, row[colMap.is_tre] ? 1 : 0],
               () => { inserted++; resolve(); });
           }
         });
