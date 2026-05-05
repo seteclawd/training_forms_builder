@@ -367,21 +367,26 @@ async function generateHtml(config = {}, isPreview = false) {
       if(el.value) el.setAttribute('value', el.value);
     });
     var html = '<!DOCTYPE html>' + document.documentElement.outerHTML;
-    var crewName = '', crew3lc = '', instructorName = '', examinerName = '';
-    var formName = config.formName || config.title || 'Training Form';
-    Object.keys(data).forEach(function(k){
-      var kl = k.toLowerCase();
-      var val = data[k];
-      if(kl.indexOf('crew')!==-1 && kl.indexOf('3lc')===-1 && kl.indexOf('license')===-1 && kl.indexOf('pos')===-1 && !crewName && val) crewName = val;
-      if(kl.indexOf('3lc')!==-1 && val) crew3lc = val;
-      if((kl.indexOf('instructor')!==-1 || kl.indexOf('tri')!==-1 || kl.indexOf('sfi')!==-1) && val) instructorName = instructorName || val;
-      if((kl.indexOf('examiner')!==-1 || kl.indexOf('tre')!==-1 || kl.indexOf('sfe')!==-1) && val) examinerName = examinerName || val;
-    });
-    var signName = instructorName || examinerName || '';
+    var crewName = '', crew3lc = '', instructorName = '', examinerName = '', dateVal = '';
+    var formName = config.formId || config.formName || config.title || 'Training Form';
     var formId = config.subtitle || config.formId || '-';
     var dateVal = config.formDate || '';
-    Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
-    Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
+    // Get values from actual DOM elements (more reliable for dynamic selects)
+    var selCrew = form.querySelector('select[data-db="crewName"]');
+    if(selCrew && selCrew.value) crewName = selCrew.value;
+    var sel3lc = form.querySelector('select[data-db="crew3lc"]');
+    if(sel3lc && sel3lc.value) crew3lc = sel3lc.value;
+    var selInstr = form.querySelector('select[data-db="instructorTri"]');
+    if(selInstr && selInstr.value) instructorName = selInstr.value;
+    var selExam = form.querySelector('select[data-db="examinerTre"]');
+    if(selExam && selExam.value) examinerName = selExam.value;
+    var dateInput = form.querySelector('input[type="date"]');
+    if(dateInput && dateInput.value) dateVal = dateInput.value;
+    if(!dateVal) Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1 && data[k]) dateVal = data[k]; });
+    // Fallback: check FormData
+    if(!crewName) Object.keys(data).forEach(function(k){ var kl=k.toLowerCase(); if(kl.indexOf('crew')!==-1 && kl.indexOf('3lc')===-1 && kl.indexOf('license')===-1 && data[k]) crewName=data[k]; });
+    if(!crew3lc) Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('3lc')!==-1 && data[k]) crew3lc=data[k]; });
+    if(!instructorName) Object.keys(data).forEach(function(k){ var kl=k.toLowerCase(); if(kl.indexOf('instructor')!==-1 && data[k]) instructorName=data[k]; });
     var subject = 'Submission ' + crewName + ' - ' + formId + ' - ' + formName + ' - ' + dateVal;
     var nl = String.fromCharCode(10);var body = 'Dear Training Department,'+nl+nl+'Kindly find attached the training form:'+nl+nl+'Form ID: '+formId+nl+'Form Name: '+formName+nl+'Crew Name: '+crewName+(crew3lc?' - '+crew3lc:'')+nl+'Date: '+dateVal+nl+nl+'Regards,'+nl+signName;
     var blob = new Blob([html], {type:'text/html'});
