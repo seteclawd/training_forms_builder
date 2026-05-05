@@ -174,6 +174,15 @@ app.delete('/api/templates/:id', (req, res) => {
   });
 });
 
+function formatFormDate(dateStr) {
+  if (!dateStr) return '';
+  if (/^\d{2}\/\w{3}\/\d{4}$/.test(dateStr)) return dateStr;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return parts[2] + '/' + months[parseInt(parts[1]) - 1] + '/' + parts[0];
+}
+
 async function generateHtml(config, isPreview = false) {
   const crewData = await new Promise((resolve) => {
     db.all('SELECT * FROM crew ORDER BY name', [], (err, rows) => resolve(rows || []));
@@ -236,7 +245,7 @@ async function generateHtml(config, isPreview = false) {
         <h1 style="margin:0;font-size:1.5rem;color:#fff;">${esc(config.title || config.formId || 'Training Form')}</h1>
         <div style="margin-top:6px;font-size:0.9rem;color:#fff;opacity:0.9;">
           ${config.subtitle || config.formIssue || config.formRevision || config.formDate ? `
-            Form: ${esc(config.subtitle || '-')}${config.formIssue ? ` | Issue: ${esc(config.formIssue)}` : ''}${config.formRevision ? ` | Revision: ${esc(config.formRevision)}` : ''}${config.formDate ? ` | Date: ${esc(config.formDate)}` : ''}
+            Form: ${esc(config.subtitle || '-')}${config.formIssue ? ` | Issue: ${esc(config.formIssue)}` : ''}${config.formRevision ? ` | Revision: ${esc(config.formRevision)}` : ''}${config.formDate ? ` | Date: ${formatFormDate(config.formDate)}` : ''}
           ` : ''}
         </div>
       </div>
