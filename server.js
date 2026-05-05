@@ -455,7 +455,7 @@ async function generateHtml(config = {}, isPreview = false) {
       var data = d.data || d;
       var displayName = d.name || k;
       var date = new Date(d.savedAt || k.replace('draft_','')*1).toLocaleString();
-      html += '<tr style="border-bottom:1px solid #334155;"><td style="color:#e2e8f0;padding:8px;">'+(i+1)+'</td><td style="color:#e2e8f0;padding:8px;font-size:0.8rem;">'+date+'</td><td style="color:#94a3b8;padding:8px;font-size:0.85rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+displayName+'</td><td style="padding:8px;"><button onclick="loadDraftFromModal(\''+k+'\')" style="background:#6366f1;color:#fff;border:none;border-radius:4px;padding:4px 12px;cursor:pointer;margin-right:4px;">Load</button><button onclick="deleteDraftFromModal(\''+k+'\')" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:4px 12px;cursor:pointer;">Delete</button></td></tr>';
+      html += '<tr style="border-bottom:1px solid #334155;"><td style="color:#e2e8f0;padding:8px;">'+(i+1)+'</td><td style="color:#e2e8f0;padding:8px;font-size:0.8rem;">'+date+'</td><td style="color:#94a3b8;padding:8px;font-size:0.85rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+displayName+'</td><td style="padding:8px;"><button onclick="loadDraftFromModal(k)" style="background:#6366f1;color:#fff;border:none;border-radius:4px;padding:4px 12px;cursor:pointer;margin-right:4px;">Load</button><button onclick="deleteDraftFromModal(k)" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:4px 12px;cursor:pointer;">Delete</button></td></tr>';
     });
     html += '</tbody></table>';
     document.getElementById('draftsList').innerHTML = html;
