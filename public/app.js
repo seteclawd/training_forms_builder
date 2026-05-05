@@ -2170,8 +2170,8 @@ async function loadForms() {
     emptyState.style.display = 'none';
     tbody.innerHTML = forms.map(f => {
       const cfg = typeof f.config_json === 'string' ? JSON.parse(f.config_json) : (f.config || {});
-      const formId = cfg.formId || cfg.subtitle || f.name || '';
-      const title = cfg.title || f.name || '';
+      const formId = cfg.formSubtitle || cfg.subtitle || '';  // Form ID (e.g. TA-TD-0001)
+      const title = cfg.formId || cfg.title || f.name || '';  // Form Name
       const rev = cfg.formRevision || '';
       const date = cfg.formDate || '';
       return `
