@@ -653,7 +653,7 @@ function renderTableHtml(field) {
       } else if (colType === 'select') {
         html += `                <td><select name="${esc(fieldName)}_${i}"><option value="">Select...</option><option value="yes">Yes</option><option value="no">No</option></select></td>\n`;
       } else if (colType === 'date') {
-        html += `                <td><input type="text" name="${esc(fieldName)}_${i}" placeholder="DD/MM/YYYY" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" onfocus="this.type='date'" onblur="if(!this.value){this.type='text'}"></td>\n`;
+        html += `                <td><input type="text" name="${esc(fieldName)}_${i}" placeholder="DD/MM/YYYY" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"></td>\n`;
       } else if (colType === 'db_crewName' || colType === 'db_crewId' || colType === 'db_crewLicense' || colType === 'db_crew3lc' || colType === 'db_instructorTri' || colType === 'db_examinerTre' || colType === 'db_pilotPosition' || colType === 'db_location' || colType === 'db_fstdId') {
         html += `                <td><select class="db-field" data-db="${colType.replace('db_','')}" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option value="">-- Loading... --</option></select></td>\n`;
       } else if (colType === 'multiline') {
