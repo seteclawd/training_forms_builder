@@ -126,7 +126,7 @@
               <span style="font-size:0.85rem;color:#64748b;">Rev:</span>
               <input type="text" id="formRevision" placeholder="xx" style="width:50px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.85rem;">
               <span style="font-size:0.85rem;color:#64748b;">Date:</span>
-              <input type="date" id="formDate" style="width:150px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.85rem;" onchange="if(this.value){var d=new Date(this.value+'T00:00:00');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];this.setAttribute('data-raw',this.value);this.type='text';this.value=d.getDate()+'/'+m[d.getMonth()]+'/'+d.getFullYear();}" onfocus="if(this.getAttribute('data-raw')){this.type='date';this.value=this.getAttribute('data-raw');}">
+              <input type="date" id="formDate" style="width:150px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.85rem;" onchange="if(this.value){var d=new Date(this.value+'T00:00:00');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];this.setAttribute('data-raw',this.value);this.type='text';this.value=d.getDate()+'-'+m[d.getMonth()]+'-'+d.getFullYear();}" onfocus="if(this.getAttribute('data-raw')){this.type='date';this.value=this.getAttribute('data-raw');}">
             </div>
           </div>
           <input type="text" id="formSubtitle" placeholder="Form ID (e.g. TA-TD-0001)" class="form-subtitle-input">

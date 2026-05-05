@@ -565,7 +565,7 @@ function renderFieldHtml(field) {
     case 'number':
     case 'tel':
     case 'date':
-      html += `          <input type="date" name="${name}" ${field.required ? 'required' : ''} style="${getFontStyle(field)}" onchange="if(this.value){var d=new Date(this.value+'T00:00:00');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];this.setAttribute('data-raw',this.value);this.type='text';this.value=d.getDate()+'/'+m[d.getMonth()]+'/'+d.getFullYear();}" onfocus="if(this.getAttribute('data-raw')){this.type='date';this.value=this.getAttribute('data-raw');}">\n`;
+      html += `          <input type="date" name="${name}" ${field.required ? 'required' : ''} style="${getFontStyle(field)}" onchange="if(this.value){var d=new Date(this.value+'T00:00:00');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];this.setAttribute('data-raw',this.value);this.type='text';this.value=d.getDate()+'-'+m[d.getMonth()]+'-'+d.getFullYear();}" onfocus="if(this.getAttribute('data-raw')){this.type='date';this.value=this.getAttribute('data-raw');}">\n`;
       break;
     case 'select':
       html += `          <select name="${name}" ${field.required ? 'required' : ''}>\n            <option value="">Select...</option>\n`;
@@ -653,7 +653,7 @@ function renderTableHtml(field) {
       } else if (colType === 'select') {
         html += `                <td><select name="${esc(fieldName)}_${i}"><option value="">Select...</option><option value="yes">Yes</option><option value="no">No</option></select></td>\n`;
       } else if (colType === 'date') {
-        html += `                <td><input type="date" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" onchange="if(this.value){var d=new Date(this.value+'T00:00:00');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];this.setAttribute('data-raw',this.value);this.type='text';this.value=d.getDate()+'/'+m[d.getMonth()]+'/'+d.getFullYear();}" onfocus="if(this.getAttribute('data-raw')){this.type='date';this.value=this.getAttribute('data-raw');}"></td>\n`;
+        html += `                <td><input type="date" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" onchange="if(this.value){var d=new Date(this.value+'T00:00:00');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];this.setAttribute('data-raw',this.value);this.type='text';this.value=d.getDate()+'-'+m[d.getMonth()]+'-'+d.getFullYear();}" onfocus="if(this.getAttribute('data-raw')){this.type='date';this.value=this.getAttribute('data-raw');}"></td>\n`;
       } else if (colType === 'db_crewName' || colType === 'db_crewId' || colType === 'db_crewLicense' || colType === 'db_crew3lc' || colType === 'db_instructorTri' || colType === 'db_examinerTre' || colType === 'db_pilotPosition' || colType === 'db_location' || colType === 'db_fstdId') {
         html += `                <td><select class="db-field" data-db="${colType.replace('db_','')}" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option value="">-- Loading... --</option></select></td>\n`;
       } else if (colType === 'multiline') {
