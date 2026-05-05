@@ -511,31 +511,74 @@ async function generateHtml(config = {}, isPreview = false) {
         else { opt.value = r.name; opt.textContent = r.name + (r.position ? ' (' + r.position + ')' : ''); }
         sel.appendChild(opt);
       });
-      // Add _Custom_ option for adIcao
+      // Add _Custom_ option for adIcao - replace select with text input on _Custom_
       if (source === 'adIcao') {
         var customOpt = document.createElement('option');
         customOpt.value = '_Custom_';
-        customOpt.textContent = '_Custom_';
+        customOpt.textContent = '_Custom_ (edit)';
         sel.appendChild(customOpt);
-        // Add custom text input after select
-        var customInput = document.createElement('input');
-        customInput.type = 'text';
-        customInput.placeholder = 'Enter custom AD ICAO';
-        customInput.style.display = 'none';
-        customInput.style.marginTop = '4px';
-        customInput.style.padding = '6px';
-        customInput.style.border = '1px solid #e2e8f0';
-        customInput.style.borderRadius = '4px';
-        customInput.style.width = '100%';
-        customInput.name = sel.name + '_custom';
-        sel.parentNode.insertBefore(customInput, sel.nextSibling);
+        var originalName = sel.name;
         sel.addEventListener('change', function() {
           if (sel.value === '_Custom_') {
-            customInput.style.display = 'block';
-            customInput.focus();
-          } else {
-            customInput.style.display = 'none';
-            customInput.value = '';
+            // Replace select with text input
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'Enter custom AD ICAO';
+            input.name = originalName;
+            input.style.background = '#f8fafc';
+            input.style.border = '1px solid #e2e8f0';
+            input.style.borderRadius = '6px';
+            input.style.padding = '8px';
+            input.style.width = '100%';
+            input.value = '';
+            sel.parentNode.replaceChild(input, sel);
+            input.focus();
+            // Add a button to go back to dropdown
+            var revertBtn = document.createElement('button');
+            revertBtn.type = 'button';
+            revertBtn.textContent = '\u2190 Back to list';
+            revertBtn.style.cssText = 'margin-top:4px;background:none;border:none;color:#6366f1;cursor:pointer;font-size:0.8rem;padding:0;';
+            revertBtn.onclick = function() {
+              var newSel = document.createElement('select');
+              newSel.name = originalName;
+              newSel.className = 'db-field';
+              newSel.setAttribute('data-db', 'adIcao');
+              newSel.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;';
+              var defaultOpt = document.createElement('option');
+              defaultOpt.value = '';
+              defaultOpt.textContent = '-- Select --';
+              newSel.appendChild(defaultOpt);
+              // Add all options
+              var seen = {};
+              __crewData.forEach(function(r) {
+                if (r.ad_icao && !seen[r.ad_icao]) {
+                  seen[r.ad_icao] = true;
+                  var opt = document.createElement('option');
+                  opt.value = r.ad_icao;
+                  opt.textContent = r.ad_icao;
+                  newSel.appendChild(opt);
+                }
+              });
+              var custOpt = document.createElement('option');
+              custOpt.value = '_Custom_';
+              custOpt.textContent = '_Custom_ (edit)';
+              newSel.appendChild(custOpt);
+              newSel.value = '_Custom_';
+              if (input.value) {
+                var savedVal = input.value;
+                // Need to add custom option and set value after re-render
+                setTimeout(function() {
+                  var co = document.createElement('option');
+                  co.value = savedVal;
+                  co.textContent = savedVal;
+                  newSel.insertBefore(co, newSel.querySelector('option[value="_Custom_"]'));
+                  newSel.value = savedVal;
+                }, 0);
+              }
+              newSel.dispatchEvent(new Event('change'));
+              revertBtn.remove();
+            };
+            sel.parentNode.insertBefore(revertBtn, input.nextSibling);
           }
         });
       }
