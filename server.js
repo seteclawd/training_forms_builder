@@ -522,10 +522,15 @@ async function generateHtml(config, isPreview = false) {
       canvas.addEventListener('touchcancel', stopDraw, {passive: false});
     }
     
-    // Delay canvas init slightly to ensure layout is settled
-    setTimeout(function() {
-      document.querySelectorAll('canvas').forEach(initCanvas);
-    }, 100);
+    // Initialize canvases immediately and with delay
+    function initAllCanvases() {
+      document.querySelectorAll('canvas').forEach(function(c) {
+        if (!c._sigInit) initCanvas(c);
+      });
+    }
+    initAllCanvases();
+    setTimeout(initAllCanvases, 300);
+    setTimeout(initAllCanvases, 1000);
     
     // Clear signature buttons
     document.querySelectorAll('.sig-clear-btn').forEach(function(btn) {
