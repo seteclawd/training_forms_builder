@@ -382,8 +382,8 @@ async function generateHtml(config = {}, isPreview = false) {
     var dateVal = config.formDate || '';
     Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
     Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
-    var subject = 'Submission ' + crewName + ' - ' + formId + ' ' + formName + ' - ' + dateVal;
-    var nl = String.fromCharCode(10);var body = 'Dear Training Department,'+nl+nl+'Kindly find attached the training form:'+nl+nl+'Form ID: '+formId+nl+'Form Name: '+formName+nl+'Crew Name: '+crewName+(crew3lc?' - '+crew3lc:'')+nl+'Date: '+dateVal+nl+nl+'Please find the completed form attached.'+nl+nl+'Regards,'+nl+signName;
+    var subject = 'Submission ' + crewName + ' - ' + formId + ' - ' + formName + ' - ' + dateVal;
+    var nl = String.fromCharCode(10);var body = 'Dear Training Department,'+nl+nl+'Kindly find attached the training form:'+nl+nl+'Form ID: '+formId+nl+'Form Name: '+formName+nl+'Crew Name: '+crewName+(crew3lc?' - '+crew3lc:'')+nl+'Date: '+dateVal+nl+nl+'Regards,'+nl+signName;
     var blob = new Blob([html], {type:'text/html'});
     var url = URL.createObjectURL(blob);
     var fileName = formId.replace(/[^a-zA-Z0-9-]/g,'') + '_' + formName.replace(/[^a-zA-Z0-9-]/g,'') + '.html';
