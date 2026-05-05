@@ -821,7 +821,7 @@ function renderFieldHtml(field) {
         const isLocation = dbName === 'location';
         const isFstdId = dbName === 'fstdId';
         const extraAttr = isLocation ? ' data-role="location"' : (isFstdId ? ' data-role="fstdId"' : '');
-        html += `          <select name="${name}" class="db-field" data-db="${esc(dbName)}"${extraAttr} style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;">\n`;
+        html += `          <select name="${name}" class="db-field" data-db="${esc(dbName)}" data-field-type="${esc(dbName)}"${extraAttr} style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;">\n`;
         html += `            <option value="">-- Select --</option>\n`;
 
         html += `          </select>\n`;

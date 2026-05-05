@@ -1952,7 +1952,7 @@ setTimeout(function(){
   var seen = {};
   rows.forEach(function(r){
     var v = '${dbName}'==='crewName'?r.name:'${dbName}'==='crew3lc'||'${dbName}'==='crewId'?r.three_lc:'${dbName}'==='crewLicense'?(r.license_number||''):'${dbName}'==='acReg'?(r.ac_reg||''):'${dbName}'==='adIcao'?(r.ad_icao||''):'${dbName}'==='acType'?(r.ac_type||''):r.name;
-    var l = '${dbName}'==='crew3lc'||'${dbName}'==='crewId'?r.three_lc+' - '+r.name:'${dbName}'==='instructorTri'?(r.name==='GFO'||r.is_sfi?'SFI':'TRI')+' - '+r.name:'${dbName}'==='examinerTre'?(r.name==='GFO'||r.is_sfe?'SFE':'TRE')+' - '+r.name:'${dbName}'==='acReg'?r.ac_reg:'${dbName}'==='adIcao'?r.ad_icao:'${dbName}'==='acType'?r.ac_type:r.name+(r.position?' ('+r.position+')':'');
+    var l = '${dbName}'==='crew3lc'||'${dbName}'==='crewId'?r.three_lc:'${dbName}'==='crewLicense'?(r.license_number||'N/A'):'${dbName}'==='instructorTri'?(r.name==='GFO'||r.is_sfi?'SFI':'TRI')+' - '+r.name:'${dbName}'==='examinerTre'?(r.name==='GFO'||r.is_sfe?'SFE':'TRE')+' - '+r.name:'${dbName}'==='acReg'?r.ac_reg:'${dbName}'==='adIcao'?r.ad_icao:'${dbName}'==='acType'?r.ac_type:r.name;
     if(v && !seen[v]) { seen[v]=true; s.innerHTML+='<option value="'+v+'">'+l+'</option>'; }
   });
   // Auto-fill crew data
