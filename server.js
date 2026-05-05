@@ -387,6 +387,7 @@ async function generateHtml(config = {}, isPreview = false) {
     if(!crewName) Object.keys(data).forEach(function(k){ var kl=k.toLowerCase(); if(kl.indexOf('crew')!==-1 && kl.indexOf('3lc')===-1 && kl.indexOf('license')===-1 && data[k]) crewName=data[k]; });
     if(!crew3lc) Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('3lc')!==-1 && data[k]) crew3lc=data[k]; });
     if(!instructorName) Object.keys(data).forEach(function(k){ var kl=k.toLowerCase(); if(kl.indexOf('instructor')!==-1 && data[k]) instructorName=data[k]; });
+    var signName = instructorName || examinerName || '';
     var subject = 'Submission ' + crewName + ' - ' + formId + ' - ' + formName + ' - ' + dateVal;
     var nl = String.fromCharCode(10);var body = 'Dear Training Department,'+nl+nl+'Kindly find attached the training form:'+nl+nl+'Form ID: '+formId+nl+'Form Name: '+formName+nl+'Crew Name: '+crewName+(crew3lc?' - '+crew3lc:'')+nl+'Date: '+dateVal+nl+nl+'Regards,'+nl+signName;
     var blob = new Blob([html], {type:'text/html'});
