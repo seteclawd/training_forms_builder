@@ -151,6 +151,15 @@ app.post('/api/saved-tables', (req, res) => {
     });
 });
 
+app.patch('/api/saved-tables/:id', (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  db.run('UPDATE saved_tables SET name = ?, updated_at = datetime("now") WHERE id = ?', [name, req.params.id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ ok: true });
+  });
+});
+
 app.delete('/api/saved-tables/:id', (req, res) => {
   db.run('DELETE FROM saved_tables WHERE id = ?', [req.params.id], (err) => {
     if (err) return res.status(500).json({ error: err.message });

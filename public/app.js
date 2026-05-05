@@ -25,11 +25,15 @@ async function loadSavedTables() {
       list.innerHTML = '<p class="hint" style="font-size:0.75rem;">No saved tables yet. Use Table Importer to create.</p>';
       return;
     }
-    list.innerHTML = tables.map(t => `
-      <div class="palette-item" draggable="true" data-type="saved_table" data-table-id="${t.id}" style="font-size:0.75rem;padding:6px 8px;margin-bottom:4px;">
-        📊 ${esc(t.name)}
-      </div>
-    `).join('');
+    list.innerHTML = tables.map(t => {
+      const safeName = t.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      return '<div class="palette-item" draggable="true" data-type="saved_table" data-table-id="' + t.id + '" style="font-size:0.75rem;padding:6px 8px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;">' +
+        '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📊 ' + esc(t.name) + '</span>' +
+        '<span style="display:flex;gap:4px;margin-left:8px;flex-shrink:0;">' +
+          '<button class="icon-btn" onclick="event.preventDefault();event.stopPropagation();renameSavedTable(' + t.id + ')" title="Rename" style="background:none;border:none;cursor:pointer;font-size:0.85rem;padding:2px 4px;opacity:0.7;">✏️</button>' +
+          '<button class="icon-btn" onclick="event.preventDefault();event.stopPropagation();deleteSavedTable(' + t.id + ')" title="Delete" style="background:none;border:none;cursor:pointer;font-size:0.85rem;padding:2px 4px;opacity:0.7;">🗑️</button>' +
+        '</span></div>';
+    }).join('');
     // Add drag handlers
     list.querySelectorAll('.palette-item').forEach(item => {
       item.addEventListener('dragstart', e => {
@@ -41,6 +45,41 @@ async function loadSavedTables() {
     });
   } catch (err) {
     console.error(err);
+  }
+}
+
+async function renameSavedTable(id) {
+  const newName = prompt('New name for this table:');
+  if (!newName) return;
+  try {
+    const res = await fetch('/api/saved-tables/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName })
+    });
+    if (res.ok) {
+      loadSavedTables();
+    } else {
+      alert('Error renaming table');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error renaming table');
+  }
+}
+
+async function deleteSavedTable(id) {
+  if (!confirm('Delete this table?')) return;
+  try {
+    const res = await fetch('/api/saved-tables/' + id, { method: 'DELETE' });
+    if (res.ok) {
+      loadSavedTables();
+    } else {
+      alert('Error deleting table');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error deleting table');
   }
 }
 
