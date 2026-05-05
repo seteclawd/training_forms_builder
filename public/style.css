@@ -400,6 +400,8 @@ body {
   transition: all 0.2s;
 }
 .btn-primary { background: #1a365d; color: #fff; }
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-danger:hover { background: #dc2626; }
 .btn-primary:hover { background: #234876; }
 .btn-secondary { background: #e2e8f0; color: #475569; }
 .btn-secondary:hover { background: #cbd5e1; }

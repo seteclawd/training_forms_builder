@@ -1,4 +1,5 @@
-currentForm = {
+document.getElementById('deleteFormBtn').style.display = 'none';
+  currentForm = {
   id: null,
   name: '',
   form_type: 'simulator',
@@ -2156,6 +2157,20 @@ async function deleteForm(id, name) {
   }
 }
 
+async function deleteCurrentForm() {
+  if (!currentForm.id) return;
+  const name = document.getElementById('formId').value || currentForm.name || 'Untitled';
+  if (!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+  try {
+    await fetch('/api/forms/' + currentForm.id, { method: 'DELETE' });
+    showDashboard();
+    loadForms();
+  } catch (err) {
+    console.error(err);
+    alert('Error deleting form');
+  }
+}
+
 async function loadForms() {
   try {
     const res = await fetch('/api/forms');
@@ -2173,7 +2188,7 @@ async function loadForms() {
       const formId = cfg.formSubtitle || cfg.subtitle || '';  // Form ID (e.g. TA-TD-0001)
       const title = cfg.formId || cfg.title || f.name || '';  // Form Name
       const rev = cfg.formRevision || '';
-      const date = cfg.formDate || '';
+      const date = formatDateString(cfg.formDate) || '';
       return `
         <tr onclick="editForm(${f.id})" style="cursor:pointer;">
           <td>${esc(formId)}</td>
@@ -2262,6 +2277,7 @@ async function editForm(id) {
     document.querySelectorAll('.builder-section').forEach(s => s.classList.remove('active'));
     document.getElementById('section-session').classList.add('active');
 
+    document.getElementById('deleteFormBtn').style.display = 'inline-flex';
     showView('builder');
   } catch (err) {
     console.error(err);
@@ -2302,6 +2318,15 @@ function unformatDate(input) {
       input.value = match[3] + '-' + month + '-' + match[1];
     }
   }
+}
+
+function formatDateString(dateStr) {
+  if (!dateStr) return '';
+  if (/^\d{2}-\w{3}-\d{4}$/.test(dateStr)) return dateStr;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return parts[2] + '-' + months[parseInt(parts[1]) - 1] + '-' + parts[0];
 }
 
 // ===== UTILS =====
