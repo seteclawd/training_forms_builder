@@ -221,30 +221,40 @@ function renderTemplateBuilderCanvas() {
   });
 }
 
+function renderTemplateBuilderCanvasFromCurrentSection() {
+  // Copy current section data to the modal's display
+  const section = document.getElementById('templateSectionType').value || currentSection;
+  const fieldsets = currentForm.config.sections[section] || [];
+  
+  // Copy to the working area for the modal
+  if (!currentForm.config.sections[section]) {
+    currentForm.config.sections[section] = [];
+  }
+  // The modal will show whatever is in currentForm.config.sections[section]
+  renderTemplateBuilderCanvas();
+}
+
 async function saveCurrentSectionAsTemplate() {
-  const name = prompt('Template name:');
-  if (!name) return;
-  const description = prompt('Description (optional):') || '';
-  const sectionType = currentSection;
-  const fields = currentForm.config.sections[currentSection];
+  // Open the template builder modal with current section data pre-filled
+  const fields = currentForm.config.sections[currentSection] || [];
   
   if (!fields || !fields.length) {
     alert('Current section is empty. Add some fields first.');
     return;
   }
-  
-  try {
-    const res = await fetch('/api/templates', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, section_type: sectionType, description, fields })
-    });
-    const data = await res.json();
-    alert('Template saved! ✅');
-  } catch (err) {
-    console.error(err);
-    alert('Error saving template');
-  }
+
+  _editingTemplateId = null;
+  document.getElementById('editingTemplateId').value = '';
+  document.getElementById('templateModalTitle').textContent = 'Save as Template - ' + currentSection.toUpperCase();
+  document.getElementById('templateName').value = '';
+  document.getElementById('templateDescription').value = '';
+  document.getElementById('templateSectionType').value = currentSection;
+
+  // Render the current section fields in the modal canvas
+  renderTemplateBuilderCanvasFromCurrentSection();
+
+  // Show modal
+  document.getElementById('templateBuilderModal').style.display = 'flex';
 }
 
 document.querySelectorAll('.nav-btn').forEach(btn => {
