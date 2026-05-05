@@ -511,6 +511,34 @@ async function generateHtml(config = {}, isPreview = false) {
         else { opt.value = r.name; opt.textContent = r.name + (r.position ? ' (' + r.position + ')' : ''); }
         sel.appendChild(opt);
       });
+      // Add _Custom_ option for adIcao
+      if (source === 'adIcao') {
+        var customOpt = document.createElement('option');
+        customOpt.value = '_Custom_';
+        customOpt.textContent = '_Custom_';
+        sel.appendChild(customOpt);
+        // Add custom text input after select
+        var customInput = document.createElement('input');
+        customInput.type = 'text';
+        customInput.placeholder = 'Enter custom AD ICAO';
+        customInput.style.display = 'none';
+        customInput.style.marginTop = '4px';
+        customInput.style.padding = '6px';
+        customInput.style.border = '1px solid #e2e8f0';
+        customInput.style.borderRadius = '4px';
+        customInput.style.width = '100%';
+        customInput.name = sel.name + '_custom';
+        sel.parentNode.insertBefore(customInput, sel.nextSibling);
+        sel.addEventListener('change', function() {
+          if (sel.value === '_Custom_') {
+            customInput.style.display = 'block';
+            customInput.focus();
+          } else {
+            customInput.style.display = 'none';
+            customInput.value = '';
+          }
+        });
+      }
     });
     // Auto-fill Pilot Position, License, 3LC when Crew Name changes
     document.querySelectorAll('select[data-db="crewName"]').forEach(function(crewSel) {
