@@ -235,6 +235,15 @@ function renderTemplateBuilderCanvasFromCurrentSection() {
 }
 
 async function saveCurrentSectionAsTemplate() {
+  console.log('saveCurrentSectionAsTemplate clicked');
+  
+  // Make sure currentForm exists
+  if (!currentForm || !currentForm.config || !currentForm.config.sections) {
+    console.error('currentForm not initialized:', currentForm);
+    alert('Please create some fields first before saving as template.');
+    return;
+  }
+  
   // Open the template builder modal with current section data pre-filled
   const fields = currentForm.config.sections[currentSection] || [];
   
