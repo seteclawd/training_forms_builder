@@ -367,17 +367,17 @@ async function generateHtml(config = {}, isPreview = false) {
       if(el.value) el.setAttribute('value', el.value);
     });
     var html = '<!DOCTYPE html>' + document.documentElement.outerHTML;
-    var crewName = '', crew3lc = '', instructorName = '', examinerName = '';
+    var crewName = '', crew3lc = '', instructorName = '', examinerName = '', formName = '';
     Object.keys(data).forEach(function(k){
       var kl = k.toLowerCase();
-      if(kl.indexOf('crew')!==-1 && kl.indexOf('3lc')===-1 && !crewName) crewName = data[k];
-      if(kl.indexOf('3lc')!==-1 || kl.indexOf('three')!==-1) crew3lc = data[k];
-      if(kl.indexOf('instructor')!==-1 || kl.indexOf('tri')!==-1 || kl.indexOf('sfi')!==-1) instructorName = instructorName || data[k];
-      if(kl.indexOf('examiner')!==-1 || kl.indexOf('tre')!==-1 || kl.indexOf('sfe')!==-1) examinerName = examinerName || data[k];
+      var val = data[k];
+      if(kl.indexOf('crew')!==-1 && kl.indexOf('3lc')===-1 && kl.indexOf('license')===-1 && kl.indexOf('pos')===-1 && !crewName && val) crewName = val;
+      if(kl.indexOf('3lc')!==-1 && val) crew3lc = val;
+      if((kl.indexOf('instructor')!==-1 || kl.indexOf('tri')!==-1 || kl.indexOf('sfi')!==-1) && val) instructorName = instructorName || val;
+      if((kl.indexOf('examiner')!==-1 || kl.indexOf('tre')!==-1 || kl.indexOf('sfe')!==-1) && val) examinerName = examinerName || val;
     });
     var signName = instructorName || examinerName || '';
     var formId = config.subtitle || config.formId || '-';
-    var formName = config.formName || config.title || 'Training Form';
     var dateVal = config.formDate || '';
     Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
     var subject = 'Submission ' + crewName + ' - ' + formId + ' ' + formName + ' - ' + dateVal;
