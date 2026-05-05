@@ -515,7 +515,7 @@ async function generateHtml(config = {}, isPreview = false) {
       if (source === 'adIcao') {
         var customOpt = document.createElement('option');
         customOpt.value = '_Custom_';
-        customOpt.textContent = '_Custom_ (edit)';
+        customOpt.textContent = '-Custom-';
         sel.appendChild(customOpt);
         var originalName = sel.name;
         sel.addEventListener('change', function() {
@@ -561,7 +561,7 @@ async function generateHtml(config = {}, isPreview = false) {
               });
               var custOpt = document.createElement('option');
               custOpt.value = '_Custom_';
-              custOpt.textContent = '_Custom_ (edit)';
+              custOpt.textContent = '-Custom-';
               newSel.appendChild(custOpt);
               newSel.value = '_Custom_';
               if (input.value) {
