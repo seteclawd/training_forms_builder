@@ -18,7 +18,7 @@ app.get("/api/crew", (req, res) => {
   if (source === "instructorTri") {
     query += " WHERE is_tri = 1 OR is_sfi = 1";
   } else if (source === "examinerTre") {
-    query += " WHERE is_tre = 1";
+    query += " WHERE is_tre = 1 OR is_sfe = 1";
   } else if (source === "examinerSfe") {
     query += " WHERE is_sfe = 1";
   } else if (source === "crewSfi") {
@@ -297,7 +297,7 @@ async function generateHtml(config, isPreview = false) {
       var data = __crewData;
       var filtered = [];
       if (source === 'instructorTri') filtered = data.filter(function(r){return r.is_tri || r.is_sfi;});
-      else if (source === 'examinerTre') filtered = data.filter(function(r){return r.is_tre;});
+      else if (source === 'examinerTre') filtered = data.filter(function(r){return r.is_tre || r.is_sfe;});
       else if (source === 'examinerSfe') filtered = data.filter(function(r){return r.is_sfe;});
       else if (source === 'crewSfi') filtered = data.filter(function(r){return r.is_sfi;});
       else if (source === 'pilotPosition') {
