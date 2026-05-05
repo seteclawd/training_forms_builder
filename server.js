@@ -967,9 +967,9 @@ app.post('/api/update-database', upload.single('file'), (req, res) => {
       else if (lower === 'tre' || lower.includes('tre')) colMap.is_tre = h;
       else if (lower === 'location' || lower.includes('location')) colMap.location = h;
       else if (lower === 'fstd id' || lower.includes('fstd')) colMap.fstd_id = h;
-      else if (lower.includes('ac type') || lower === 'type') colMap.ac_type = h;
-      else if (lower.includes('ac reg') || lower.includes('registration')) colMap.ac_reg = h;
-      else if (lower.includes('ad icao') || lower.includes('icao')) colMap.ad_icao = h;
+      else if (lower.includes('type') && !lower.includes('training')) colMap.ac_type = h;
+      else if (lower.includes('reg') || lower.includes('registration')) colMap.ac_reg = h;
+      else if (lower.includes('icao')) colMap.ad_icao = h;
     });
 
     let inserted = 0, updated = 0, skipped = 0;
