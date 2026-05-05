@@ -327,6 +327,7 @@ async function generateHtml(config, isPreview = false) {
         filtered = [{name: 'CAPT'}, {name: 'FO'}];
       }
       else filtered = data;
+      if (source === 'location' || source === 'fstdId') return;
       filtered.forEach(function(r) {
         var opt = document.createElement('option');
         if (source === 'crewName') { opt.value = r.name; opt.textContent = r.name; }
