@@ -54,6 +54,11 @@ function showDashboard() { showView('dashboard'); loadForms(); }
 function showTemplates() { showView('templates'); loadTemplates(); }
 
 function createNewTemplate() {
+  _editingTemplateId = null;
+  document.getElementById('editingTemplateId').value = '';
+  document.getElementById('templateModalTitle').textContent = 'Create Section Template';
+  document.getElementById('templateName').value = '';
+  document.getElementById('templateDescription').value = '';
   const section = document.getElementById('newTemplateSection').value;
   currentSection = section;
   currentForm = {
@@ -164,14 +169,56 @@ async function deleteTemplate(id) {
   }
 }
 
+let _editingTemplateId = null;
+
 async function editTemplate(id) {
   try {
     const res = await fetch(`/api/templates/${id}`);
     const template = await res.json();
-    alert('Edit template: ' + template.name + '\n\n(Feature coming soon - for now, delete and recreate)');
+    _editingTemplateId = template.id;
+
+    // Fill modal with template data
+    document.getElementById('templateName').value = template.name;
+    document.getElementById('templateSectionType').value = template.section_type || 'session';
+    document.getElementById('templateDescription').value = template.description || '';
+    document.getElementById('templateModalTitle').textContent = 'Edit Template';
+    document.getElementById('editingTemplateId').value = template.id;
+
+    // Load fields into builder canvas
+    currentSection = template.section_type || 'session';
+    currentForm.config.sections[currentSection] = JSON.parse(JSON.stringify(template.fields));
+    renderTemplateBuilderCanvas();
+
+    // Show modal
+    document.getElementById('templateBuilderModal').style.display = 'flex';
   } catch (err) {
     console.error(err);
+    alert('Error loading template for editing');
   }
+}
+
+function renderTemplateBuilderCanvas() {
+  const container = document.getElementById('templateBuilderCanvas');
+  container.innerHTML = '';
+  const fieldsets = currentForm.config.sections[currentSection] || [];
+  if (!fieldsets.length) {
+    container.innerHTML = '<p class="hint">Design your template section here. Add sub-sections and fields.</p>';
+    return;
+  }
+  fieldsets.forEach(fs => {
+    const fsDiv = document.createElement('div');
+    fsDiv.style.cssText = 'border:2px dashed #e2e8f0;border-radius:8px;padding:12px;margin-bottom:12px;';
+    fsDiv.innerHTML = `<strong>${esc(fs.title || 'Sub-section')}</strong>`;
+    if (fs.fields && fs.fields.length) {
+      fs.fields.forEach(f => {
+        const fDiv = document.createElement('div');
+        fDiv.style.cssText = 'margin:4px 0;padding:4px 8px;background:#f8fafc;border-radius:4px;font-size:0.8rem;';
+        fDiv.textContent = `${f.type}: ${f.label}`;
+        fsDiv.appendChild(fDiv);
+      });
+    }
+    container.appendChild(fsDiv);
+  });
 }
 
 async function saveCurrentSectionAsTemplate() {
@@ -1906,11 +1953,12 @@ async function saveForm() {
 }
 
 async function saveTemplate() {
-  const name = prompt('Template name:', 'New Template');
-  if (!name) return;
+  const name = document.getElementById('templateName').value;
+  if (!name) { alert('Please enter a template name'); return; }
   
-  const section = window._templateSection || 'session';
-  const description = prompt('Description (optional):', '');
+  const section = document.getElementById('templateSectionType').value;
+  const description = document.getElementById('templateDescription').value;
+  const editingId = document.getElementById('editingTemplateId').value;
   
   // Collect fields from all fieldsets in current section
   const fieldsets = currentForm.config.sections[section] || [];
@@ -1920,8 +1968,10 @@ async function saveTemplate() {
   });
   
   try {
-    const res = await fetch('/api/templates', {
-      method: 'POST',
+    const url = editingId ? `/api/templates/${editingId}` : '/api/templates';
+    const method = editingId ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method: method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: name,
@@ -1931,8 +1981,11 @@ async function saveTemplate() {
       })
     });
     const data = await res.json();
-    if (data.id) {
-      alert('Template saved! ✅');
+    if (data.id || data.ok || data.success) {
+      alert(editingId ? 'Template updated!' : 'Template saved!');
+      document.getElementById('editingTemplateId').value = '';
+      document.getElementById('templateModalTitle').textContent = 'Create Section Template';
+      _editingTemplateId = null;
       window._saveAsTemplate = false;
       showTemplates();
     }
