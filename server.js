@@ -381,7 +381,7 @@ async function generateHtml(config = {}, isPreview = false) {
     var dateVal = config.formDate || '';
     Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
     var subject = 'Submission ' + crewName + ' - ' + formId + ' ' + formName + ' - ' + dateVal;
-    var body = 'Dear Training Department,\n\nKindly find attached the training form:\n\nForm ID: ' + formId + '\nForm Name: ' + formName + '\nCrew Name: ' + crewName + (crew3lc ? ' - ' + crew3lc : '') + '\nDate: ' + dateVal + '\n\nRegards,\n' + signName;
+    var nl = String.fromCharCode(10);var body = 'Dear Training Department,'+nl+nl+'Kindly find attached the training form:'+nl+nl+'Form ID: '+formId+nl+'Form Name: '+formName+nl+'Crew Name: '+crewName+(crew3lc?' - '+crew3lc:'')+nl+'Date: '+dateVal+nl+nl+'Regards,'+nl+signName;
     var blob = new Blob([html], {type:'text/html'});
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
