@@ -269,7 +269,7 @@ async function generateHtml(config, isPreview = false) {
   .notes-input { width: 100%; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }
   .signature-box { border: 2px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; text-align: center; padding: 10px; }
   canvas { background: #fff; border-radius: 6px; cursor: crosshair; touch-action: none; -webkit-user-select: none; user-select: none; }
-  input[type="date"].has-date::-webkit-calendar-picker-indicator { display: none; }
+  input[type="date"].has-date::-webkit-calendar-picker-indicator { visibility: hidden; pointer-events: none; }
   input[type="date"].has-date::-ms-clear { display: none; }
   input[type="date"].has-date::-webkit-inner-spin-button,
   input[type="date"].has-date::-webkit-outer-spin-button { display: none; }
