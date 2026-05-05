@@ -8,6 +8,15 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// CORS headers for offline HTML forms
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
 const upload = multer({dest: '/tmp/uploads/'});
 
 // API: Get crew data
@@ -334,10 +343,11 @@ async function generateHtml(config, isPreview = false) {
   }
   function saveDraft() {
     var data = Object.fromEntries(new FormData(document.getElementById('trainingForm')));
-    fetch('/api/drafts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({form_id:null, data_json:data})})
+    var serverUrl = window.location.protocol === 'file:' ? 'http://37.27.202.203:8999' : '';
+    fetch(serverUrl + '/api/drafts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({form_id:null, data_json:data})})
       .then(function(r){return r.json()})
       .then(function(d){alert('Draft saved (ID: '+d.id+')');})
-      .catch(function(e){alert('Error: '+e.message);});
+      .catch(function(e){alert('Error saving draft: '+e.message);});
   }
   function submitForm() {
     var data = Object.fromEntries(new FormData(document.getElementById('trainingForm')));
@@ -357,10 +367,11 @@ async function generateHtml(config, isPreview = false) {
     var subject = 'Submission ' + crewName + ' - ' + formId + ' ' + formName + ' - ' + dateVal;
     var body = 'Dear Training Department,\n\nKindly find attached the training form:\n\nForm ID: ' + formId + '\nForm Name: ' + formName + '\nCrew Name: ' + crewName + (crew3lc ? ' - ' + crew3lc : '') + '\nDate: ' + dateVal + '\n\nRegards,\n' + signName;
     var mailto = 'mailto:luis.rivas@texelair.com?cc=luis.rivas@texelair.com&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-    fetch('/api/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({form_id:null, data_json:data})})
+    var serverUrl = window.location.protocol === 'file:' ? 'http://37.27.202.203:8999' : '';
+    fetch(serverUrl + '/api/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({form_id:null, data_json:data})})
       .then(function(r){return r.json()})
       .then(function(d){window.location.href = mailto;})
-      .catch(function(e){window.location.href = mailto;});
+      .catch(function(e){console.error(e); window.location.href = mailto;});
   }
   function downloadForm() { var html = document.documentElement.outerHTML; var blob = new Blob([html], {type: 'text/html;charset=utf-8'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (document.title || 'training-form') + '.html'; document.body.appendChild(a); a.click(); setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100); }
 </script>
