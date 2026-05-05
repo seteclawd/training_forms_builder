@@ -664,7 +664,7 @@ function renderFieldHtml(field) {
       break;
     case 'signature':
       const sigH = getSignatureHeight(field);
-      html += `          <div class="signature-box">\n            <p style="margin:0 0 8px;color:#64748b;font-size:0.85rem;">${esc(field.label)}</p>\n            <canvas id="${name}" width="400" height="${sigH}"></canvas>\n          </div>\n`;
+      html += `          <div class="signature-box">\n            <p style="margin:0 0 8px;color:#64748b;font-size:0.85rem;">${esc(field.label)}</p>\n            <canvas id="${name}" width="400" height="${sigH}" style="width:100%;max-width:400px;height:${sigH}px;"></canvas>\n          </div>\n`;
       break;
     case 'db_crewName': case 'db_crewId': case 'db_crewLicense': case 'db_crew3lc':
     case 'db_instructorTri': case 'db_examinerTre': case 'db_pilotPosition':
@@ -733,7 +733,7 @@ function renderTableHtml(field) {
         const sigH = field.columnSigHeights?.[i] || '2row';
         const sigPx = { '1row': 40, '2row': 60, '3row': 100, '4row': 150, '5row': 200 }[sigH] || 60;
         const canvasId = `${esc(fieldName)}_${i}`;
-        html += `                <td><div class="signature-box" style="position:relative;display:inline-block;width:100%;"><canvas id="${canvasId}" width="200" height="${sigPx}" style="border:1px solid #e2e8f0;border-radius:4px;cursor:crosshair;display:block;width:100%;"></canvas><button type="button" class="sig-clear-btn" data-canvas="${canvasId}" style="position:absolute;top:4px;right:4px;background:#ef4444;color:#fff;border:none;border-radius:3px;padding:2px 8px;font-size:0.7rem;cursor:pointer;pointer-events:auto;z-index:10;">Clear</button></div></td>\n`;
+        html += `                <td><div class="signature-box" style="position:relative;display:inline-block;width:100%;"><canvas id="${canvasId}" width="200" height="${sigPx}" style="border:1px solid #e2e8f0;border-radius:4px;cursor:crosshair;display:block;width:100%;height:${sigPx}px;"></canvas><button type="button" class="sig-clear-btn" data-canvas="${canvasId}" style="position:absolute;top:4px;right:4px;background:#ef4444;color:#fff;border:none;border-radius:3px;padding:2px 8px;font-size:0.7rem;cursor:pointer;pointer-events:auto;z-index:10;">Clear</button></div></td>\n`;
       } else {
         html += `                <td><input type="text" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></td>\n`;
       }
