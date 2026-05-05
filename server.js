@@ -814,6 +814,57 @@ app.post('/api/update-database', upload.single('file'), (req, res) => {
   }
 });
 
+// API: Save draft
+app.post('/api/drafts', (req, res) => {
+  const { form_id, data_json } = req.body;
+  db.run(
+    'INSERT INTO form_submissions (form_id, data_json, status) VALUES (?, ?, ?)',
+    [form_id || null, JSON.stringify(data_json), 'draft'],
+    function(err) {
+      if (err) return res.status(500).json({error: err.message});
+      res.json({id: this.lastID, status: 'draft'});
+    }
+  );
+});
+
+// API: Submit form
+app.post('/api/submit', (req, res) => {
+  const { form_id, data_json } = req.body;
+  db.run(
+    'INSERT INTO form_submissions (form_id, data_json, status, sent_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+    [form_id || null, JSON.stringify(data_json), 'submitted'],
+    function(err) {
+      if (err) return res.status(500).json({error: err.message});
+      res.json({id: this.lastID, status: 'submitted'});
+    }
+  );
+});
+
+// API: Get all drafts
+app.get('/api/drafts', (req, res) => {
+  db.all('SELECT * FROM form_submissions WHERE status = ? ORDER BY created_at DESC', ['draft'], (err, rows) => {
+    if (err) return res.status(500).json({error: err.message});
+    res.json(rows || []);
+  });
+});
+
+// API: Get draft by id
+app.get('/api/drafts/:id', (req, res) => {
+  db.get('SELECT * FROM form_submissions WHERE id = ?', [req.params.id], (err, row) => {
+    if (err) return res.status(500).json({error: err.message});
+    if (!row) return res.status(404).json({error: 'Not found'});
+    res.json(row);
+  });
+});
+
+// API: Delete draft
+app.delete('/api/drafts/:id', (req, res) => {
+  db.run('DELETE FROM form_submissions WHERE id = ? AND status = ?', [req.params.id, 'draft'], function(err) {
+    if (err) return res.status(500).json({error: err.message});
+    res.json({deleted: this.changes > 0});
+  });
+});
+
 const PORT = process.env.PORT || 8999;
 app.listen(PORT, () => {
   console.log('Training Forms Builder running on port', PORT);
