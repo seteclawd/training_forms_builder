@@ -387,7 +387,7 @@ async function generateHtml(config, isPreview = false) {
     document.querySelectorAll('select[data-role="fstdId"]').forEach(function(sel){
       (__fstdData || []).forEach(function(f){
         var opt = document.createElement('option');
-        opt.value = f.fstd_id; opt.textContent = f.fstd_id + ' - ' + f.location_name;
+        opt.value = f.fstd_id; opt.textContent = f.fstd_id;
         sel.appendChild(opt);
       });
     });
@@ -395,8 +395,8 @@ async function generateHtml(config, isPreview = false) {
     function filterFstdForLoc(locSel, fstdSel) {
       var selectedLoc = locSel.value;
       fstdSel.innerHTML = '<option value="">-- Select --</option>';
-      if (!window.__fstdData) return;
-      var filtered = selectedLoc ? window.__fstdData.filter(function(f){return f.location_name === selectedLoc;}) : window.__fstdData;
+      if (!__fstdData) return;
+      var filtered = selectedLoc ? __fstdData.filter(function(f){return f.location_name === selectedLoc;}) : __fstdData;
       filtered.forEach(function(f){
         var opt = document.createElement('option');
         opt.value = f.fstd_id; opt.textContent = f.fstd_id;
@@ -418,8 +418,8 @@ async function generateHtml(config, isPreview = false) {
     } else {
       initLocFstdFilter();
     }
-    // Also try again after a short delay for late-rendered content
-    setTimeout(initLocFstdFilter, 500);
+    setTimeout(initLocFstdFilter, 300);
+    setTimeout(initLocFstdFilter, 1000);
 
     // Signature canvas drawing
     function initCanvas(canvas) {
