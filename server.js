@@ -397,10 +397,25 @@ async function generateHtml(config, isPreview = false) {
         });
       });
     }
+    // Run immediately and on window load
     populateLocFstd();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', populateLocFstd);
+    }
+    window.addEventListener('load', populateLocFstd);
     setTimeout(populateLocFstd, 200);
     setTimeout(populateLocFstd, 500);
-    setTimeout(populateLocFstd, 1000);
+    setTimeout(populateLocFstd, 1500);
+    // Also use MutationObserver to watch for DOM changes
+    var observer = new MutationObserver(function() {
+      var locSels = document.querySelectorAll('select[data-role="location"]');
+      var fstdSels = document.querySelectorAll('select[data-role="fstdId"]');
+      if (locSels.length > 0 || fstdSels.length > 0) {
+        populateLocFstd();
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body || document.documentElement, {childList: true, subtree: true});
     // When Location changes, filter FSTD ID dropdown
     function filterFstdForLoc(locSel, fstdSel) {
       var selectedLoc = locSel.value;
