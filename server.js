@@ -671,6 +671,15 @@ function renderFieldHtml(field) {
         const extraAttr = isLocation ? ' data-role="location"' : (isFstdId ? ' data-role="fstdId"' : '');
         html += `          <select name="${name}" class="db-field" data-db="${esc(dbName)}"${extraAttr} style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;">\n`;
         html += `            <option value="">-- Select --</option>\n`;
+        if (isLocation) {
+          (locationsData || []).forEach(function(loc) {
+            html += `            <option value="${esc(loc)}">${esc(loc)}</option>\n`;
+          });
+        } else if (isFstdId) {
+          (fstdData || []).forEach(function(f) {
+            html += `            <option value="${esc(f.fstd_id)}">${esc(f.fstd_id)}</option>\n`;
+          });
+        }
         html += `          </select>\n`;
       }
       break;
