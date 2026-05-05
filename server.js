@@ -643,7 +643,15 @@ app.post('/api/update-database', upload.single('file'), (req, res) => {
     if (!req.file) return res.json({success: false, error: 'No file uploaded'});
     const wb = XLSX.readFile(req.file.path);
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws);
+    const allRows = XLSX.utils.sheet_to_json(ws, {header: 1, defval: ''});
+    // Skip first row (category headers) - row 1 has actual column names
+    if (allRows.length < 2) return res.json({success: false, error: 'Invalid spreadsheet'});
+    const headers = allRows[1];
+    const rows = allRows.slice(2).filter(r => r.some(c => c !== '')).map(r => {
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = r[i] || ''; });
+      return obj;
+    });
     if (!rows.length) return res.json({success: false, error: 'Empty spreadsheet'});
 
     // Map columns (flexible header matching)
@@ -653,7 +661,7 @@ app.post('/api/update-database', upload.single('file'), (req, res) => {
       const lower = h.toLowerCase().trim();
       if (lower.includes('3lc') || lower === 'code') colMap.three_lc = h;
       else if (lower.includes('name') || lower === 'nombre') colMap.name = h;
-      else if (lower.includes('position') || lower.includes('puesto')) colMap.position = h;
+      else if (lower.includes('position') || lower.includes('puesto') || lower === 'pos') colMap.position = h;
       else if (lower.includes('license') || lower.includes('licencia')) colMap.license_number = h;
       else if (lower.includes('email') || lower === 'correo') colMap.email = h;
       else if (lower === 'sfi' || lower.includes('sfi')) colMap.is_sfi = h;
