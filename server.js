@@ -721,6 +721,7 @@ async function generateHtml(config = {}, isPreview = false) {
   } else {
     setTimeout(populateDbFields, 0);
   }
+  }
 </script>
 </body>
 </html>`;
