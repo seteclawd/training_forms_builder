@@ -556,6 +556,32 @@ async function generateHtml(config = {}, isPreview = false) {
     setTimeout(initLocFstdFilter, 300);
     setTimeout(initLocFstdFilter, 1000);
 
+    // Cascading TYPE -> A/C REG filter
+    document.querySelectorAll('select[data-db="acType"]').forEach(function(typeSel) {
+      typeSel.addEventListener('change', function() {
+        var selectedType = typeSel.value;
+        var form = typeSel.closest('form') || typeSel.closest('.builder-canvas') || document;
+        var regSelect = form.querySelector('select[data-db="acReg"]');
+        if (regSelect) {
+          regSelect.innerHTML = '<option value="">-- Select --</option>';
+          var filtered = selectedType ? __crewData.filter(function(r) { return r.ac_type === selectedType; }) : __crewData;
+          var seen = {};
+          filtered.forEach(function(r) {
+            if (r.ac_reg && !seen[r.ac_reg]) {
+              seen[r.ac_reg] = true;
+              var opt = document.createElement('option');
+              opt.value = r.ac_reg;
+              opt.textContent = r.ac_reg;
+              regSelect.appendChild(opt);
+            }
+          });
+        }
+      });
+      // Initialize A/C Reg on load if A/C Type already selected
+      if (typeSel.value) {
+        typeSel.dispatchEvent(new Event('change'));
+      }
+    });
 
     
     // Clear signature buttons
