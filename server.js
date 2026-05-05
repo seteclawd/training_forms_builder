@@ -302,7 +302,7 @@ async function generateHtml(config, isPreview = false) {
       else filtered = data;
       filtered.forEach(function(r) {
         var opt = document.createElement('option');
-        if (source === 'crewName') { opt.value = r.name; opt.textContent = r.name + (r.position ? ' (' + r.position + ')' : ''); }
+        if (source === 'crewName') { opt.value = r.name; opt.textContent = r.name; }
         else if (source === 'crew3lc' || source === 'crewId') { opt.value = r.three_lc; opt.textContent = r.three_lc + ' - ' + r.name; }
         else if (source === 'crewLicense') { opt.value = r.license_number || ''; opt.textContent = r.three_lc + ' - ' + (r.license_number || 'N/A'); }
         else if (source === 'pilotPosition') { opt.value = r.name; opt.textContent = r.name; }
