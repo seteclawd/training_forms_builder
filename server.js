@@ -967,6 +967,9 @@ app.post('/api/update-database', upload.single('file'), (req, res) => {
       else if (lower === 'tre' || lower.includes('tre')) colMap.is_tre = h;
       else if (lower === 'location' || lower.includes('location')) colMap.location = h;
       else if (lower === 'fstd id' || lower.includes('fstd')) colMap.fstd_id = h;
+      else if (lower.includes('ac type') || lower === 'type') colMap.ac_type = h;
+      else if (lower.includes('ac reg') || lower.includes('registration')) colMap.ac_reg = h;
+      else if (lower.includes('ad icao') || lower.includes('icao')) colMap.ad_icao = h;
     });
 
     let inserted = 0, updated = 0, skipped = 0;
@@ -978,14 +981,16 @@ app.post('/api/update-database', upload.single('file'), (req, res) => {
 
         db.get('SELECT id FROM crew WHERE name = ?', [name], (err, existing) => {
           if (existing) {
-            db.run('UPDATE crew SET three_lc=?, position=?, license_number=?, email=?, is_sfi=?, is_tri=?, is_sfe=?, is_tre=? WHERE name=?',
+            db.run('UPDATE crew SET three_lc=?, position=?, license_number=?, email=?, is_sfi=?, is_tri=?, is_sfe=?, is_tre=?, ac_type=?, ac_reg=?, ad_icao=? WHERE name=?',
               [three_lc, row[colMap.position] || '', row[colMap.license_number] || '', row[colMap.email] || '',
-               row[colMap.is_sfi] ? 1 : 0, row[colMap.is_tri] ? 1 : 0, row[colMap.is_sfe] ? 1 : 0, row[colMap.is_tre] ? 1 : 0, name],
+               row[colMap.is_sfi] ? 1 : 0, row[colMap.is_tri] ? 1 : 0, row[colMap.is_sfe] ? 1 : 0, row[colMap.is_tre] ? 1 : 0,
+               row[colMap.ac_type] || '', row[colMap.ac_reg] || '', row[colMap.ad_icao] || '', name],
               () => { updated++; resolve(); });
           } else {
-            db.run('INSERT INTO crew (three_lc, name, position, license_number, email, is_sfi, is_tri, is_sfe, is_tre) VALUES (?,?,?,?,?,?,?,?,?)',
+            db.run('INSERT INTO crew (three_lc, name, position, license_number, email, is_sfi, is_tri, is_sfe, is_tre, ac_type, ac_reg, ad_icao) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
               [three_lc, name, row[colMap.position] || '', row[colMap.license_number] || '', row[colMap.email] || '',
-               row[colMap.is_sfi] ? 1 : 0, row[colMap.is_tri] ? 1 : 0, row[colMap.is_sfe] ? 1 : 0, row[colMap.is_tre] ? 1 : 0],
+               row[colMap.is_sfi] ? 1 : 0, row[colMap.is_tri] ? 1 : 0, row[colMap.is_sfe] ? 1 : 0, row[colMap.is_tre] ? 1 : 0,
+               row[colMap.ac_type] || '', row[colMap.ac_reg] || '', row[colMap.ad_icao] || ''],
               () => { inserted++; resolve(); });
           }
         });
