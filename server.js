@@ -341,15 +341,21 @@ async function generateHtml(config, isPreview = false) {
   }
   function submitForm() {
     var data = Object.fromEntries(new FormData(document.getElementById('trainingForm')));
-    var crewName = '';
-    Object.keys(data).forEach(function(k){ if(k.indexOf('crew')!==-1 || k.indexOf('Crew')!==-1) crewName = crewName || data[k]; });
-    crewName = crewName || Object.values(data)[0] || '';
+    var crewName = '', crew3lc = '', instructorName = '', examinerName = '';
+    Object.keys(data).forEach(function(k){
+      var kl = k.toLowerCase();
+      if(kl.indexOf('crew')!==-1 && kl.indexOf('3lc')===-1 && !crewName) crewName = data[k];
+      if(kl.indexOf('3lc')!==-1 || kl.indexOf('three')!==-1) crew3lc = data[k];
+      if(kl.indexOf('instructor')!==-1 || kl.indexOf('tri')!==-1 || kl.indexOf('sfi')!==-1) instructorName = instructorName || data[k];
+      if(kl.indexOf('examiner')!==-1 || kl.indexOf('tre')!==-1 || kl.indexOf('sfe')!==-1) examinerName = examinerName || data[k];
+    });
+    var signName = instructorName || examinerName || '';
     var formId = config.subtitle || config.formId || '-';
     var formName = config.formName || config.title || 'Training Form';
     var dateVal = config.formDate || '';
     Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
     var subject = 'Submission ' + crewName + ' - ' + formId + ' ' + formName + ' - ' + dateVal;
-    var body = 'Dear Training Department,\n\nKindly find attached the training form:\n\nForm ID: ' + formId + '\nForm Name: ' + formName + '\nCrew Name: ' + crewName + '\nDate: ' + dateVal + '\n\nRegards,';
+    var body = 'Dear Training Department,\n\nKindly find attached the training form:\n\nForm ID: ' + formId + '\nForm Name: ' + formName + '\nCrew Name: ' + crewName + (crew3lc ? ' - ' + crew3lc : '') + '\nDate: ' + dateVal + '\n\nRegards,\n' + signName;
     var mailto = 'mailto:luis.rivas@texelair.com?cc=luis.rivas@texelair.com&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
     fetch('/api/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({form_id:null, data_json:data})})
       .then(function(r){return r.json()})
