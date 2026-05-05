@@ -331,8 +331,20 @@ async function generateHtml(config, isPreview = false) {
     document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===n));
     document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===n));
   }
-  function saveDraft() { localStorage.setItem('form_draft', JSON.stringify(Object.fromEntries(new FormData(document.getElementById('trainingForm'))))); alert('Draft saved'); }
-  function submitForm() { console.log('Submit:', Object.fromEntries(new FormData(document.getElementById('trainingForm')))); alert('Submitted!'); }
+  function saveDraft() {
+    var data = Object.fromEntries(new FormData(document.getElementById('trainingForm')));
+    fetch('/api/drafts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({form_id:null, data_json:data})})
+      .then(function(r){return r.json()})
+      .then(function(d){alert('Draft saved (ID: '+d.id+')');})
+      .catch(function(e){alert('Error: '+e.message);});
+  }
+  function submitForm() {
+    var data = Object.fromEntries(new FormData(document.getElementById('trainingForm')));
+    fetch('/api/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({form_id:null, data_json:data})})
+      .then(function(r){return r.json()})
+      .then(function(d){alert('Form submitted!');})
+      .catch(function(e){alert('Error: '+e.message);});
+  }
   function downloadForm() { var html = document.documentElement.outerHTML; var blob = new Blob([html], {type: 'text/html;charset=utf-8'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (document.title || 'training-form') + '.html'; document.body.appendChild(a); a.click(); setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100); }
 </script>
 <script>
@@ -793,6 +805,58 @@ app.listen(PORT, () => {
 // API: Download form as self-contained HTML (offline-ready)
 app.post('/api/download-html', async (req, res) => {
   const { config } = req.body;
+
+// API: Save draft
+app.post('/api/drafts', (req, res) => {
+  const { form_id, data_json } = req.body;
+  db.run(
+    'INSERT INTO form_submissions (form_id, data_json, status) VALUES (?, ?, ?)',
+    [form_id || null, JSON.stringify(data_json), 'draft'],
+    function(err) {
+      if (err) return res.status(500).json({error: err.message});
+      res.json({id: this.lastID, status: 'draft'});
+    }
+  );
+});
+
+// API: Submit form
+app.post('/api/submit', (req, res) => {
+  const { form_id, data_json } = req.body;
+  db.run(
+    'INSERT INTO form_submissions (form_id, data_json, status, sent_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+    [form_id || null, JSON.stringify(data_json), 'submitted'],
+    function(err) {
+      if (err) return res.status(500).json({error: err.message});
+      res.json({id: this.lastID, status: 'submitted'});
+    }
+  );
+});
+
+// API: Get all drafts
+app.get('/api/drafts', (req, res) => {
+  db.all('SELECT * FROM form_submissions WHERE status = ? ORDER BY created_at DESC', ['draft'], (err, rows) => {
+    if (err) return res.status(500).json({error: err.message});
+    res.json(rows || []);
+  });
+});
+
+// API: Get draft by id
+app.get('/api/drafts/:id', (req, res) => {
+  db.get('SELECT * FROM form_submissions WHERE id = ?', [req.params.id], (err, row) => {
+    if (err) return res.status(500).json({error: err.message});
+    if (!row) return res.status(404).json({error: 'Not found'});
+    res.json(row);
+  });
+});
+
+// API: Delete draft
+app.delete('/api/drafts/:id', (req, res) => {
+  db.run('DELETE FROM form_submissions WHERE id = ? AND status = ?', [req.params.id, 'draft'], function(err) {
+    if (err) return res.status(500).json({error: err.message});
+    res.json({deleted: this.changes > 0});
+  });
+});
+
   const html = await generateHtml(config, false);
   res.setHeader('Content-Type', 'text/html');
   res.setHeader('Content-Disposition', `attachment; filename="${(config.title || config.formId || 'training-form').replace(/[^a-zA-Z0-9 _-]/g, '')}.html"`);
