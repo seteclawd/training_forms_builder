@@ -297,9 +297,7 @@ async function generateHtml(config, isPreview = false) {
       else if (source === 'examinerSfe') filtered = data.filter(function(r){return r.is_sfe;});
       else if (source === 'crewSfi') filtered = data.filter(function(r){return r.is_sfi;});
       else if (source === 'pilotPosition') {
-        var positions = {};
-        data.forEach(function(r){ if(r.position) positions[r.position] = true; });
-        filtered = Object.keys(positions).sort().map(function(p){ return {name: p}; });
+        filtered = [{name: 'CAPT'}, {name: 'FO'}];
       }
       else filtered = data;
       filtered.forEach(function(r) {
