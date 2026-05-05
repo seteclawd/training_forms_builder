@@ -483,7 +483,8 @@ async function generateHtml(config = {}, isPreview = false) {
   var __crewData = ${JSON.stringify(crewData)};
   var __locationsData = ${JSON.stringify(locationsData)};
   var __fstdData = ${JSON.stringify(fstdData)};
-  document.addEventListener('DOMContentLoaded', function() {
+  // Populate db fields immediately and on DOMContentLoaded
+  function populateDbFields() {
     document.querySelectorAll('.db-field').forEach(function(sel) {
       var source = sel.getAttribute('data-db');
       var data = __crewData;
@@ -714,7 +715,13 @@ async function generateHtml(config = {}, isPreview = false) {
   });
       });
     });
-  });
+  }
+  // Run immediately if DOM ready, otherwise wait
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', populateDbFields);
+  } else {
+    setTimeout(populateDbFields, 0);
+  }
 </script>
 </body>
 </html>`;
