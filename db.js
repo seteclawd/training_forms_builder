@@ -52,9 +52,6 @@ db.serialize(() => {
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-});
-
-module.exports = db;
 
   db.run(`
     CREATE TABLE IF NOT EXISTS locations (
@@ -70,7 +67,6 @@ module.exports = db;
       location_name TEXT NOT NULL
     )
   `);
-
 });
 
 module.exports = db;
