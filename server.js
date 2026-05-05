@@ -483,8 +483,7 @@ async function generateHtml(config = {}, isPreview = false) {
   var __crewData = ${JSON.stringify(crewData)};
   var __locationsData = ${JSON.stringify(locationsData)};
   var __fstdData = ${JSON.stringify(fstdData)};
-  // Populate db fields immediately and on DOMContentLoaded
-  function populateDbFields() {
+  document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.db-field').forEach(function(sel) {
       var source = sel.getAttribute('data-db');
       var data = __crewData;
@@ -632,8 +631,7 @@ async function generateHtml(config = {}, isPreview = false) {
     window.addEventListener('load', populateLocFstd);
     
     // Cascading TYPE -> A/C REG filter
-    function initCascadingFilter() {
-      document.querySelectorAll('select[data-db="acType"]').forEach(function(typeSel) {
+    document.querySelectorAll('select[data-db="acType"]').forEach(function(typeSel) {
       typeSel.addEventListener('change', function() {
         var selectedType = typeSel.value;
         // Find A/C REG select anywhere in the same form
@@ -654,14 +652,7 @@ async function generateHtml(config = {}, isPreview = false) {
           });
         }
       });
-    }
-    }
-    // Run cascading filter after DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initCascadingFilter);
-    } else {
-      setTimeout(initCascadingFilter, 50);
-    }
+    });
     setTimeout(populateLocFstd, 200);
     setTimeout(populateLocFstd, 500);
     setTimeout(populateLocFstd, 1500);
@@ -712,16 +703,10 @@ async function generateHtml(config = {}, isPreview = false) {
       btn.addEventListener('click', function() {
         var c = document.getElementById(btn.getAttribute('data-canvas'));
         if (c) { var ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height); }
+  });
       });
     });
-  }
-  // Run immediately if DOM ready, otherwise wait
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', populateDbFields);
-  } else {
-    setTimeout(populateDbFields, 0);
-  }
-  }
+  });
 </script>
 </body>
 </html>`;
