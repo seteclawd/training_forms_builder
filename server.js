@@ -470,9 +470,11 @@ async function generateHtml(config, isPreview = false) {
           clientX = e.clientX;
           clientY = e.clientY;
         }
+        var scaleX = rect.width > 0 ? canvas.width / rect.width : 1;
+        var scaleY = rect.height > 0 ? canvas.height / rect.height : 1;
         return {
-          x: (clientX - rect.left) * (canvas.width / rect.width),
-          y: (clientY - rect.top) * (canvas.height / rect.height)
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY
         };
       }
       
