@@ -380,8 +380,9 @@ async function generateHtml(config = {}, isPreview = false) {
     if(selInstr && selInstr.value) instructorName = selInstr.value;
     var selExam = form.querySelector('select[data-db="examinerTre"]');
     if(selExam && selExam.value) examinerName = selExam.value;
-    var dateInput = form.querySelector('input[type="date"]');
+    var dateInput = form.querySelector('input[name*="date"], input[name*="Date"]');
     if(dateInput && dateInput.value) dateVal = dateInput.value;
+    if(!dateVal) { var di = form.querySelector('input[type="date"]'); if(di && di.value) dateVal = di.value; }
     if(!dateVal) Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1 && data[k]) dateVal = data[k]; });
     // Fallback: check FormData
     if(!crewName) Object.keys(data).forEach(function(k){ var kl=k.toLowerCase(); if(kl.indexOf('crew')!==-1 && kl.indexOf('3lc')===-1 && kl.indexOf('license')===-1 && data[k]) crewName=data[k]; });
