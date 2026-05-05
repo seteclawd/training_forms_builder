@@ -232,7 +232,8 @@ function formatFormDate(dateStr) {
 let __locationsDataGlobal = [];
 let __fstdDataGlobal = [];
 
-async function generateHtml(config, isPreview = false) {
+async function generateHtml(config = {}, isPreview = false) {
+  config = config || {};
   const crewData = await new Promise((resolve) => {
     db.all('SELECT * FROM crew ORDER BY name', [], (err, rows) => resolve(rows || []));
   });
