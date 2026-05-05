@@ -380,10 +380,32 @@ async function generateHtml(config = {}, isPreview = false) {
     if(selInstr && selInstr.value) instructorName = selInstr.value;
     var selExam = form.querySelector('select[data-db="examinerTre"]');
     if(selExam && selExam.value) examinerName = selExam.value;
-    var dateInput = form.querySelector('input[name*="date"], input[name*="Date"]');
-    if(dateInput && dateInput.value) dateVal = dateInput.value;
-    if(!dateVal) { var di = form.querySelector('input[type="date"]'); if(di && di.value) dateVal = di.value; }
+    // Try multiple approaches to get the date
+    // 1. Look for input whose name contains 'date'
+    var allInputs = form.querySelectorAll('input');
+    allInputs.forEach(function(inp){
+      if(dateVal) return;
+      var nm = (inp.name || '').toLowerCase();
+      if(nm.indexOf('date') !== -1 && inp.value) dateVal = inp.value;
+    });
+    // 2. Look for input with data-raw attribute (our date fields store raw value here)
+    if(!dateVal) {
+      allInputs.forEach(function(inp){
+        if(dateVal) return;
+        var raw = inp.getAttribute('data-raw');
+        if(raw) dateVal = raw;
+      });
+    }
+    // 3. Fallback: FormData
     if(!dateVal) Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1 && data[k]) dateVal = data[k]; });
+    // 4. Last resort: look for date pattern DD-MMM-YYYY in any input value
+    if(!dateVal) {
+      var datePattern = /\d{1,2}-[A-Za-z]{3}-\d{4}/;
+      allInputs.forEach(function(inp){
+        if(dateVal) return;
+        if(inp.value && datePattern.test(inp.value)) dateVal = inp.value;
+      });
+    }
     // Fallback: check FormData
     if(!crewName) Object.keys(data).forEach(function(k){ var kl=k.toLowerCase(); if(kl.indexOf('crew')!==-1 && kl.indexOf('3lc')===-1 && kl.indexOf('license')===-1 && data[k]) crewName=data[k]; });
     if(!crew3lc) Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('3lc')!==-1 && data[k]) crew3lc=data[k]; });
