@@ -327,6 +327,7 @@ async function generateHtml(config, isPreview = false) {
   </form>
 </div>
 <script>
+  var config = ${JSON.stringify(config)};
   function showTab(n) {
     document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===n));
     document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===n));
@@ -340,10 +341,20 @@ async function generateHtml(config, isPreview = false) {
   }
   function submitForm() {
     var data = Object.fromEntries(new FormData(document.getElementById('trainingForm')));
+    var crewName = '';
+    Object.keys(data).forEach(function(k){ if(k.indexOf('crew')!==-1 || k.indexOf('Crew')!==-1) crewName = crewName || data[k]; });
+    crewName = crewName || Object.values(data)[0] || '';
+    var formId = config.subtitle || config.formId || '-';
+    var formName = config.formName || config.title || 'Training Form';
+    var dateVal = config.formDate || '';
+    Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
+    var subject = 'Submission ' + crewName + ' - ' + formId + ' ' + formName + ' - ' + dateVal;
+    var body = 'Dear Training Department,\n\nKindly find attached the training form:\n\nForm ID: ' + formId + '\nForm Name: ' + formName + '\nCrew Name: ' + crewName + '\nDate: ' + dateVal + '\n\nRegards,';
+    var mailto = 'mailto:luis.rivas@texelair.com?cc=luis.rivas@texelair.com&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
     fetch('/api/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({form_id:null, data_json:data})})
       .then(function(r){return r.json()})
-      .then(function(d){alert('Form submitted!');})
-      .catch(function(e){alert('Error: '+e.message);});
+      .then(function(d){window.location.href = mailto;})
+      .catch(function(e){window.location.href = mailto;});
   }
   function downloadForm() { var html = document.documentElement.outerHTML; var blob = new Blob([html], {type: 'text/html;charset=utf-8'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (document.title || 'training-form') + '.html'; document.body.appendChild(a); a.click(); setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100); }
 </script>
