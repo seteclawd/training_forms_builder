@@ -370,7 +370,7 @@ async function generateHtml(config = {}, isPreview = false) {
     var crewName = '', crew3lc = '', instructorName = '', examinerName = '', dateVal = '';
     var formName = config.formId || config.formName || config.title || 'Training Form';
     var formId = config.subtitle || config.formId || '-';
-    var dateVal = config.formDate || '';
+    dateVal = config.formDate || '';
     // Get values from actual DOM elements (more reliable for dynamic selects)
     var selCrew = form.querySelector('select[data-db="crewName"]');
     if(selCrew && selCrew.value) crewName = selCrew.value;
