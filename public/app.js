@@ -1934,9 +1934,10 @@ function renderPreviewField(field) {
         html += `        </select>\n`;
         html += `<script>\n`;
         if (dbName === 'location') {
-          html += `setTimeout(function(){fetch('/api/locations').then(r=>r.json()).then(locs=>{var s=document.getElementById('${selId}');if(!s)return;s.innerHTML='<option value="">-- Select --</option>';locs.forEach(loc=>{s.innerHTML+='<option value="'+loc+'">'+loc+'</option>';});});},100);\n`;
+          html += `setTimeout(function(){fetch('/api/locations').then(r=>r.json()).then(locs=>{var s=document.getElementById('${selId}');if(!s)return;s.innerHTML='<option value="">-- Select --</option>';locs.forEach(loc=>{s.innerHTML+='<option value="'+loc+'">'+loc+'</option>';});s.addEventListener('change',function(){var fs=document.querySelector('select[data-role=fstdId]');if(!fs||!window._fstdData)return;fs.innerHTML='<option value="">-- Select --</option>';var v=s.value;var filt=v?window._fstdData.filter(function(f){return f.location_name===v;}):window._fstdData;filt.forEach(function(f){fs.innerHTML+='<option value="'+f.fstd_id+'">'+f.fstd_id+'</option>';});});});},100);\n`;
         } else if (dbName === 'fstdId') {
-          html += `setTimeout(function(){fetch('/api/fstd-ids').then(r=>r.json()).then(fstds=>{var s=document.getElementById('${selId}');if(!s)return;s.innerHTML='<option value="">-- Select --</option>';fstds.forEach(f=>{s.innerHTML+='<option value="'+f.fstd_id+'">'+f.fstd_id+' - '+f.location_name+'</option>';});});},100);\n`;
+          html += `setTimeout(function(){fetch('/api/fstd-ids').then(r=>r.json()).then(fstds=>{window._fstdData=fstds;var s=document.getElementById('${selId}');if(!s)return;s.innerHTML='<option value="">-- Select --</option>';fstds.forEach(f=>{s.innerHTML+='<option value="'+f.fstd_id+'">'+f.fstd_id+'</option>';});});},100);\n`;
+          html += `setTimeout(function(){fetch('/api/fstd-ids').then(r=>r.json()).then(fstds=>{var s=document.getElementById('${selId}');if(!s)return;s.innerHTML='<option value="">-- Select --</option>';fstds.forEach(f=>{s.innerHTML+='<option value="'+f.fstd_id+'">'+f.fstd_id+'</option>';});});},100);\n`;
         }
         html += `</script>\n`;
       }
