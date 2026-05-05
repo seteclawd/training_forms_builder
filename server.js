@@ -395,8 +395,8 @@ async function generateHtml(config, isPreview = false) {
     document.querySelectorAll('select[data-role="location"]').forEach(function(locSel){
       locSel.addEventListener('change', function(){
         var selectedLoc = locSel.value;
-        var form = locSel.closest('form') || locSel.closest('.container') || document.body;
-        var fstdSel = form.querySelector('select[data-role="fstdId"]');
+        var container = locSel.closest('.form-row') || locSel.closest('fieldset') || locSel.closest('form') || document.body;
+        var fstdSel = container.querySelector('select[data-role="fstdId"]');
         if (!fstdSel) return;
         fstdSel.innerHTML = '<option value="">-- Select --</option>';
         if (!__fstdData) return;
