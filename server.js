@@ -633,21 +633,22 @@ async function generateHtml(config = {}, isPreview = false) {
     document.querySelectorAll('select[data-db="acType"]').forEach(function(typeSel) {
       typeSel.addEventListener('change', function() {
         var selectedType = typeSel.value;
-        var acRegSel = typeSel.closest('.form-row') || typeSel.closest('fieldset');
-        if (acRegSel) {
-          var regSelect = acRegSel.querySelector('select[data-db="acReg"]');
-          if (regSelect) {
-            regSelect.innerHTML = '<option value=>-- Select --</option>';
-            var filtered = selectedType ? __crewData.filter(function(r) { return r.ac_type === selectedType; }) : __crewData;
-            filtered.forEach(function(r) {
-              if (r.ac_reg) {
-                var opt = document.createElement('option');
-                opt.value = r.ac_reg;
-                opt.textContent = r.ac_reg;
-                regSelect.appendChild(opt);
-              }
-            });
-          }
+        // Find A/C REG select anywhere in the same form
+        var form = typeSel.closest('form') || typeSel.closest('.builder-canvas') || document;
+        var regSelect = form.querySelector('select[data-db="acReg"]');
+        if (regSelect) {
+          regSelect.innerHTML = '<option value="">-- Select --</option>';
+          var filtered = selectedType ? __crewData.filter(function(r) { return r.ac_type === selectedType; }) : __crewData;
+          var seen = {};
+          filtered.forEach(function(r) {
+            if (r.ac_reg && !seen[r.ac_reg]) {
+              seen[r.ac_reg] = true;
+              var opt = document.createElement('option');
+              opt.value = r.ac_reg;
+              opt.textContent = r.ac_reg;
+              regSelect.appendChild(opt);
+            }
+          });
         }
       });
     });
