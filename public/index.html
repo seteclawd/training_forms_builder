@@ -262,14 +262,14 @@
       <button class="close-btn" onclick="closeUpdateDb()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">✕</button>
     </div>
     <div style="padding:24px;overflow-y:auto;flex:1;">
-      <p style="color:#64748b;font-size:0.9rem;margin-bottom:16px;">Upload an Excel file (.xlsx) with crew data to update the database.</p>
+      <p style="color:#64748b;font-size:0.9rem;margin-bottom:16px;">Upload an Excel file (.xlsx) or CSV file (.csv) with crew data to update the database.</p>
       <div style="border:2px dashed #cbd5e1;border-radius:10px;padding:40px 20px;text-align:center;cursor:pointer;margin-bottom:16px;" onclick="document.getElementById('dbFileInput').click()">
         <div style="font-size:2.5rem;margin-bottom:12px;">📄</div>
-        <p style="color:#475569;font-weight:600;margin-bottom:4px;">Click to select Excel file</p>
+        <p style="color:#475569;font-weight:600;margin-bottom:4px;">Click to select Excel or CSV file</p>
         <p style="color:#94a3b8;font-size:0.8rem;">or drag and drop</p>
         <p id="dbFileName" style="color:#0ea5e9;font-weight:600;margin-top:12px;display:none;"></p>
       </div>
-      <input type="file" id="dbFileInput" accept=".xlsx,.xls" style="display:none;" onchange="handleDbFileSelect(this)">
+      <input type="file" id="dbFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleDbFileSelect(this)">
       <div id="dbPreview" style="display:none;margin-bottom:16px;">
         <h4 style="margin-bottom:8px;">Preview:</h4>
         <div id="dbPreviewContent" style="max-height:200px;overflow:auto;border:1px solid #e2e8f0;border-radius:8px;padding:8px;font-size:0.8rem;"></div>

@@ -2621,10 +2621,32 @@ function handleDbFileSelect(input) {
   var reader = new FileReader();
   reader.onload = function(e) {
     try {
-      var data = new Uint8Array(e.target.result);
-      var wb = XLSX.read(data, {type: 'array'});
-      var ws = wb.Sheets[wb.SheetNames[0]];
-      var rows = XLSX.utils.sheet_to_json(ws, {header: 1});
+      var rows;
+      if (file.name.toLowerCase().endsWith('.csv')) {
+        // Parse CSV
+        var text = e.target.result;
+        var lines = text.split(/\r?\n/).filter(function(l) { return l.trim(); });
+        rows = lines.map(function(line) {
+          // Simple CSV parsing (handles quoted values)
+          var result = [];
+          var inQuote = false;
+          var current = '';
+          for (var i = 0; i < line.length; i++) {
+            var ch = line[i];
+            if (ch === '"') { inQuote = !inQuote; }
+            else if (ch === ',' && !inQuote) { result.push(current.trim()); current = ''; }
+            else { current += ch; }
+          }
+          result.push(current.trim());
+          return result;
+        });
+      } else {
+        // Parse Excel
+        var data = new Uint8Array(e.target.result);
+        var wb = XLSX.read(data, {type: 'array'});
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, {header: 1});
+      }
       var preview = document.getElementById('dbPreviewContent');
       var html = '<table style="width:100%;border-collapse:collapse;">';
       var maxRows = Math.min(rows.length, 6);

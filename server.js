@@ -910,11 +910,33 @@ app.get('/html-cleaner', (req, res) => {
 app.post('/api/update-database', upload.single('file'), (req, res) => {
   try {
     if (!req.file) return res.json({success: false, error: 'No file uploaded'});
-    const wb = XLSX.readFile(req.file.path);
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const allRows = XLSX.utils.sheet_to_json(ws, {header: 1, defval: ''});
+    const isCsv = req.file.originalname.toLowerCase().endsWith('.csv');
+    let allRows;
+    if (isCsv) {
+      // Parse CSV
+      const fs = require('fs');
+      const text = fs.readFileSync(req.file.path, 'utf8');
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      allRows = lines.map(line => {
+        const result = [];
+        let inQuote = false, current = '';
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') { inQuote = !inQuote; }
+          else if (ch === ',' && !inQuote) { result.push(current.trim()); current = ''; }
+          else { current += ch; }
+        }
+        result.push(current.trim());
+        return result;
+      });
+    } else {
+      // Parse Excel
+      const wb = XLSX.readFile(req.file.path);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      allRows = XLSX.utils.sheet_to_json(ws, {header: 1, defval: ''});
+    }
     // Skip first row (category headers) - row 1 has actual column names
-    if (allRows.length < 2) return res.json({success: false, error: 'Invalid spreadsheet'});
+    if (allRows.length < 2) return res.json({success: false, error: 'Invalid file'});
     const headers = allRows[1];
     const rows = allRows.slice(2).filter(r => r.some(c => c !== '')).map(r => {
       const obj = {};
