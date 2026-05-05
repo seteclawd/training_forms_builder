@@ -2369,6 +2369,79 @@ function changeFieldRowGroup(fieldId, direction) {
   });
 })();
 
+
+// ===== SECTION IMPORT =====
+let importTargetSection = 'session';
+
+async function showSectionImport() {
+  importTargetSection = currentSection || 'session';
+  const sectionLabels = { session: 'Session Details', training: 'Training Details', comments: 'Comments & Signatures' };
+  document.getElementById('sectionImportTitle').textContent = 'Import to ' + (sectionLabels[importTargetSection] || importTargetSection);
+  document.getElementById('sectionImportHint').textContent = 'Select one or more templates to add to ' + (sectionLabels[importTargetSection] || importTargetSection) + ':';
+  
+  try {
+    const res = await fetch('/api/templates');
+    const allTemplates = await res.json();
+    const templates = allTemplates.filter(t => t.section_type === importTargetSection);
+    
+    const list = document.getElementById('sectionImportList');
+    if (!templates.length) {
+      list.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">No templates found for this section.</p>';
+    } else {
+      list.innerHTML = templates.map(t => {
+        return '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;cursor:pointer;">' +
+          '<input type="checkbox" class="import-template-cb" value="' + t.id + '" style="margin-top:3px;">' +
+          '<div><strong>' + esc(t.name) + '</strong>' +
+          '<div style="color:#64748b;font-size:0.8rem;margin-top:2px;">' + esc(t.description || '') + '</div>' +
+          '<div style="color:#94a3b8;font-size:0.75rem;margin-top:2px;">' + new Date(t.created_at).toLocaleDateString() + '</div></div></label>';
+      }).join('');
+    }
+    
+    document.getElementById('sectionImportModal').style.display = 'flex';
+  } catch (err) {
+    console.error(err);
+    alert('Error loading templates');
+  }
+}
+
+function closeSectionImport() {
+  document.getElementById('sectionImportModal').style.display = 'none';
+}
+
+async function applyImportedTemplates() {
+  const checkboxes = document.querySelectorAll('.import-template-cb:checked');
+  if (!checkboxes.length) {
+    alert('Please select at least one template');
+    return;
+  }
+  
+  const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+  
+  for (const id of ids) {
+    try {
+      const res = await fetch('/api/templates/' + id);
+      const template = await res.json();
+      const fields = JSON.parse(JSON.stringify(template.fields || []));
+      
+      currentForm.config.sections[importTargetSection] = currentForm.config.sections[importTargetSection] || [];
+      currentForm.config.sections[importTargetSection].push({
+        id: 'fieldset_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        type: 'fieldset',
+        title: template.name,
+        fields: fields
+      });
+    } catch (err) {
+      console.error('Error loading template ' + id, err);
+    }
+  }
+  
+  if (importTargetSection === currentSection) {
+    renderCurrentSection();
+  }
+  updateLivePreview();
+  closeSectionImport();
+}
+
 // ===== INIT =====
 showDashboard();
 loadTemplates();

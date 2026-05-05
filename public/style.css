@@ -135,6 +135,21 @@ body {
   color: #1a365d;
   border-bottom-color: #1a365d;
 }
+.section-import-btn {
+  margin-left: auto;
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #f8fafc;
+  font-size: 0.8rem;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.section-import-btn:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
 
 /* Builder Sections */
 .builder-section { display: none; }

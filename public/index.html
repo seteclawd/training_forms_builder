@@ -150,6 +150,7 @@
           <button class="section-tab active" data-section="session">SECTION 1: Session Details</button>
           <button class="section-tab" data-section="training">SECTION 2: Training Details</button>
           <button class="section-tab" data-section="comments">SECTION 3: Comments & Signatures</button>
+          <button class="section-import-btn" onclick="showSectionImport()" title="Import Template">📥 Import Template</button>
         </div>
 
         <div id="builderSections">
@@ -241,6 +242,24 @@
     <div style="padding:20px;border-top:1px solid #e2e8f0;display:flex;gap:10px;justify-content:center;">
       <button class="btn btn-primary" onclick="saveTemplate()">💾 Save Template</button>
       <button class="btn btn-secondary" onclick="closeTemplateBuilder()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Section Import Modal -->
+<div id="sectionImportModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;width:50vw;max-width:500px;max-height:70vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #e2e8f0;">
+      <h2 id="sectionImportTitle">Import Template</h2>
+      <button class="close-btn" onclick="closeSectionImport()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:16px 20px;overflow-y:auto;flex:1;">
+      <p id="sectionImportHint" style="color:#64748b;font-size:0.85rem;margin-bottom:12px;">Select templates to import into this section:</p>
+      <div id="sectionImportList"></div>
+    </div>
+    <div style="padding:16px 20px;border-top:1px solid #e2e8f0;display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeSectionImport()">Cancel</button>
+      <button class="btn btn-primary" onclick="applyImportedTemplates()">📥 Import Selected</button>
     </div>
   </div>
 </div>
