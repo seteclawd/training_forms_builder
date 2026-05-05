@@ -210,7 +210,13 @@ async function useTemplate(templateId) {
       config: { title: '', subtitle: '', sections: { session: [], training: [], comments: [] } }
     };
     // Apply template fields to the appropriate section
-    currentForm.config.sections[template.section_type] = JSON.parse(JSON.stringify(template.fields));
+    const fields = JSON.parse(JSON.stringify(template.fields || []));
+    currentForm.config.sections[template.section_type] = [{
+      id: "fieldset_" + Date.now(),
+      type: "fieldset",
+      title: template.name,
+      fields: fields
+    }];
     showBuilder();
     document.getElementById('formId').value = template.name;
     // Switch to the section that has the template
