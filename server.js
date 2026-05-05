@@ -630,7 +630,8 @@ async function generateHtml(config = {}, isPreview = false) {
     window.addEventListener('load', populateLocFstd);
     
     // Cascading TYPE -> A/C REG filter
-    document.querySelectorAll('select[data-db="acType"]').forEach(function(typeSel) {
+    function initCascadingFilter() {
+      document.querySelectorAll('select[data-db="acType"]').forEach(function(typeSel) {
       typeSel.addEventListener('change', function() {
         var selectedType = typeSel.value;
         // Find A/C REG select anywhere in the same form
@@ -651,7 +652,14 @@ async function generateHtml(config = {}, isPreview = false) {
           });
         }
       });
-    });
+    }
+    }
+    // Run cascading filter after DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initCascadingFilter);
+    } else {
+      setTimeout(initCascadingFilter, 50);
+    }
     setTimeout(populateLocFstd, 200);
     setTimeout(populateLocFstd, 500);
     setTimeout(populateLocFstd, 1500);
