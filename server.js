@@ -392,24 +392,25 @@ async function generateHtml(config, isPreview = false) {
       });
     });
     // When Location changes, filter FSTD ID dropdown
+    function filterFstdForLoc(locSel, fstdSel) {
+      var selectedLoc = locSel.value;
+      fstdSel.innerHTML = '<option value="">-- Select --</option>';
+      if (!__fstdData) return;
+      var filtered = selectedLoc ? __fstdData.filter(function(f){return f.location_name === selectedLoc;}) : __fstdData;
+      filtered.forEach(function(f){
+        var opt = document.createElement('option');
+        opt.value = f.fstd_id; opt.textContent = f.fstd_id;
+        fstdSel.appendChild(opt);
+      });
+    }
     (function(){
       var allLocSels = Array.from(document.querySelectorAll('select[data-role="location"]'));
       var allFstdSels = Array.from(document.querySelectorAll('select[data-role="fstdId"]'));
       allLocSels.forEach(function(locSel, idx){
         var fstdSel = allFstdSels[idx];
         if (!fstdSel) return;
-        locSel.addEventListener('change', function(){
-          var selectedLoc = locSel.value;
-          fstdSel.innerHTML = '<option value="">-- Select --</option>';
-          if (!__fstdData) return;
-          var filtered = selectedLoc ? __fstdData.filter(function(f){return f.location_name === selectedLoc;}) : __fstdData;
-          filtered.forEach(function(f){
-            var opt = document.createElement('option');
-            opt.value = f.fstd_id; opt.textContent = f.fstd_id;
-            fstdSel.appendChild(opt);
-          });
-          fstdSel.value = '';
-        });
+        locSel.addEventListener('change', function(){ filterFstdForLoc(locSel, fstdSel); });
+        if (locSel.value) filterFstdForLoc(locSel, fstdSel);
       });
     })();
 
