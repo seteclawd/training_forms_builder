@@ -2471,3 +2471,95 @@ async function applyImportedTemplates() {
 showDashboard();
 loadTemplates();
 loadSavedTables();
+
+// ===== UPDATE DATABASE =====
+var _dbFile = null;
+
+function showUpdateDatabase() {
+  document.getElementById('updateDbModal').style.display = 'flex';
+  document.getElementById('dbFileInput').value = '';
+  document.getElementById('dbFileName').style.display = 'none';
+  document.getElementById('dbPreview').style.display = 'none';
+  document.getElementById('dbStatus').style.display = 'none';
+  document.getElementById('uploadDbBtn').disabled = true;
+  _dbFile = null;
+}
+
+function closeUpdateDb() {
+  document.getElementById('updateDbModal').style.display = 'none';
+}
+
+function handleDbFileSelect(input) {
+  var file = input.files[0];
+  if (!file) return;
+  _dbFile = file;
+  document.getElementById('dbFileName').textContent = file.name;
+  document.getElementById('dbFileName').style.display = 'block';
+  document.getElementById('uploadDbBtn').disabled = false;
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var wb = XLSX.read(data, {type: 'array'});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, {header: 1});
+      var preview = document.getElementById('dbPreviewContent');
+      var html = '<table style="width:100%;border-collapse:collapse;">';
+      var maxRows = Math.min(rows.length, 6);
+      for (var i = 0; i < maxRows; i++) {
+        html += '<tr>';
+        rows[i].forEach(function(cell) {
+          html += '<td style="padding:4px 8px;border:1px solid #e2e8f0;">' + (cell || '') + '</td>';
+        });
+        html += '</tr>';
+      }
+      html += '</table>';
+      html += '<p style="color:#64748b;margin-top:8px;">' + rows.length + ' rows total</p>';
+      preview.innerHTML = html;
+      document.getElementById('dbPreview').style.display = 'block';
+    } catch(err) {
+      document.getElementById('dbStatus').style.display = 'block';
+      document.getElementById('dbStatus').style.background = '#fef2f2';
+      document.getElementById('dbStatus').style.color = '#dc2626';
+      document.getElementById('dbStatus').textContent = 'Error reading file: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function uploadDatabase() {
+  if (!_dbFile) return;
+  var status = document.getElementById('dbStatus');
+  status.style.display = 'block';
+  status.style.background = '#f0f9ff';
+  status.style.color = '#0369a1';
+  status.textContent = 'Uploading and processing...';
+  document.getElementById('uploadDbBtn').disabled = true;
+
+  var formData = new FormData();
+  formData.append('file', _dbFile);
+  fetch('/api/update-database', {method: 'POST', body: formData})
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+      status.style.display = 'block';
+      if (result.success) {
+        status.style.background = '#f0fdf4';
+        status.style.color = '#16a34a';
+        status.innerHTML = '✅ Database updated successfully!<br>' +
+          'Crew members: ' + result.crewCount + '<br>' +
+          'Inserted: ' + result.inserted + ', Updated: ' + result.updated;
+      } else {
+        status.style.background = '#fef2f2';
+        status.style.color = '#dc2626';
+        status.textContent = '❌ ' + (result.error || 'Update failed');
+      }
+      document.getElementById('uploadDbBtn').disabled = false;
+    })
+    .catch(function(err) {
+      status.style.background = '#fef2f2';
+      status.style.color = '#dc2626';
+      status.textContent = '❌ Network error: ' + err.message;
+      document.getElementById('uploadDbBtn').disabled = false;
+    });
+}

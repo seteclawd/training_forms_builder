@@ -1,10 +1,14 @@
 const express = require('express');
 const path = require('path');
+const multer = require('multer');
+const XLSX = require('xlsx');
 const db = require('./db');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+const upload = multer({dest: '/tmp/uploads/'});
 
 // API: Get crew data
 app.get("/api/crew", (req, res) => {
@@ -625,6 +629,64 @@ function esc(str) {
 // HTML Cleaner route
 app.get('/html-cleaner', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'converter.html'));
+});
+
+// API: Update database from Excel
+app.post('/api/update-database', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) return res.json({success: false, error: 'No file uploaded'});
+    const wb = XLSX.readFile(req.file.path);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws);
+    if (!rows.length) return res.json({success: false, error: 'Empty spreadsheet'});
+
+    // Map columns (flexible header matching)
+    const colMap = {};
+    const headers = Object.keys(rows[0]);
+    headers.forEach(h => {
+      const lower = h.toLowerCase().trim();
+      if (lower.includes('3lc') || lower === 'code') colMap.three_lc = h;
+      else if (lower.includes('name') || lower === 'nombre') colMap.name = h;
+      else if (lower.includes('position') || lower.includes('puesto')) colMap.position = h;
+      else if (lower.includes('license') || lower.includes('licencia')) colMap.license_number = h;
+      else if (lower.includes('email') || lower === 'correo') colMap.email = h;
+      else if (lower === 'sfi' || lower.includes('sfi')) colMap.is_sfi = h;
+      else if (lower === 'tri' || lower.includes('tri')) colMap.is_tri = h;
+      else if (lower === 'sfe' || lower.includes('sfe')) colMap.is_sfe = h;
+      else if (lower === 'tre' || lower.includes('tre')) colMap.is_tre = h;
+    });
+
+    let inserted = 0, updated = 0, skipped = 0;
+    const processRow = (row) => {
+      return new Promise((resolve) => {
+        const name = row[colMap.name];
+        const three_lc = row[colMap.three_lc] || '';
+        if (!name) { skipped++; return resolve(); }
+
+        db.get('SELECT id FROM crew WHERE name = ?', [name], (err, existing) => {
+          if (existing) {
+            db.run('UPDATE crew SET three_lc=?, position=?, license_number=?, email=?, is_sfi=?, is_tri=?, is_sfe=?, is_tre=? WHERE name=?',
+              [three_lc, row[colMap.position] || '', row[colMap.license_number] || '', row[colMap.email] || '',
+               row[colMap.is_sfi] ? 1 : 0, row[colMap.is_tri] ? 1 : 0, row[colMap.is_sfe] ? 1 : 0, row[colMap.is_tre] ? 1 : 0, name],
+              () => { updated++; resolve(); });
+          } else {
+            db.run('INSERT INTO crew (three_lc, name, position, license_number, email, is_sfi, is_tri, is_sfe, is_tre) VALUES (?,?,?,?,?,?,?,?,?)',
+              [three_lc, name, row[colMap.position] || '', row[colMap.license_number] || '', row[colMap.email] || '',
+               row[colMap.is_sfi] ? 1 : 0, row[colMap.is_tri] ? 1 : 0, row[colMap.is_sfe] ? 1 : 0, row[colMap.is_tre] ? 1 : 0],
+              () => { inserted++; resolve(); });
+          }
+        });
+      });
+    };
+
+    Promise.all(rows.map(processRow)).then(() => {
+      db.get('SELECT COUNT(*) as cnt FROM crew', [], (err, r) => {
+        res.json({success: true, inserted, updated, skipped, crewCount: r ? r.cnt : 0});
+      });
+    });
+  } catch(err) {
+    res.json({success: false, error: err.message});
+  }
 });
 
 const PORT = process.env.PORT || 8999;
