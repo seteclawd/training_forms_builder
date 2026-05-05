@@ -269,10 +269,11 @@ async function generateHtml(config, isPreview = false) {
   .notes-input { width: 100%; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }
   .signature-box { border: 2px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; text-align: center; padding: 10px; }
   canvas { background: #fff; border-radius: 6px; cursor: crosshair; touch-action: none; -webkit-user-select: none; user-select: none; }
-  input[type="date"].has-date::-webkit-calendar-picker-indicator { visibility: hidden; pointer-events: none; }
+  input[type="date"].has-date::-webkit-calendar-picker-indicator { -webkit-appearance: none; appearance: none; visibility: hidden; width: 0; height: 0; overflow: hidden; }
   input[type="date"].has-date::-ms-clear { display: none; }
-  input[type="date"].has-date::-webkit-inner-spin-button,
+  input[type="date"].has-date::-webkit-inner-spin-button { display: none; }
   input[type="date"].has-date::-webkit-outer-spin-button { display: none; }
+  input[type="date"].has-date { color-scheme: light; }
   .form-footer { padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: center; }
   .btn { padding: 14px 28px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; }
   .btn-primary { background: #1a365d; color: #fff; }
@@ -652,7 +653,7 @@ function renderTableHtml(field) {
       } else if (colType === 'select') {
         html += `                <td><select name="${esc(fieldName)}_${i}"><option value="">Select...</option><option value="yes">Yes</option><option value="no">No</option></select></td>\n`;
       } else if (colType === 'date') {
-        html += `                <td><input type="date" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" onchange="if(this.value){this.classList.add('has-date');}"></td>\n`;
+        html += `                <td><input type="date" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" onchange="if(this.value){this.classList.add('has-date');var s=document.createElement('style');s.textContent='#'+this.id+'.has-date::-webkit-calendar-picker-indicator{display:none}';document.head.appendChild(s);}else{this.classList.remove('has-date');}"></td>\n`;
       } else if (colType === 'db_crewName' || colType === 'db_crewId' || colType === 'db_crewLicense' || colType === 'db_crew3lc' || colType === 'db_instructorTri' || colType === 'db_examinerTre' || colType === 'db_pilotPosition' || colType === 'db_location' || colType === 'db_fstdId') {
         html += `                <td><select class="db-field" data-db="${colType.replace('db_','')}" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option value="">-- Loading... --</option></select></td>\n`;
       } else if (colType === 'multiline') {
