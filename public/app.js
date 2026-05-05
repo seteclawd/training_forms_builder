@@ -1884,6 +1884,10 @@ function renderPreviewField(field) {
     html += `        <label>${esc(field.label)}${field.required ? ' *' : ''}</label>\n`;
   }
   switch (field.type) {
+    case 'text': case 'email': case 'number': case 'tel':
+      html += `        <input type="${field.type}" name="${name}" placeholder="${esc(field.placeholder || '')}" ${field.required ? 'required' : ''}>
+`;
+      break;
     case 'date':
       html += `        <input type="text" placeholder="dd/mmm/yyyy" pattern="[0-9]{2}/[A-Za-z]{3}/[0-9]{4}" onblur="formatDate(this)" onfocus="unformatDate(this)" ${field.required ? 'required' : ''}>\n`;
       break;
