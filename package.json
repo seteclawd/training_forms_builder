@@ -8,6 +8,12 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@editorjs/editorjs": "^2.31.6",
+    "@editorjs/header": "^2.8.8",
+    "@editorjs/image": "^2.10.3",
+    "@editorjs/list": "^2.0.9",
+    "@editorjs/paragraph": "^2.11.7",
+    "@editorjs/table": "^2.4.5",
     "express": "^4.18.2",
     "multer": "^2.1.1",
     "sqlite3": "^6.0.1",

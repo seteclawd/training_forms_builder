@@ -1003,145 +1003,14 @@ function renderProperties(field) {
     if (contentType === 'html') {
       html += propGroup('Content (HTML)', `<textarea id="prop_content" rows="8" oninput="updateField('content', this.value)" style="font-family:monospace;font-size:0.85rem;">${esc(field.content || '')}</textarea>`);
     } else {
-      const toolbarId = 'toolbar_' + field.id;
-      const editorId = 'editor_' + field.id;
+      const editorId = 'editorjs_' + field.id;
       html += `<div class="prop-group">
         <label>Content</label>
-        <div id="${toolbarId}_bar" class="editor-menubar">
-          <div class="editor-menu-item" data-menu="file">File ▾</div>
-          <div class="editor-menu-item" data-menu="edit">Edit ▾</div>
-          <div class="editor-menu-item" data-menu="insert">Insert ▾</div>
-          <div class="editor-menu-item" data-menu="view">View ▾</div>
-          <div class="editor-menu-item" data-menu="format">Format ▾</div>
-          <div class="editor-menu-item" data-menu="table">Table ▾</div>
-          <div class="editor-menu-item" data-menu="tools">Tools ▾</div>
-        </div>
-        <div class="editor-dropdown-container" id="${toolbarId}_menus">
-          <div class="editor-dropdown" data-menu="file">
-            <div class="editor-dropdown-item" data-cmd="new">📄 New document</div>
-            <div class="editor-dropdown-item" data-cmd="source">📄 Source code</div>
-          </div>
-          <div class="editor-dropdown" data-menu="edit">
-            <div class="editor-dropdown-item" data-cmd="undo">↩ Undo</div>
-            <div class="editor-dropdown-item" data-cmd="redo">↪ Redo</div>
-            <div class="editor-dropdown-separator"></div>
-            <div class="editor-dropdown-item" data-cmd="cut">✂ Cut</div>
-            <div class="editor-dropdown-item" data-cmd="copy">📋 Copy</div>
-            <div class="editor-dropdown-item" data-cmd="paste">📄 Paste</div>
-            <div class="editor-dropdown-separator"></div>
-            <div class="editor-dropdown-item" data-cmd="selectAll">☑ Select all</div>
-            <div class="editor-dropdown-item" data-cmd="find">🔍 Find and replace</div>
-          </div>
-          <div class="editor-dropdown" data-menu="insert">
-            <div class="editor-dropdown-item" data-cmd="link">🔗 Insert/edit link</div>
-            <div class="editor-dropdown-item" data-cmd="image">🖼️ Insert/edit image</div>
-            <div class="editor-dropdown-item" data-cmd="video">🎬 Insert/edit video</div>
-            <div class="editor-dropdown-separator"></div>
-            <div class="editor-dropdown-item" data-cmd="specialChar">Ω Special character</div>
-            <div class="editor-dropdown-item" data-cmd="hr">— Horizontal line</div>
-            <div class="editor-dropdown-item" data-cmd="nbsp">␣ Nonbreaking space</div>
-            <div class="editor-dropdown-item" data-cmd="anchor">⚓ Anchor</div>
-            <div class="editor-dropdown-item" data-cmd="datetime">🕐 Insert date/time</div>
-          </div>
-          <div class="editor-dropdown" data-menu="view">
-            <div class="editor-dropdown-item" data-cmd="showBlocks">▢ Show invisible characters</div>
-            <div class="editor-dropdown-item" data-cmd="showBlocks">▢ Show blocks</div>
-            <div class="editor-dropdown-item" data-cmd="visualAids">✓ Visual aids</div>
-            <div class="editor-dropdown-separator"></div>
-            <div class="editor-dropdown-item" data-cmd="preview">👁 Preview</div>
-            <div class="editor-dropdown-item" data-cmd="fullscreen">⛶ Fullscreen</div>
-          </div>
-          <div class="editor-dropdown" data-menu="format">
-            <div class="editor-dropdown-item" data-cmd="bold"><b>B</b> Bold</div>
-            <div class="editor-dropdown-item" data-cmd="italic"><i>I</i> Italic</div>
-            <div class="editor-dropdown-item" data-cmd="underline"><u>U</u> Underline</div>
-            <div class="editor-dropdown-item" data-cmd="strikeThrough"><s>S</s> Strikethrough</div>
-            <div class="editor-dropdown-separator"></div>
-            <div class="editor-dropdown-item" data-cmd="superscript">X² Superscript</div>
-            <div class="editor-dropdown-item" data-cmd="subscript">X₂ Subscript</div>
-            <div class="editor-dropdown-separator"></div>
-            <div class="editor-dropdown-submenu">
-              <div class="editor-dropdown-item">▸ Formats ▾</div>
-              <div class="editor-dropdown" style="left:100%;top:0;">
-                <div class="editor-dropdown-item" data-cmd="formatBlock" data-val="H3">H3 Heading</div>
-                <div class="editor-dropdown-item" data-cmd="formatBlock" data-val="H4">H4 Heading</div>
-                <div class="editor-dropdown-item" data-cmd="formatBlock" data-val="P">P Paragraph</div>
-              </div>
-            </div>
-            <div class="editor-dropdown-separator"></div>
-            <div class="editor-dropdown-item" data-cmd="insertUnorderedList">• Bullet list</div>
-            <div class="editor-dropdown-item" data-cmd="insertOrderedList">1. Numbered list</div>
-            <div class="editor-dropdown-separator"></div>
-            <div class="editor-dropdown-item" data-cmd="removeFormat">Ix Clear formatting</div>
-          </div>
-          <div class="editor-dropdown" data-menu="table">
-            <div class="editor-dropdown-submenu">
-              <div class="editor-dropdown-item">⊞ Insert table ▾</div>
-              <div class="editor-dropdown table-grid-dropdown" style="left:100%;top:0;display:none;">
-                <div class="table-grid-info">1 × 1</div>
-                <div class="table-grid"></div>
-              </div>
-            </div>
-            <div class="editor-dropdown-item" data-cmd="tableProp">Table properties</div>
-            <div class="editor-dropdown-item" data-cmd="deleteTable">🗑 Delete table</div>
-            <div class="editor-dropdown-separator"></div>
-            <div class="editor-dropdown-submenu">
-              <div class="editor-dropdown-item">Cell ▾</div>
-              <div class="editor-dropdown" style="left:100%;top:0;">
-                <div class="editor-dropdown-item" data-cmd="cellProp">Cell properties</div>
-                <div class="editor-dropdown-item" data-cmd="mergeCells">Merge cells</div>
-                <div class="editor-dropdown-item" data-cmd="splitCell">Split cell</div>
-              </div>
-            </div>
-            <div class="editor-dropdown-submenu">
-              <div class="editor-dropdown-item">Row ▾</div>
-              <div class="editor-dropdown" style="left:100%;top:0;">
-                <div class="editor-dropdown-item" data-cmd="insertRowAbove">Insert row before</div>
-                <div class="editor-dropdown-item" data-cmd="insertRowBelow">Insert row after</div>
-                <div class="editor-dropdown-item" data-cmd="deleteRow">Delete row</div>
-                <div class="editor-dropdown-item" data-cmd="rowProp">Row properties</div>
-                <div class="editor-dropdown-separator"></div>
-                <div class="editor-dropdown-item" data-cmd="cutRow">Cut row</div>
-                <div class="editor-dropdown-item" data-cmd="copyRow">Copy row</div>
-                <div class="editor-dropdown-item" data-cmd="pasteRowAbove">Paste row before</div>
-                <div class="editor-dropdown-item" data-cmd="pasteRowBelow">Paste row after</div>
-              </div>
-            </div>
-            <div class="editor-dropdown-submenu">
-              <div class="editor-dropdown-item">Column ▾</div>
-              <div class="editor-dropdown" style="left:100%;top:0;">
-                <div class="editor-dropdown-item" data-cmd="insertColBefore">Insert column before</div>
-                <div class="editor-dropdown-item" data-cmd="insertColAfter">Insert column after</div>
-                <div class="editor-dropdown-item" data-cmd="deleteCol">Delete column</div>
-              </div>
-            </div>
-          </div>
-          <div class="editor-dropdown" data-menu="tools">
-            <div class="editor-dropdown-item" data-cmd="source"><> Source code</div>
-          </div>
-        </div>
-        <div class="editor-toolbar">
-          <button data-cmd="bold" title="Bold" class="style-btn"><b>B</b></button>
-          <button data-cmd="italic" title="Italic" class="style-btn"><i>I</i></button>
-          <button data-cmd="underline" title="Underline" class="style-btn"><u>U</u></button>
-          <span class="toolbar-sep"></span>
-          <button data-cmd="insertUnorderedList" title="Bullet list" class="style-btn">•</button>
-          <button data-cmd="insertOrderedList" title="Numbered list" class="style-btn">1.</button>
-          <span class="toolbar-sep"></span>
-          <button data-cmd="formatBlock" data-val="H3" title="H3" class="style-btn">H3</button>
-          <button data-cmd="formatBlock" data-val="H4" title="H4" class="style-btn">H4</button>
-          <span class="toolbar-sep"></span>
-          <button data-cmd="justifyLeft" title="Align left" class="style-btn">⫷</button>
-          <button data-cmd="justifyCenter" title="Center" class="style-btn">☰</button>
-          <button data-cmd="justifyRight" title="Align right" class="style-btn">⫸</button>
-          <span class="toolbar-sep"></span>
-          <button data-cmd="table" title="Insert table" class="style-btn">⊞</button>
-          <button data-cmd="link" title="Insert link" class="style-btn">🔗</button>
-          <button data-cmd="image" title="Insert image" class="style-btn">🖼</button>
-        </div>
-        <div id="${editorId}" contenteditable="true" style="min-height:120px;padding:8px;border:2px solid #e2e8f0;border-radius:6px;background:#fff;">${field.content || ''}</div>
+        <div id="${editorId}" style="min-height:120px;border:2px solid #e2e8f0;border-radius:6px;background:#fff;"></div>
         <textarea id="prop_content" style="display:none;">${esc(field.content || '')}</textarea>
       </div>`;
+      // Init EditorJS after render
+      setTimeout(() => initInfoBlockEditor(field.id, field.content || ''), 50);
     }
   }
 
@@ -1214,6 +1083,7 @@ document.addEventListener('click', function(e) {
       case 'undo': case 'redo': case 'cut': case 'copy':
       case 'selectAll': case 'removeFormat':
       case 'insertHorizontalRule':
+      case 'paste':
         document.execCommand(cmd, false, null);
         break;
       case 'formatBlock':
@@ -1279,6 +1149,14 @@ document.addEventListener('click', function(e) {
       case 'mergeCells': tableAction('mergeCells'); break;
       case 'splitCell': tableAction('splitCell'); break;
       case 'deleteTable': tableAction('deleteTable'); break;
+      case 'changeTableStyle': tableAction('changeTableStyle'); break;
+      case 'tableProp': tableAction('showTableProps'); break;
+      case 'cellProp': tableAction('showCellProps'); break;
+      case 'rowProp': tableAction('showRowProps'); break;
+      case 'cutRow': tableAction('cutRow'); break;
+      case 'copyRow': tableAction('copyRow'); break;
+      case 'pasteRowAbove': tableAction('pasteRowAbove'); break;
+      case 'pasteRowBelow': tableAction('pasteRowBelow'); break;
       case 'table':
         showInsertTable(editor.id);
         break;
@@ -1303,25 +1181,101 @@ function closeEditorMenus() {
 }
 
 function showInsertTable(editorId) {
-  // Find the toolbar bar and show table grid
   const editor = document.getElementById(editorId);
   if (!editor) return;
-  const propGroup = editor.closest('.prop-group');
-  const tableMenu = propGroup.querySelector('.editor-dropdown[data-menu="table"]');
-  const grid = tableMenu?.querySelector('.table-grid-dropdown');
-  if (!grid) {
-    // Simple prompt fallback
-    const rows = prompt('Number of rows:', '3');
-    if (!rows) return;
-    const cols = prompt('Number of columns:', '3');
-    if (!cols) return;
-    editor.focus();
-    const tableHtml = '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;margin:8px 0;">' + Array(parseInt(rows)).fill().map(() => '<tr>' + Array(parseInt(cols)).fill('<td>&nbsp;</td>').join('') + '</tr>').join('') + '</table><p></p>';
-    document.execCommand('insertHTML', false, tableHtml);
-    editor.dispatchEvent(new Event('input'));
-    return;
+  
+  // Create modal overlay
+  let existing = document.querySelector('.insert-table-modal');
+  if (existing) existing.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'insert-table-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:99999';
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#fff;border-radius:12px;padding:20px;width:300px;box-shadow:0 20px 60px rgba(0,0,0,0.3)';
+  
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+  html += '<h3 style="margin:0;font-size:1rem;">Insert Table</h3>';
+  html += '<button class="close-modal-btn" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">✕</button>';
+  html += '</div>';
+  
+  // Grid for size selection
+  html += '<div style="margin-bottom:12px;">';
+  html += '<div style="font-size:0.8rem;color:#64748b;margin-bottom:6px;">Select size: <span id="gridInfo">3 × 3</span></div>';
+  html += '<div id="insertTableGrid" style="display:grid;grid-template-columns:repeat(10,20px);gap:1px;">';
+  for (let i = 0; i < 100; i++) {
+    const r = Math.floor(i / 10) + 1;
+    const c = (i % 10) + 1;
+    html += '<div data-row="' + r + '" data-col="' + c + '" style="width:20px;height:20px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;"></div>';
   }
-  grid.style.display = grid.style.display === 'block' ? 'none' : 'block';
+  html += '</div></div>';
+  
+  // Style selector
+  html += '<div style="margin-bottom:16px;">';
+  html += '<div style="font-size:0.8rem;color:#64748b;margin-bottom:6px;">Style:</div>';
+  html += '<select id="insertTableStyle" style="width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:4px;">';
+  Object.entries(TABLE_STYLES).forEach(([id, s]) => {
+    html += '<option value="' + id + '">' + s.name + '</option>';
+  });
+  html += '</select></div>';
+  
+  html += '<button id="insertTableBtn" style="width:100%;padding:8px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Insert</button>';
+  
+  modal.innerHTML = html;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  
+  let selectedRows = 3, selectedCols = 3;
+  
+  // Grid hover/click handlers
+  const gridEl = document.getElementById('insertTableGrid');
+  const gridInfo = document.getElementById('gridInfo');
+  
+  gridEl.addEventListener('mousemove', function(e) {
+    const cell = e.target.closest('[data-row]');
+    if (!cell) return;
+    selectedRows = parseInt(cell.dataset.row);
+    selectedCols = parseInt(cell.dataset.col);
+    gridInfo.textContent = selectedRows + ' × ' + selectedCols;
+    gridEl.querySelectorAll('[data-row]').forEach(c => {
+      const r = parseInt(c.dataset.row);
+      const co = parseInt(c.dataset.col);
+      c.style.background = (r <= selectedRows && co <= selectedCols) ? '#3b82f6' : '#fff';
+    });
+  });
+  
+  gridEl.addEventListener('click', function(e) {
+    const cell = e.target.closest('[data-row]');
+    if (!cell) return;
+    selectedRows = parseInt(cell.dataset.row);
+    selectedCols = parseInt(cell.dataset.col);
+    insertTableFromModal(editor, selectedRows, selectedCols, overlay);
+  });
+  
+  document.getElementById('insertTableBtn').addEventListener('click', function() {
+    const styleId = document.getElementById('insertTableStyle').value;
+    insertTableFromModal(editor, selectedRows, selectedCols, overlay, styleId);
+  });
+  
+  overlay.querySelector('.close-modal-btn').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) overlay.remove();
+  });
+}
+
+function insertTableFromModal(editor, rows, cols, overlay, styleId) {
+  styleId = styleId || document.getElementById('insertTableStyle')?.value || 'simple';
+  const style = TABLE_STYLES[styleId] || TABLE_STYLES['simple'];
+  
+  editor.focus();
+  const tableHtml = '<table data-table-style="' + styleId + '" style="' + style.table + '">' +
+    Array(rows).fill().map(() => '<tr>' + Array(cols).fill().map(() => '<td style="' + style.td + '">&nbsp;</td>').join('') + '</tr>').join('') +
+    '</table><p></p>';
+  
+  document.execCommand('insertHTML', false, tableHtml);
+  editor.dispatchEvent(new Event('input'));
+  overlay.remove();
 }
 
 let currentEditorId = null;
@@ -1398,9 +1352,304 @@ tableAction = function(action) {
       if (!table) return;
       table.remove();
       break;
+    case 'changeTableStyle':
+      if (!table) return;
+      showTableStylePicker(table, editor);
+      break;
+    case 'showTableProps':
+      if (!table) return;
+      showTableProperties(table, editor);
+      break;
+    case 'showCellProps':
+      if (!cell) { alert('Place cursor in a table cell first'); return; }
+      showCellProperties(cell, editor);
+      break;
+    case 'showRowProps':
+      if (!row) { alert('Place cursor in a table row first'); return; }
+      showRowProperties(row, editor);
+      break;
+    case 'cutRow':
+      if (!row || !table) return;
+      window._cutRow = row.cloneNode(true);
+      row.remove();
+      break;
+    case 'copyRow':
+      if (!row) return;
+      window._copiedRow = row.cloneNode(true);
+      alert('Row copied');
+      break;
+    case 'pasteRowAbove':
+      if (!row || !table) return;
+      const srcRowAbove = window._cutRow || window._copiedRow;
+      if (!srcRowAbove) { alert('No row copied/cut'); return; }
+      row.parentNode.insertBefore(srcRowAbove.cloneNode(true), row);
+      if (window._cutRow) { window._cutRow = null; }
+      break;
+    case 'pasteRowBelow':
+      if (!row || !table) return;
+      const srcRowBelow = window._cutRow || window._copiedRow;
+      if (!srcRowBelow) { alert('No row copied/cut'); return; }
+      row.parentNode.insertBefore(srcRowBelow.cloneNode(true), row.nextSibling);
+      if (window._cutRow) { window._cutRow = null; }
+      break;
   }
   editor.dispatchEvent(new Event('input'));
 };
+
+function showCellProperties(cell, editor) {
+  let existing = document.querySelector('.cell-props-modal');
+  if (existing) existing.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'cell-props-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:99999';
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#fff;border-radius:12px;padding:24px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.3)';
+  
+  const currentBg = cell.style.backgroundColor || '#ffffff';
+  const currentAlign = cell.style.textAlign || 'left';
+  const currentWidth = cell.style.width || '';
+  
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+  html += '<h3 style="margin:0;font-size:1rem;">Cell Properties</h3>';
+  html += '<button class="close-cell-btn" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">✕</button>';
+  html += '</div>';
+  html += '<div style="margin-bottom:12px;"><label style="font-size:0.85rem;display:block;margin-bottom:4px;">Background</label><input type="color" id="cellBg" value="' + currentBg + '" style="width:100%;height:32px;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;"></div>';
+  html += '<div style="margin-bottom:12px;"><label style="font-size:0.85rem;display:block;margin-bottom:4px;">Align</label><select id="cellAlign" style="width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:4px;"><option value="left"' + (currentAlign === 'left' ? ' selected' : '') + '>Left</option><option value="center"' + (currentAlign === 'center' ? ' selected' : '') + '>Center</option><option value="right"' + (currentAlign === 'right' ? ' selected' : '') + '>Right</option></select></div>';
+  html += '<div style="margin-bottom:16px;"><label style="font-size:0.85rem;display:block;margin-bottom:4px;">Width</label><input type="text" id="cellWidth" value="' + currentWidth + '" placeholder="e.g. 100px or 20%" style="width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:4px;"></div>';
+  html += '<button id="applyCellProps" style="width:100%;padding:8px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Apply</button>';
+  
+  modal.innerHTML = html;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  
+  overlay.querySelector('.close-cell-btn').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#applyCellProps').addEventListener('click', () => {
+    cell.style.backgroundColor = overlay.querySelector('#cellBg').value;
+    cell.style.textAlign = overlay.querySelector('#cellAlign').value;
+    cell.style.width = overlay.querySelector('#cellWidth').value;
+    overlay.remove();
+    editor.dispatchEvent(new Event('input'));
+  });
+}
+
+function showRowProperties(row, editor) {
+  let existing = document.querySelector('.row-props-modal');
+  if (existing) existing.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'row-props-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:99999';
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#fff;border-radius:12px;padding:24px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.3)';
+  
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+  html += '<h3 style="margin:0;font-size:1rem;">Row Properties</h3>';
+  html += '<button class="close-row-btn" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">✕</button>';
+  html += '</div>';
+  html += '<div style="margin-bottom:16px;"><label style="font-size:0.85rem;display:block;margin-bottom:4px;">Background</label><input type="color" id="rowBg" value="#ffffff" style="width:100%;height:32px;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;"></div>';
+  html += '<button id="applyRowProps" style="width:100%;padding:8px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Apply</button>';
+  
+  modal.innerHTML = html;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  
+  overlay.querySelector('.close-row-btn').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#applyRowProps').addEventListener('click', () => {
+    const bg = overlay.querySelector('#rowBg').value;
+    row.querySelectorAll('td, th').forEach(td => td.style.backgroundColor = bg);
+    overlay.remove();
+    editor.dispatchEvent(new Event('input'));
+  });
+}
+
+function showTableProperties(table, editor) {
+  let existing = document.querySelector('.table-props-modal');
+  if (existing) existing.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'table-props-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:99999';
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#fff;border-radius:12px;padding:24px;width:350px;box-shadow:0 20px 60px rgba(0,0,0,0.3)';
+  
+  const currentBorder = table.style.borderColor || '#cbd5e1';
+  const currentBg = table.style.backgroundColor || '#fff';
+  const currentStyle = table.getAttribute('data-table-style') || 'simple';
+  
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+  html += '<h3 style="margin:0;font-size:1rem;">Table Properties</h3>';
+  html += '<button class="close-props-btn" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">✕</button>';
+  html += '</div>';
+  
+  html += '<div style="margin-bottom:12px;">';
+  html += '<label style="font-size:0.85rem;display:block;margin-bottom:4px;">Table Style</label>';
+  html += '<select id="propsTableStyle" style="width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:4px;">';
+  Object.entries(TABLE_STYLES).forEach(([id, s]) => {
+    html += '<option value="' + id + '"' + (id === currentStyle ? ' selected' : '') + '>' + s.name + '</option>';
+  });
+  html += '</select></div>';
+  
+  html += '<div style="margin-bottom:12px;">';
+  html += '<label style="font-size:0.85rem;display:block;margin-bottom:4px;">Background Color</label>';
+  html += '<input type="color" id="propsTableBg" value="' + currentBg + '" style="width:100%;height:32px;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;">';
+  html += '</div>';
+  
+  html += '<div style="margin-bottom:16px;">';
+  html += '<label style="font-size:0.85rem;display:block;margin-bottom:4px;">Border Color</label>';
+  html += '<input type="color" id="propsTableBorder" value="' + currentBorder + '" style="width:100%;height:32px;border:1px solid #cbd5e1;border-radius:4px;cursor:pointer;">';
+  html += '</div>';
+  
+  html += '<div style="display:flex;gap:8px;">';
+  html += '<button id="applyTableProps" style="flex:1;padding:8px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Apply</button>';
+  html += '<button id="cancelTableProps" style="flex:1;padding:8px;background:#e2e8f0;border:none;border-radius:6px;cursor:pointer;">Cancel</button>';
+  html += '</div>';
+  
+  modal.innerHTML = html;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  
+  overlay.querySelector('.close-props-btn').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('#cancelTableProps').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+  
+  overlay.querySelector('#applyTableProps').addEventListener('click', function() {
+    const styleId = overlay.querySelector('#propsTableStyle').value;
+    const bgColor = overlay.querySelector('#propsTableBg').value;
+    const borderColor = overlay.querySelector('#propsTableBorder').value;
+    
+    applyTableStyle(table, styleId);
+    table.style.backgroundColor = bgColor;
+    table.querySelectorAll('th, td').forEach(cell => {
+      if (!cell.style.backgroundColor || cell.style.backgroundColor === 'inherit') {
+        cell.style.borderColor = borderColor;
+      }
+    });
+    
+    overlay.remove();
+    editor.dispatchEvent(new Event('input'));
+  });
+}
+
+// Table style definitions
+const TABLE_STYLES = {
+  'simple': {
+    name: '📄 Simple',
+    table: 'border-collapse:collapse;width:100%;margin:8px 0;font-size:0.85rem;',
+    th: 'background:#f1f5f9;padding:8px 12px;border:1px solid #cbd5e1;text-align:left;font-weight:600;',
+    td: 'padding:8px 12px;border:1px solid #cbd5e1;',
+    headerBg: '#f1f5f9'
+  },
+  'minimal': {
+    name: '✨ Minimal',
+    table: 'border-collapse:collapse;width:100%;margin:8px 0;font-size:0.85rem;',
+    th: 'padding:8px 12px;border-bottom:2px solid #334155;text-align:left;font-weight:600;',
+    td: 'padding:8px 12px;border-bottom:1px solid #e2e8f0;',
+    headerBg: 'transparent'
+  },
+  'dark': {
+    name: '🌙 Dark',
+    table: 'border-collapse:collapse;width:100%;margin:8px 0;font-size:0.85rem;color:#e2e8f0;',
+    th: 'background:#1e293b;padding:8px 12px;border:1px solid #334155;text-align:left;font-weight:600;color:#f1f5f9;',
+    td: 'padding:8px 12px;border:1px solid #334155;background:#1e293b;',
+    headerBg: '#1e293b'
+  },
+  'blue': {
+    name: '💙 Blue',
+    table: 'border-collapse:collapse;width:100%;margin:8px 0;font-size:0.85rem;',
+    th: 'background:#1e40af;color:#fff;padding:8px 12px;border:1px solid #1e40af;text-align:left;font-weight:600;',
+    td: 'padding:8px 12px;border:1px solid #bfdbfe;',
+    headerBg: '#1e40af'
+  },
+  'green': {
+    name: '💚 Green',
+    table: 'border-collapse:collapse;width:100%;margin:8px 0;font-size:0.85rem;',
+    th: 'background:#166534;color:#fff;padding:8px 12px;border:1px solid #166534;text-align:left;font-weight:600;',
+    td: 'padding:8px 12px;border:1px solid #bbf7d0;',
+    headerBg: '#166534'
+  },
+  'borderless': {
+    name: '🔲 Borderless',
+    table: 'width:100%;margin:8px 0;font-size:0.85rem;',
+    th: 'padding:8px 12px;text-align:left;font-weight:600;background:#f8fafc;',
+    td: 'padding:8px 12px;',
+    headerBg: '#f8fafc'
+  },
+  'striped': {
+    name: '🦓 Striped',
+    table: 'border-collapse:collapse;width:100%;margin:8px 0;font-size:0.85rem;',
+    th: 'background:#f1f5f9;padding:8px 12px;border:1px solid #cbd5e1;text-align:left;font-weight:600;',
+    td: 'padding:8px 12px;border:1px solid #cbd5e1;',
+    headerBg: '#f1f5f9',
+    stripe: '#f8fafc'
+  }
+};
+
+function applyTableStyle(table, styleId) {
+  const style = TABLE_STYLES[styleId] || TABLE_STYLES['simple'];
+  table.style.cssText = style.table;
+  table.setAttribute('data-table-style', styleId);
+  table.querySelectorAll('th').forEach(th => th.style.cssText = style.th);
+  table.querySelectorAll('td').forEach(td => td.style.cssText = style.td);
+  if (style.stripe) {
+    table.querySelectorAll('tr:nth-child(even) td').forEach(td => {
+      td.style.cssText = style.td + 'background:' + style.stripe + ';';
+    });
+  }
+}
+
+function showTableStylePicker(table, editor) {
+  let existing = document.querySelector('.table-style-picker-modal');
+  if (existing) existing.remove();
+  
+  const currentStyle = table.getAttribute('data-table-style') || 'simple';
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'table-style-picker-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:99999';
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#fff;border-radius:12px;padding:24px;width:400px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)';
+  
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+  html += '<h3 style="margin:0;font-size:1.1rem;">Table Style</h3>';
+  html += '<button onclick="this.closest(\'.table-style-picker-modal\').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">✕</button>';
+  html += '</div>';
+  
+  Object.entries(TABLE_STYLES).forEach(([id, s]) => {
+    const isActive = id === currentStyle;
+    html += '<div class="table-style-option" data-style-id="' + id + '" style="padding:12px;margin-bottom:8px;border:2px solid ' + (isActive ? '#3b82f6' : '#e2e8f0') + ';border-radius:8px;cursor:pointer;background:' + (isActive ? '#eff6ff' : '#fff') + ';" onmouseover="this.style.borderColor=\'#3b82f6\'" onmouseout="this.style.borderColor=\'' + (isActive ? '#3b82f6' : '#e2e8f0') + '\'">';
+    html += '<div style="font-weight:600;margin-bottom:4px;">' + s.name + '</div>';
+    html += '<table style="' + s.table + '"><tr>';
+    html += '<th style="' + s.th + '">Header 1</th>';
+    html += '<th style="' + s.th + '">Header 2</th></tr>';
+    html += '<tr><td style="' + s.td + '">Data</td><td style="' + s.td + '">Data</td></tr>';
+    if (id === 'striped') {
+      html += '<tr><td style="' + s.td + 'background:' + s.stripe + ';">Data</td><td style="' + s.td + 'background:' + s.stripe + ';">Data</td></tr>';
+    }
+    html += '</table></div>';
+  });
+  
+  modal.innerHTML = html;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  
+  overlay.addEventListener('click', function(e) {
+    const option = e.target.closest('.table-style-option');
+    if (option) {
+      const styleId = option.getAttribute('data-style-id');
+      applyTableStyle(table, styleId);
+      overlay.remove();
+      editor.dispatchEvent(new Event('input'));
+    }
+    if (e.target === overlay) overlay.remove();
+  });
+}
 
 function toggleSourceCode(editorId) {
   const editor = document.getElementById(editorId);
@@ -1898,7 +2147,13 @@ function renderPreviewField(field) {
   }
   html += `      <div class="form-group${field.width === '100' ? ' full' : ''}">\n`;
   if (field.type !== 'radio' && field.type !== 'checkbox') {
-    html += `        <label>${esc(field.label)}${field.required ? ' *' : ''}</label>\n`;
+    let labelStyle = '';
+    if (field.fontStyle === 'bold') labelStyle += 'font-weight:bold;';
+    else if (field.fontStyle === 'italic') labelStyle += 'font-style:italic;';
+    if (field.fontSize === 'small') labelStyle += 'font-size:0.85rem;';
+    else if (field.fontSize === 'large') labelStyle += 'font-size:1.1rem;';
+    else if (field.fontSize === 'xlarge') labelStyle += 'font-size:1.2rem;';
+    html += `        <label style="${labelStyle}">${esc(field.label)}${field.required ? ' *' : ''}</label>\n`;
   }
   switch (field.type) {
     case 'text': case 'email': case 'number': case 'tel':
@@ -1924,7 +2179,14 @@ function renderPreviewField(field) {
       });
       break;
     case 'textarea':
-      html += `        <textarea rows="${getTextareaRows(field)}" placeholder="${esc(field.placeholder || '')}" ${field.required ? 'required' : ''}></textarea>\n`;
+      let taStyle = '';
+      if (field.fontStyle === 'bold') taStyle += 'font-weight:bold;';
+      else if (field.fontStyle === 'italic') taStyle += 'font-style:italic;';
+      else if (field.fontStyle === 'bold-italic') taStyle += 'font-weight:bold;font-style:italic;';
+      if (field.fontSize === 'small') taStyle += 'font-size:0.85rem;';
+      else if (field.fontSize === 'large') taStyle += 'font-size:1.1rem;';
+      else if (field.fontSize === 'xlarge') taStyle += 'font-size:1.2rem;';
+      html += `        <textarea rows="${getTextareaRows(field)}" placeholder="${esc(field.placeholder || '')}" ${field.required ? 'required' : ''} style="${taStyle}"></textarea>\n`;
       break;
     case 'table':
       html += renderPreviewTable(field);
@@ -2706,3 +2968,357 @@ function uploadDatabase() {
       document.getElementById('uploadDbBtn').disabled = false;
     });
 }
+// Initialize table grid cells
+(function initTableGrid() {
+  document.querySelectorAll('.table-grid').forEach(grid => {
+    for (let i = 0; i < 100; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'table-grid-cell';
+      cell.dataset.row = Math.floor(i / 10) + 1;
+      cell.dataset.col = (i % 10) + 1;
+      grid.appendChild(cell);
+    }
+    
+    const dropdown = grid.closest('.table-grid-dropdown');
+    const info = dropdown?.querySelector('.table-grid-info');
+    
+    grid.addEventListener('mousemove', function(e) {
+      const target = e.target.closest('.table-grid-cell');
+      if (!target || !info) return;
+      const row = parseInt(target.dataset.row);
+      const col = parseInt(target.dataset.col);
+      info.textContent = row + ' × ' + col;
+      grid.querySelectorAll('.table-grid-cell').forEach(c => {
+        const r = parseInt(c.dataset.row);
+        const co = parseInt(c.dataset.col);
+        c.classList.toggle('active', r <= row && co <= col);
+      });
+    });
+    
+    grid.addEventListener('click', function(e) {
+      const target = e.target.closest('.table-grid-cell');
+      if (!target) return;
+      const rows = parseInt(target.dataset.row);
+      const cols = parseInt(target.dataset.col);
+      
+      const editor = dropdown.closest('.prop-group')?.querySelector('[contenteditable]');
+      if (!editor) return;
+      editor.focus();
+      
+      const styleSelect = document.getElementById('newTableStyleSelect');
+      const styleId = styleSelect?.value || 'simple';
+      const style = TABLE_STYLES[styleId] || TABLE_STYLES['simple'];
+      
+      const tableHtml = '<table data-table-style="' + styleId + '" style="' + style.table + '">' +
+        Array(rows).fill().map(() => '<tr>' + Array(cols).fill().map(() => '<td style="' + style.td + '">&nbsp;</td>').join('') + '</tr>').join('') +
+        '</table><p></p>';
+      
+      document.execCommand('insertHTML', false, tableHtml);
+      editor.dispatchEvent(new Event('input'));
+      
+      dropdown.style.display = 'none';
+    });
+    
+    grid.addEventListener('mouseleave', function() {
+      grid.querySelectorAll('.table-grid-cell').forEach(c => c.classList.remove('active'));
+      if (info) info.textContent = '1 × 1';
+    });
+  });
+})();
+
+// ===== TinyMCE Integration =====
+let tinyMCEInstances = {};
+
+function initInfoBlockEditor(fieldId, initialContent) {
+  const editorId = 'tinymce_' + fieldId;
+  const holder = document.getElementById('editorjs_' + fieldId);
+  if (!holder) return;
+  
+  // Replace holder with textarea for TinyMCE
+  holder.innerHTML = '<textarea id="' + editorId + '">' + (initialContent || '') + '</textarea>';
+  
+  // Destroy existing instance
+  if (tinyMCEInstances[fieldId]) {
+    tinymce.get(editorId)?.remove();
+    delete tinyMCEInstances[fieldId];
+  }
+  
+  setTimeout(() => {
+    tinymce.init({
+      selector: '#' + editorId,
+      height: 400,
+      min_height: 300,
+      resize: 'both',
+      plugins: [
+        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+        'insertdatetime', 'media', 'table', 'help', 'wordcount',
+        'emoticons', 'template', 'codesample', 'pagebreak',
+        'save', 'directionality', 'nonbreaking', 'visualchars',
+        'quickbars', 'autosave', 'imagetools', 'textpattern', 'autoresize'
+      ],
+      toolbar1: 'undo redo | formatselect fontselect fontsizeselect | bold italic underline strikethrough | forecolor backcolor | subscript superscript | removeformat',
+      toolbar2: 'alignleft aligncenter alignright alignjustify | outdent indent | bullist numlist | table | link image media anchor codesample | hr nonbreaking pagebreak',
+      toolbar3: 'cut copy paste pastetext | searchreplace | code preview print save fullscreen | insertdatetime charmap emoticons | template | help wordcount',
+      quickbars_selection_toolbar: 'bold italic | quicklink h2 h3 blockquote quickimage quicktable',
+      quickbars_insert_toolbar: 'quickimage quicktable | hr',
+      menubar: 'file edit insert view format table tools',
+      menu: {
+        file: { title: 'File', items: 'newdocument | preview | print' },
+        edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
+        insert: { title: 'Insert', items: 'link image media insertdatetime table template codesample | charmap emoticons hr anchor pagebreak nonbreaking' },
+        view: { title: 'View', items: 'code visualaid visualchars visualblocks | spellchecker | preview fullscreen' },
+        format: { title: 'Format', items: 'bold italic underline strikethrough superscript subscript | formats | fontformats fontsizes align lineheight | forecolor backcolor | removeformat' },
+        table: { title: 'Table', items: 'inserttable tableprops deletetable | cell row column | advtablesort tablecellvaligntoggle tablecellborderwidth tablecellborderstyle tablecellbackgroundcolor tablebordercolor' },
+        tools: { title: 'Tools', items: 'spellchecker | code wordcount' }
+      },
+      style_formats: [
+        { title: 'Headings', items: [
+          { title: 'Heading 1', format: 'h1' },
+          { title: 'Heading 2', format: 'h2' },
+          { title: 'Heading 3', format: 'h3' },
+          { title: 'Heading 4', format: 'h4' },
+          { title: 'Heading 5', format: 'h5' },
+          { title: 'Heading 6', format: 'h6' }
+        ]},
+        { title: 'Inline', items: [
+          { title: 'Bold', format: 'bold', icon: 'bold' },
+          { title: 'Italic', format: 'italic', icon: 'italic' },
+          { title: 'Underline', format: 'underline', icon: 'underline' },
+          { title: 'Strikethrough', format: 'strikethrough', icon: 'strikethrough' },
+          { title: 'Superscript', format: 'superscript', icon: 'superscript' },
+          { title: 'Subscript', format: 'subscript', icon: 'subscript' },
+          { title: 'Code', format: 'code', icon: 'code' },
+          { title: 'Highlight', inline: 'mark', classes: 'highlight', wrapper: true }
+        ]},
+        { title: 'Blocks', items: [
+          { title: 'Paragraph', format: 'p' },
+          { title: 'Blockquote', format: 'blockquote', wrapper: true },
+          { title: 'Div', format: 'div', wrapper: true },
+          { title: 'Pre', format: 'pre' }
+        ]},
+        { title: 'Alignment', items: [
+          { title: 'Left', format: 'alignleft' },
+          { title: 'Center', format: 'aligncenter' },
+          { title: 'Right', format: 'alignright' },
+          { title: 'Justify', format: 'alignjustify' }
+        ]}
+      ],
+      font_formats: 'Arial=arial,helvetica,sans-serif; Arial Black=arial black,avant garde; Book Antiqua=book antiqua,palatino; Comic Sans MS=comic sans ms,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Helvetica=helvetica; Impact=impact,chicago; Symbol=symbol; Tahoma=tahoma,arial,helvetica,sans-serif; Terminal=terminal,monaco; Times New Roman=times new roman,times; Trebuchet MS=trebuchet ms,geneva; Verdana=verdana,geneva; Webdings=webdings; Wingdings=wingdings,zapf dingbats; Calibri=calibri,arial,sans-serif; Cambria=cambria,serif; Candara=candara,sans-serif; Consolas=consolas,monospace; Constantia=constantia,serif; Corbel=corbel,sans-serif',
+      fontsize_formats: '8pt 9pt 10pt 11pt 12pt 13pt 14pt 15pt 16pt 18pt 20pt 22pt 24pt 26pt 28pt 32pt 36pt 40pt 44pt 48pt 54pt 60pt 72pt 96pt',
+      lineheight_formats: '1 1.1 1.2 1.3 1.4 1.5 1.6 1.8 2 2.5 3',
+      color_cols: 5,
+      color_map: [
+        '#000000', 'Black', '#1a1a1a', 'Dark Gray 1', '#333333', 'Dark Gray 2',
+        '#4d4d4d', 'Dark Gray 3', '#666666', 'Medium Gray 1', '#808080', 'Medium Gray 2',
+        '#999999', 'Medium Gray 3', '#b3b3b3', 'Light Gray 1', '#cccccc', 'Light Gray 2',
+        '#e6e6e6', 'Light Gray 3', '#ffffff', 'White',
+        '#ff0000', 'Red', '#ff3333', 'Light Red', '#cc0000', 'Dark Red',
+        '#ff6600', 'Orange', '#ff9900', 'Light Orange', '#ffcc00', 'Yellow Orange',
+        '#ffff00', 'Yellow', '#ffff33', 'Light Yellow', '#cccc00', 'Dark Yellow',
+        '#00ff00', 'Green', '#33ff33', 'Light Green', '#00cc00', 'Dark Green',
+        '#00ffcc', 'Cyan', '#00ffff', 'Light Cyan', '#009999', 'Dark Cyan',
+        '#0000ff', 'Blue', '#3333ff', 'Light Blue', '#0000cc', 'Dark Blue',
+        '#6600ff', 'Purple', '#9900ff', 'Light Purple', '#cc00ff', 'Magenta',
+        '#ff00ff', 'Pink', '#ff33ff', 'Light Pink', '#ff66b3', 'Hot Pink',
+        '#ff0066', 'Rose', '#cc0066', 'Dark Rose', '#99004d', 'Maroon'
+      ],
+      table_class_list: [
+        { title: 'None', value: '' },
+        { title: 'Simple', value: 'table-simple' },
+        { title: 'Striped', value: 'table-striped' },
+        { title: 'Bordered', value: 'table-bordered' },
+        { title: 'Hover', value: 'table-hover' },
+        { title: 'Compact', value: 'table-sm' },
+        { title: 'Dark', value: 'table-dark' },
+        { title: 'Light', value: 'table-light' }
+      ],
+      table_cell_class_list: [
+        { title: 'None', value: '' },
+        { title: 'Header', value: 'cell-header' },
+        { title: 'Primary', value: 'cell-primary' },
+        { title: 'Secondary', value: 'cell-secondary' },
+        { title: 'Success', value: 'cell-success' },
+        { title: 'Info', value: 'cell-info' },
+        { title: 'Warning', value: 'cell-warning' },
+        { title: 'Danger', value: 'cell-danger' },
+        { title: 'Light', value: 'cell-light' },
+        { title: 'Dark', value: 'cell-dark' }
+      ],
+      table_row_class_list: [
+        { title: 'None', value: '' },
+        { title: 'Header', value: 'row-header' },
+        { title: 'Striped', value: 'row-striped' },
+        { title: 'Success', value: 'row-success' },
+        { title: 'Info', value: 'row-info' },
+        { title: 'Warning', value: 'row-warning' },
+        { title: 'Danger', value: 'row-danger' }
+      ],
+      table_advtab: true,
+      table_cell_advtab: true,
+      table_row_advtab: true,
+      table_default_attributes: { border: '1' },
+      table_default_styles: { 'border-collapse': 'collapse', width: '100%' },
+      table_responsive_width: true,
+      advtable_default_styles: {
+        border: '1px solid #ccc',
+        'border-collapse': 'collapse',
+        width: '100%'
+      },
+      pagebreak_separator: '<!-- pagebreak -->',
+      pagebreak_split_block: true,
+      codesample_languages: [
+        { text: 'HTML/XML', value: 'markup' },
+        { text: 'JavaScript', value: 'javascript' },
+        { text: 'CSS', value: 'css' },
+        { text: 'PHP', value: 'php' },
+        { text: 'Ruby', value: 'ruby' },
+        { text: 'Python', value: 'python' },
+        { text: 'Java', value: 'java' },
+        { text: 'C', value: 'c' },
+        { text: 'C#', value: 'csharp' },
+        { text: 'C++', value: 'cpp' },
+        { text: 'SQL', value: 'sql' },
+        { text: 'Bash/Shell', value: 'bash' },
+        { text: 'JSON', value: 'json' },
+        { text: 'YAML', value: 'yaml' },
+        { text: 'Markdown', value: 'markdown' }
+      ],
+      image_advtab: true,
+      image_dimensions: true,
+      image_class_list: [
+        { title: 'None', value: '' },
+        { title: 'Responsive', value: 'img-responsive' },
+        { title: 'Rounded', value: 'img-rounded' },
+        { title: 'Thumbnail', value: 'img-thumbnail' },
+        { title: 'Circle', value: 'img-circle' },
+        { title: 'Float Left', value: 'img-float-left' },
+        { title: 'Float Right', value: 'img-float-right' }
+      ],
+      image_title: true,
+      image_caption: true,
+      link_context_toolbar: true,
+      link_default_target: '_blank',
+      link_title: true,
+      target_list: [
+        { title: 'None', value: '' },
+        { title: 'Same page', value: '_self' },
+        { title: 'New page', value: '_blank' },
+        { title: 'Parent window', value: '_parent' }
+      ],
+      rel_list: [
+        { title: 'No follow', value: 'nofollow' },
+        { title: 'Sponsored', value: 'sponsored' },
+        { title: 'UGC', value: 'ugc' }
+      ],
+      insertdatetime_formats: ['%H:%M:%S', '%Y-%m-%d', '%I:%M:%S %p', '%D', '%B %d, %Y', '%d/%m/%Y'],
+      insertdatetime_element: true,
+      template_replace_values: {
+        username: 'User',
+        staffid: '001'
+      },
+      templates: [
+        { title: 'Basic Table', description: 'Simple bordered table', content: '<table style="border-collapse: collapse; width: 100%;" border="1"><tbody><tr><td style="width: 50%;">Cell 1</td><td style="width: 50%;">Cell 2</td></tr><tr><td style="width: 50%;">Cell 3</td><td style="width: 50%;">Cell 4</td></tr></tbody></table>' },
+        { title: 'Two Columns', description: 'Two column layout', content: '<div style="display: flex; gap: 20px;"><div style="flex: 1;"><h3>Column 1</h3><p>Content here...</p></div><div style="flex: 1;"><h3>Column 2</h3><p>Content here...</p></div></div>' },
+        { title: 'Callout Box', description: 'Highlighted info box', content: '<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 16px; margin: 16px 0;"><strong>Note:</strong> Important information here.</div>' },
+        { title: 'Warning Box', description: 'Warning alert box', content: '<div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 16px; margin: 16px 0;"><strong>Warning:</strong> Be careful with this step.</div>' },
+        { title: 'Danger Box', description: 'Danger alert box', content: '<div style="background: #ffebee; border-left: 4px solid #f44336; padding: 16px; margin: 16px 0;"><strong>Danger:</strong> Do not proceed without approval.</div>' }
+      ],
+      branding: false,
+      promotion: false,
+      elementpath: true,
+      statusbar: true,
+      paste_as_text: false,
+      paste_enable_default_filters: true,
+      paste_data_images: true,
+      smart_paste: true,
+      browser_spellcheck: true,
+      contextmenu: 'link image table codesample',
+      textpattern_patterns: [
+        { start: '*', end: '*', format: 'italic' },
+        { start: '**', end: '**', format: 'bold' },
+        { start: '#', format: 'h1' },
+        { start: '##', format: 'h2' },
+        { start: '###', format: 'h3' },
+        { start: '1. ', cmd: 'InsertOrderedList' },
+        { start: '* ', cmd: 'InsertUnorderedList' },
+        { start: '- ', cmd: 'InsertUnorderedList' }
+      ],
+      autoresize_bottom_margin: 50,
+      autosave_interval: '30s',
+      autosave_prefix: 'tinymce-autosave-{path}{query}-{id}-',
+      autosave_restore_when_empty: false,
+      autosave_retention: '2m',
+      setup: function(editor) {
+        editor.ui.registry.addButton('customSave', {
+          icon: 'save',
+          tooltip: 'Save Content',
+          onAction: function() {
+            const content = editor.getContent();
+            const textarea = holder.closest('.prop-group')?.querySelector('#prop_content');
+            if (textarea) {
+              textarea.value = content;
+              updateField('content', content);
+            }
+            editor.notificationManager.open({
+              text: 'Content saved!',
+              type: 'success',
+              timeout: 2000
+            });
+          }
+        });
+        
+        editor.on('change input blur ExecCommand', function() {
+          const content = editor.getContent();
+          const textarea = holder.closest('.prop-group')?.querySelector('#prop_content');
+          if (textarea) {
+            textarea.value = content;
+            updateField('content', content);
+          }
+        });
+        
+        editor.on('init', function() {
+          if (initialContent) {
+            editor.setContent(initialContent);
+          }
+          editor.notificationManager.open({
+            text: 'Editor ready! Use Format > Table for advanced table design.',
+            type: 'info',
+            timeout: 4000
+          });
+        });
+      },
+      init_instance_callback: function(editor) {
+        tinyMCEInstances[fieldId] = editor;
+      }
+    });
+  }, 200);
+}
+
+// Override showContentType for infoblock
+const originalShowContentType = window.showContentType;
+window.showContentType = function(fieldId, type) {
+  if (type === 'text') {
+    setTimeout(() => {
+      const textarea = document.querySelector(`[id*="prop_content"]`);
+      if (textarea) {
+        initInfoBlockEditor(fieldId, textarea.value);
+      }
+    }, 150);
+  }
+  if (originalShowContentType) originalShowContentType(fieldId, type);
+};
+
+// Clean up on field change
+const originalRenderProps = window.renderProperties;
+window.renderProperties = function(field) {
+  // Destroy all TinyMCE instances
+  Object.keys(tinyMCEInstances).forEach(key => {
+    const ed = tinyMCEInstances[key];
+    if (ed && !ed.removed) {
+      ed.remove();
+    }
+    delete tinyMCEInstances[key];
+  });
+  if (originalRenderProps) originalRenderProps(field);
+};

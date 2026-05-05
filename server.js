@@ -771,7 +771,13 @@ function renderFieldHtml(field) {
   const combinedStyle = widthStyle || heightStyle ? ` style="${widthStyle}${heightStyle ? (widthStyle ? ' ' : '') + heightStyle : ''}"` : '';
   html += `        <div class="form-group${field.width === '100' ? ' full' : ''}"${combinedStyle}>\n`;
   if (field.type !== 'radio' && field.type !== 'checkbox') {
-    html += `          <label>${esc(field.label)}${field.required ? ' *' : ''}</label>\n`;
+    let labelStyle = '';
+    if (field.fontStyle === 'bold') labelStyle += 'font-weight:bold;';
+    else if (field.fontStyle === 'italic') labelStyle += 'font-style:italic;';
+    if (field.fontSize === 'small') labelStyle += 'font-size:0.85rem;';
+    else if (field.fontSize === 'large') labelStyle += 'font-size:1.1rem;';
+    else if (field.fontSize === 'xlarge') labelStyle += 'font-size:1.2rem;';
+    html += `          <label style="${labelStyle}">${esc(field.label)}${field.required ? ' *' : ''}</label>\n`;
   }
 
   switch (field.type) {
@@ -804,7 +810,14 @@ function renderFieldHtml(field) {
       });
       break;
     case 'textarea':
-      html += `          <textarea name="${name}" rows="${getTextareaRows(field)}" placeholder="${esc(field.placeholder || '')}" ${field.required ? 'required' : ''}></textarea>\n`;
+      let taStyle = '';
+      if (field.fontStyle === 'bold') taStyle += 'font-weight:bold;';
+      else if (field.fontStyle === 'italic') taStyle += 'font-style:italic;';
+      else if (field.fontStyle === 'bold-italic') taStyle += 'font-weight:bold;font-style:italic;';
+      if (field.fontSize === 'small') taStyle += 'font-size:0.85rem;';
+      else if (field.fontSize === 'large') taStyle += 'font-size:1.1rem;';
+      else if (field.fontSize === 'xlarge') taStyle += 'font-size:1.2rem;';
+      html += `          <textarea name="${name}" rows="${getTextareaRows(field)}" placeholder="${esc(field.placeholder || '')}" ${field.required ? 'required' : ''} style="${taStyle}"></textarea>\n`;
       break;
     case 'table':
       html += renderTableHtml(field);
