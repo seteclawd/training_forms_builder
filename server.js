@@ -331,8 +331,8 @@ async function generateHtml(config = {}, isPreview = false) {
 
   html += `
     <div class="form-footer">
-      <button type="button" class="btn btn-secondary" onclick="saveDraft()">Save Draft</button>
-      <button type="button" class="btn btn-primary" onclick="submitForm()">Submit</button>
+      <button type="button" class="btn btn-secondary" id="saveDraftBtn">Save Draft</button>
+      <button type="button" class="btn btn-primary" id="submitFormBtn">Submit</button>
     </div>
   </form>
 </div>
@@ -342,15 +342,23 @@ async function generateHtml(config = {}, isPreview = false) {
     document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===n));
     document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===n));
   }
-  function saveDraft() {
+  window.saveDraft = function() {
     var data = Object.fromEntries(new FormData(document.getElementById('trainingForm')));
+    var formId = config.subtitle || config.formId || 'form';
+    var crewName = '';
+    Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('crew')!==-1 && !crewName) crewName = data[k]; });
+    var dateVal = config.formDate || '';
+    Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
+    var defaultName = formId + (crewName ? ' - ' + crewName : '') + (dateVal ? ' - ' + dateVal : '');
+    var name = prompt('Save draft as:', defaultName);
+    if (name === null) return;
     var draftId = 'draft_' + Date.now();
     var drafts = JSON.parse(localStorage.getItem('training_drafts') || '{}');
-    drafts[draftId] = {data: data, savedAt: new Date().toISOString(), title: config.title || 'Training Form'};
+    drafts[draftId] = {data: data, savedAt: new Date().toISOString(), title: config.title || 'Training Form', name: name || defaultName};
     localStorage.setItem('training_drafts', JSON.stringify(drafts));
-    alert('Draft saved!');
-  }
-  function submitForm() {
+    alert('Draft saved: ' + (name || defaultName));
+  };
+  window.submitForm = function() {
     var form = document.getElementById('trainingForm');
     var data = Object.fromEntries(new FormData(form));
     // Fill all inputs with their current values before cloning
@@ -386,7 +394,9 @@ async function generateHtml(config = {}, isPreview = false) {
     var mailto = 'mailto:luis.rivas@texelair.com?cc=luis.rivas@texelair.com&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
     window.location.href = mailto;
   }
-  function downloadForm() { var html = document.documentElement.outerHTML; var blob = new Blob([html], {type: 'text/html;charset=utf-8'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (document.title || 'training-form') + '.html'; document.body.appendChild(a); a.click(); setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100); }
+  window.downloadForm = function() { var html = document.documentElement.outerHTML; var blob = new Blob([html], {type: 'text/html;charset=utf-8'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (document.title || 'training-form') + '.html'; document.body.appendChild(a); a.click(); setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100); };
+  document.getElementById('saveDraftBtn').addEventListener('click', window.saveDraft);
+  document.getElementById('submitFormBtn').addEventListener('click', window.submitForm);
 </script>
 <script>
   var __crewData = ${JSON.stringify(crewData)};
