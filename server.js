@@ -395,15 +395,15 @@ async function generateHtml(config, isPreview = false) {
     function filterFstdForLoc(locSel, fstdSel) {
       var selectedLoc = locSel.value;
       fstdSel.innerHTML = '<option value="">-- Select --</option>';
-      if (!__fstdData) return;
-      var filtered = selectedLoc ? __fstdData.filter(function(f){return f.location_name === selectedLoc;}) : __fstdData;
+      if (!window.__fstdData) return;
+      var filtered = selectedLoc ? window.__fstdData.filter(function(f){return f.location_name === selectedLoc;}) : window.__fstdData;
       filtered.forEach(function(f){
         var opt = document.createElement('option');
         opt.value = f.fstd_id; opt.textContent = f.fstd_id;
         fstdSel.appendChild(opt);
       });
     }
-    (function(){
+    function initLocFstdFilter() {
       var allLocSels = Array.from(document.querySelectorAll('select[data-role="location"]'));
       var allFstdSels = Array.from(document.querySelectorAll('select[data-role="fstdId"]'));
       allLocSels.forEach(function(locSel, idx){
@@ -412,7 +412,14 @@ async function generateHtml(config, isPreview = false) {
         locSel.addEventListener('change', function(){ filterFstdForLoc(locSel, fstdSel); });
         if (locSel.value) filterFstdForLoc(locSel, fstdSel);
       });
-    })();
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLocFstdFilter);
+    } else {
+      initLocFstdFilter();
+    }
+    // Also try again after a short delay for late-rendered content
+    setTimeout(initLocFstdFilter, 500);
 
     // Signature canvas drawing
     function initCanvas(canvas) {
