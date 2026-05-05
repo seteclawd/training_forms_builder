@@ -617,6 +617,8 @@ function renderFieldHtml(field) {
     case 'email':
     case 'number':
     case 'tel':
+      html += `          <input type="${field.type}" name="${name}" placeholder="${esc(field.placeholder || '')}" ${field.required ? 'required' : ''} style="${getFontStyle(field)}">\n`;
+      break;
     case 'date':
       html += `          <input type="date" name="${name}" ${field.required ? 'required' : ''} style="${getFontStyle(field)}" onchange="if(this.value){var d=new Date(this.value+'T00:00:00');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];this.setAttribute('data-raw',this.value);this.type='text';this.value=d.getDate()+'-'+m[d.getMonth()]+'-'+d.getFullYear();}" onfocus="if(this.getAttribute('data-raw')){this.type='date';this.value=this.getAttribute('data-raw');}">\n`;
       break;
