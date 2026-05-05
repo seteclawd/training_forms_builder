@@ -512,7 +512,68 @@ async function generateHtml(config = {}, isPreview = false) {
         else { opt.value = r.name; opt.textContent = r.name + (r.position ? ' (' + r.position + ')' : ''); }
         sel.appendChild(opt);
       });
-      ;
+      // Add -Custom- option for adIcao - replace select with text input on selection
+      if (source === 'adIcao') {
+        var customOpt = document.createElement('option');
+        customOpt.value = '-Custom-';
+        customOpt.textContent = '-Custom-';
+        sel.appendChild(customOpt);
+        var origName = sel.name;
+        sel.addEventListener('change', function() {
+          if (sel.value === '-Custom-') {
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'Enter custom AD ICAO';
+            input.name = origName;
+            input.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;';
+            var savedSel = sel;
+            sel.parentNode.replaceChild(input, sel);
+            input.focus();
+            var revertBtn = document.createElement('button');
+            revertBtn.type = 'button';
+            revertBtn.textContent = '← Back to list';
+            revertBtn.style.cssText = 'margin-top:4px;background:none;border:none;color:#6366f1;cursor:pointer;font-size:0.8rem;padding:0;';
+            revertBtn.onclick = function() {
+              var newSel = document.createElement('select');
+              newSel.name = origName;
+              newSel.className = 'db-field';
+              newSel.setAttribute('data-db', 'adIcao');
+              newSel.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;';
+              var defOpt = document.createElement('option');
+              defOpt.value = '';
+              defOpt.textContent = '-- Select --';
+              newSel.appendChild(defOpt);
+              var seen2 = {};
+              __crewData.forEach(function(r) {
+                if (r.ad_icao && !seen2[r.ad_icao]) {
+                  seen2[r.ad_icao] = true;
+                  var o = document.createElement('option');
+                  o.value = r.ad_icao;
+                  o.textContent = r.ad_icao;
+                  newSel.appendChild(o);
+                }
+              });
+              var cOpt = document.createElement('option');
+              cOpt.value = '-Custom-';
+              cOpt.textContent = '-Custom-';
+              newSel.appendChild(cOpt);
+              if (input.value) {
+                var sv = input.value;
+                setTimeout(function() {
+                  var co = document.createElement('option');
+                  co.value = sv;
+                  co.textContent = sv;
+                  newSel.insertBefore(co, newSel.querySelector('option[value="-Custom-"]'));
+                  newSel.value = sv;
+                }, 0);
+              }
+              newSel.dispatchEvent(new Event('change'));
+              revertBtn.remove();
+            };
+            input.parentNode.insertBefore(revertBtn, input.nextSibling);
+          }
+        });
+      }
     setTimeout(populateLocFstd, 200);
     setTimeout(populateLocFstd, 500);
     setTimeout(populateLocFstd, 1500);
