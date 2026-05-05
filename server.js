@@ -336,21 +336,28 @@ async function generateHtml(config, isPreview = false) {
   </form>
 </div>
 <script>
-  var config = ${JSON.stringify(config)};
+  var config = JSON.parse(atob('${Buffer.from(JSON.stringify(config)).toString('base64')}'));
   function showTab(n) {
     document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===n));
     document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===n));
   }
   function saveDraft() {
     var data = Object.fromEntries(new FormData(document.getElementById('trainingForm')));
-    var serverUrl = window.location.protocol === 'file:' ? 'http://37.27.202.203:8999' : '';
-    fetch(serverUrl + '/api/drafts', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({form_id:null, data_json:data})})
-      .then(function(r){return r.json()})
-      .then(function(d){alert('Draft saved (ID: '+d.id+')');})
-      .catch(function(e){alert('Error saving draft: '+e.message);});
+    var draftId = 'draft_' + Date.now();
+    var drafts = JSON.parse(localStorage.getItem('training_drafts') || '{}');
+    drafts[draftId] = {data: data, savedAt: new Date().toISOString(), title: config.title || 'Training Form'};
+    localStorage.setItem('training_drafts', JSON.stringify(drafts));
+    alert('Draft saved!');
   }
   function submitForm() {
-    var data = Object.fromEntries(new FormData(document.getElementById('trainingForm')));
+    var form = document.getElementById('trainingForm');
+    var data = Object.fromEntries(new FormData(form));
+    // Fill all inputs with their current values before cloning
+    form.querySelectorAll('input, select, textarea').forEach(function(el){
+      if(el.type === 'checkbox' || el.type === 'radio') return;
+      if(el.value) el.setAttribute('value', el.value);
+    });
+    var html = '<!DOCTYPE html>' + document.documentElement.outerHTML;
     var crewName = '', crew3lc = '', instructorName = '', examinerName = '';
     Object.keys(data).forEach(function(k){
       var kl = k.toLowerCase();
@@ -366,12 +373,17 @@ async function generateHtml(config, isPreview = false) {
     Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
     var subject = 'Submission ' + crewName + ' - ' + formId + ' ' + formName + ' - ' + dateVal;
     var body = 'Dear Training Department,\n\nKindly find attached the training form:\n\nForm ID: ' + formId + '\nForm Name: ' + formName + '\nCrew Name: ' + crewName + (crew3lc ? ' - ' + crew3lc : '') + '\nDate: ' + dateVal + '\n\nRegards,\n' + signName;
+    var blob = new Blob([html], {type:'text/html'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = (formName.replace(/[^a-zA-Z0-9]/g,'_')) + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 100);
     var mailto = 'mailto:luis.rivas@texelair.com?cc=luis.rivas@texelair.com&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-    var serverUrl = window.location.protocol === 'file:' ? 'http://37.27.202.203:8999' : '';
-    fetch(serverUrl + '/api/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({form_id:null, data_json:data})})
-      .then(function(r){return r.json()})
-      .then(function(d){window.location.href = mailto;})
-      .catch(function(e){console.error(e); window.location.href = mailto;});
+    window.location.href = mailto;
   }
   function downloadForm() { var html = document.documentElement.outerHTML; var blob = new Blob([html], {type: 'text/html;charset=utf-8'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (document.title || 'training-form') + '.html'; document.body.appendChild(a); a.click(); setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100); }
 </script>

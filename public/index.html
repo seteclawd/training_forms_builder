@@ -298,35 +298,37 @@
 <script>
 function showDrafts() {
   document.getElementById('draftsModal').style.display = 'flex';
-  document.getElementById('draftsList').innerHTML = 'Loading...';
-  fetch('/api/drafts').then(function(r){return r.json()}).then(function(drafts) {
-    if (!drafts.length) { document.getElementById('draftsList').innerHTML = '<p style="color:#64748b;text-align:center;padding:40px;">No drafts saved yet.</p>'; return; }
-    var html = '<table style="width:100%;border-collapse:collapse;"><thead><tr><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">ID</th><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">Date</th><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">Data</th><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">Actions</th></tr></thead><tbody>';
-    drafts.forEach(function(d) {
-      var data = typeof d.data_json === 'string' ? JSON.parse(d.data_json) : d.data_json;
-      var summary = Object.keys(data).slice(0,3).map(function(k){return k+': '+(data[k]||'-')}).join(' | ');
-      html += '<tr style="border-bottom:1px solid #334155;"><td style="color:#e2e8f0;padding:8px;">'+d.id+'</td><td style="color:#e2e8f0;padding:8px;">'+d.created_at+'</td><td style="color:#94a3b8;padding:8px;font-size:0.85rem;">'+summary+'</td><td style="padding:8px;"><button onclick="loadDraft('+d.id+')" style="background:#6366f1;color:#fff;border:none;border-radius:4px;padding:4px 12px;cursor:pointer;margin-right:4px;">Load</button><button onclick="deleteDraft('+d.id+')" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:4px 12px;cursor:pointer;">Delete</button></td></tr>';
+  var drafts = JSON.parse(localStorage.getItem('training_drafts') || '{}');
+  var keys = Object.keys(drafts);
+  if (!keys.length) { document.getElementById('draftsList').innerHTML = '<p style="color:#64748b;text-align:center;padding:40px;">No drafts saved yet.</p>'; return; }
+  var html = '<table style="width:100%;border-collapse:collapse;"><thead><tr><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">#</th><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">Saved</th><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">Data</th><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">Actions</th></tr></thead><tbody>';
+  keys.reverse().forEach(function(k, i) {
+    var d = drafts[k];
+    var data = d.data || d;
+    var summary = Object.keys(data).slice(0,3).map(function(k){return k+': '+(data[k]||'-')}).join(' | ');
+    var date = new Date(d.savedAt || k.replace('draft_','')*1).toLocaleString();
+    html += '<tr style="border-bottom:1px solid #334155;"><td style="color:#e2e8f0;padding:8px;">'+(i+1)+'</td><td style="color:#e2e8f0;padding:8px;font-size:0.8rem;">'+date+'</td><td style="color:#94a3b8;padding:8px;font-size:0.85rem;">'+summary+'</td><td style="padding:8px;"><button onclick="loadDraft(\''+k+'\')" style="background:#6366f1;color:#fff;border:none;border-radius:4px;padding:4px 12px;cursor:pointer;margin-right:4px;">Load</button><button onclick="deleteDraft(\''+k+'\')" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:4px 12px;cursor:pointer;">Delete</button></td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('draftsList').innerHTML = html;
+}
+function loadDraft(key) {
+  var drafts = JSON.parse(localStorage.getItem('training_drafts') || '{}');
+  var d = drafts[key];
+  if (d && d.data) {
+    Object.keys(d.data).forEach(function(k) {
+      var el = document.querySelector('[name="'+k+'"]');
+      if (el) el.value = d.data[k];
     });
-    html += '</tbody></table>';
-    document.getElementById('draftsList').innerHTML = html;
-  }).catch(function(e) { document.getElementById('draftsList').innerHTML = '<p style="color:#ef4444;">Error: '+e.message+'</p>';
-  });
+    document.getElementById('draftsModal').style.display = 'none';
+  }
 }
-function loadDraft(id) {
-  fetch('/api/drafts/'+id).then(function(r){return r.json()}).then(function(draft) {
-    if (draft.data_json) {
-      var data = typeof draft.data_json === 'string' ? JSON.parse(draft.data_json) : draft.data_json;
-      Object.keys(data).forEach(function(key) {
-        var el = document.querySelector('[name="'+key+'"]');
-        if (el) el.value = data[key];
-      });
-      document.getElementById('draftsModal').style.display = 'none';
-    }
-  });
-}
-function deleteDraft(id) {
+function deleteDraft(key) {
   if (!confirm('Delete this draft?')) return;
-  fetch('/api/drafts/'+id, {method:'DELETE'}).then(function(){showDrafts();});
+  var drafts = JSON.parse(localStorage.getItem('training_drafts') || '{}');
+  delete drafts[key];
+  localStorage.setItem('training_drafts', JSON.stringify(drafts));
+  showDrafts();
 }
 </script>
 
