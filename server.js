@@ -332,9 +332,19 @@ async function generateHtml(config = {}, isPreview = false) {
   html += `
     <div class="form-footer">
       <button type="button" class="btn btn-secondary" id="saveDraftBtn">Save Draft</button>
+      <button type="button" class="btn btn-secondary" id="draftsBtn" style="background:#6366f1;color:#fff;">Draft Forms</button>
       <button type="button" class="btn btn-primary" id="submitFormBtn">Submit</button>
     </div>
   </form>
+  <div id="draftsModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;justify-content:center;align-items:center;">
+    <div style="background:#1e293b;border-radius:12px;width:90%;max-width:700px;max-height:80vh;overflow-y:auto;padding:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="color:#f1f5f9;margin:0;">Saved Drafts</h3>
+        <button onclick="document.getElementById('draftsModal').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">x</button>
+      </div>
+      <div id="draftsList"><p style="color:#64748b;text-align:center;padding:20px;">Loading...</p></div>
+    </div>
+  </div>
 </div>
 <script>
   var config = JSON.parse(atob('${Buffer.from(JSON.stringify(config)).toString('base64')}'));
@@ -435,6 +445,42 @@ async function generateHtml(config = {}, isPreview = false) {
   window.downloadForm = function() { var html = document.documentElement.outerHTML; var blob = new Blob([html], {type: 'text/html;charset=utf-8'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (document.title || 'training-form') + '.html'; document.body.appendChild(a); a.click(); setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100); };
   document.getElementById('saveDraftBtn').addEventListener('click', window.saveDraft);
   document.getElementById('submitFormBtn').addEventListener('click', window.submitForm);
+  document.getElementById('draftsBtn').addEventListener('click', showDrafts);
+
+  function showDrafts() {
+    document.getElementById('draftsModal').style.display = 'flex';
+    var drafts = JSON.parse(localStorage.getItem('training_drafts') || '{}');
+    var keys = Object.keys(drafts);
+    if (!keys.length) { document.getElementById('draftsList').innerHTML = '<p style="color:#64748b;text-align:center;padding:20px;">No drafts saved yet.</p>'; return; }
+    var html = '<table style="width:100%;border-collapse:collapse;"><thead><tr><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">#</th><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">Saved</th><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">Name</th><th style="color:#94a3b8;text-align:left;padding:8px;border-bottom:1px solid #334155;">Actions</th></tr></thead><tbody>';
+    keys.reverse().forEach(function(k, i) {
+      var d = drafts[k];
+      var data = d.data || d;
+      var displayName = d.name || k;
+      var date = new Date(d.savedAt || k.replace('draft_','')*1).toLocaleString();
+      html += '<tr style="border-bottom:1px solid #334155;"><td style="color:#e2e8f0;padding:8px;">'+(i+1)+'</td><td style="color:#e2e8f0;padding:8px;font-size:0.8rem;">'+date+'</td><td style="color:#94a3b8;padding:8px;font-size:0.85rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+displayName+'</td><td style="padding:8px;"><button onclick="loadDraftFromModal(\''+k+'\')" style="background:#6366f1;color:#fff;border:none;border-radius:4px;padding:4px 12px;cursor:pointer;margin-right:4px;">Load</button><button onclick="deleteDraftFromModal(\''+k+'\')" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:4px 12px;cursor:pointer;">Delete</button></td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('draftsList').innerHTML = html;
+  }
+  function loadDraftFromModal(key) {
+    var drafts = JSON.parse(localStorage.getItem('training_drafts') || '{}');
+    var d = drafts[key];
+    if (!d || !d.data) { alert('No data in draft'); return; }
+    var form = document.getElementById('trainingForm');
+    Object.keys(d.data).forEach(function(k) {
+      var el = form.querySelector('[name="'+k+'"]');
+      if (el) el.value = d.data[k];
+    });
+    document.getElementById('draftsModal').style.display = 'none';
+  }
+  function deleteDraftFromModal(key) {
+    if (!confirm('Delete this draft?')) return;
+    var drafts = JSON.parse(localStorage.getItem('training_drafts') || '{}');
+    delete drafts[key];
+    localStorage.setItem('training_drafts', JSON.stringify(drafts));
+    showDrafts();
+  }
 </script>
 <script>
   var __crewData = ${JSON.stringify(crewData)};
