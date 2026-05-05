@@ -712,7 +712,6 @@ async function generateHtml(config = {}, isPreview = false) {
       btn.addEventListener('click', function() {
         var c = document.getElementById(btn.getAttribute('data-canvas'));
         if (c) { var ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height); }
-  });
       });
     });
   }
