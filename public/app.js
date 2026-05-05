@@ -202,15 +202,22 @@ async function useTemplate(templateId) {
   try {
     const res = await fetch(`/api/templates/${templateId}`);
     const template = await res.json();
-    currentForm = {
-      id: null,
-      name: '',
-      form_type: 'simulator',
-      description: '',
-      config: { title: '', subtitle: '', sections: { session: [], training: [], comments: [] } }
-    };
+    // Initialize currentForm if not already
+    if (!currentForm || !currentForm.config) {
+      currentForm = {
+        id: null,
+        name: '',
+        form_type: 'simulator',
+        description: '',
+        config: { title: '', subtitle: '', formId: '', formRevision: '', formDate: '', sections: { session: [], training: [], comments: [] } }
+      };
+    }
+    // Ensure sections exist
+    if (!currentForm.config.sections) {
+      currentForm.config.sections = { session: [], training: [], comments: [] };
+    }
     showBuilder();
-    // Apply template fields to the appropriate section
+    // Apply template fields ONLY to the target section
     const fields = JSON.parse(JSON.stringify(template.fields || []));
     currentForm.config.sections[template.section_type] = [{
       id: "fieldset_" + Date.now(),
@@ -218,7 +225,6 @@ async function useTemplate(templateId) {
       title: template.name,
       fields: fields
     }];
-    document.getElementById('formId').value = template.name;
     // Switch to the section that has the template
     document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
     document.querySelector(`.section-tab[data-section="${template.section_type}"]`).classList.add('active');
@@ -227,6 +233,9 @@ async function useTemplate(templateId) {
     currentSection = template.section_type;
     renderCurrentSection();
     updateLivePreview();
+    // Notify user
+    const sectionLabels = { session: 'Session Details', training: 'Training Details', comments: 'Comments & Signatures' };
+    alert('Template "' + template.name + '" applied to ' + (sectionLabels[template.section_type] || template.section_type));
   } catch (err) {
     console.error(err);
     alert('Error loading template');
