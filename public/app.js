@@ -645,16 +645,14 @@ function createField(type) {
       return { ...base, label: 'Pilot Position', dbSource: 'pilotPosition', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_location':
       return { ...base, label: 'Location', dbSource: 'location', options: [{value:'', label:'-- Select from database --'}] };
-    case 'db_trainingType':
-      return { ...base, label: 'Type of Training', dbSource: 'trainingType', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_fstdId':
       return { ...base, label: 'FSTD ID', dbSource: 'fstdId', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_acReg':
-      return { ...base, label: 'A/C REG', dbSource: 'acReg', options: [{value:'', label:'-- Select from database --'}] };
+      return { ...base, label: 'A/C Reg', dbSource: 'acReg', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_adIcao':
       return { ...base, label: 'AD ICAO', dbSource: 'adIcao', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_acType':
-      return { ...base, label: 'TYPE', dbSource: 'acType', options: [{value:'', label:'-- Select from database --'}] };
+      return { ...base, label: 'A/C Type', dbSource: 'acType', options: [{value:'', label:'-- Select from database --'}] };
     default:
       return base;
   }
@@ -668,8 +666,8 @@ function getDefaultLabel(type) {
     table: 'Table', signature: 'Signature', heading: 'Heading',
     db_crewName: 'Crew Name', db_crewId: 'Crew ID', db_crewLicense: 'License Number',
     db_crew3lc: 'Crew 3LC', db_instructorTri: 'Instructor', db_pilotPosition: 'Pilot Position',
-    db_acReg: 'A/C REG', db_adIcao: 'AD ICAO', db_acType: 'TYPE',
-    db_trainingType: 'Type of Training', db_fstdId: 'FSTD ID'
+    db_acReg: 'A/C Reg', db_adIcao: 'AD ICAO', db_acType: 'A/C Type',
+    db_fstdId: 'FSTD ID'
   };
   return labels[type] || 'Field';
 }
