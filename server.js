@@ -505,6 +505,7 @@ async function generateHtml(config = {}, isPreview = false) {
         else if (source === 'pilotPosition') { opt.value = r.name; opt.textContent = r.name; }
         else if (source === 'acReg') { opt.value = r.ac_reg || ''; opt.textContent = r.ac_reg || 'N/A'; }
         else if (source === 'adIcao') { opt.value = r.ad_icao || ''; opt.textContent = r.ad_icao || 'N/A'; }
+        else if (source === 'acType') { opt.value = r.ac_type || ''; opt.textContent = r.ac_type || 'N/A'; }
         else if (source === 'instructorTri') { var prefix = (r.name === 'GFO' || r.is_sfi) ? 'SFI' : 'TRI'; opt.value = r.name; opt.textContent = prefix + ' - ' + r.name; }
         else if (source === 'examinerTre') { var prefix = (r.name === 'GFO' || r.is_sfe) ? 'SFE' : 'TRE'; opt.value = r.name; opt.textContent = prefix + ' - ' + r.name; }
         else { opt.value = r.name; opt.textContent = r.name + (r.position ? ' (' + r.position + ')' : ''); }
@@ -556,6 +557,29 @@ async function generateHtml(config = {}, isPreview = false) {
       document.addEventListener('DOMContentLoaded', populateLocFstd);
     }
     window.addEventListener('load', populateLocFstd);
+    
+    // Cascading TYPE -> A/C REG filter
+    document.querySelectorAll('select[data-db="acType"]').forEach(function(typeSel) {
+      typeSel.addEventListener('change', function() {
+        var selectedType = typeSel.value;
+        var acRegSel = typeSel.closest('.form-row') || typeSel.closest('fieldset');
+        if (acRegSel) {
+          var regSelect = acRegSel.querySelector('select[data-db="acReg"]');
+          if (regSelect) {
+            regSelect.innerHTML = '<option value=>-- Select --</option>';
+            var filtered = selectedType ? __crewData.filter(function(r) { return r.ac_type === selectedType; }) : __crewData;
+            filtered.forEach(function(r) {
+              if (r.ac_reg) {
+                var opt = document.createElement('option');
+                opt.value = r.ac_reg;
+                opt.textContent = r.ac_reg;
+                regSelect.appendChild(opt);
+              }
+            });
+          }
+        }
+      });
+    });
     setTimeout(populateLocFstd, 200);
     setTimeout(populateLocFstd, 500);
     setTimeout(populateLocFstd, 1500);
@@ -746,7 +770,7 @@ function renderFieldHtml(field) {
       break;
     case 'db_crewName': case 'db_crewId': case 'db_crewLicense': case 'db_crew3lc':
     case 'db_instructorTri': case 'db_examinerTre': case 'db_pilotPosition':
-    case 'db_location': case 'db_fstdId': case 'db_acReg': case 'db_adIcao':
+    case 'db_location': case 'db_fstdId': case 'db_acReg': case 'db_adIcao': case 'db_acType':
       {
         const dbName = field.dbSource || 'unknown';
         const isLocation = dbName === 'location';

@@ -653,6 +653,8 @@ function createField(type) {
       return { ...base, label: 'A/C REG', dbSource: 'acReg', options: [{value:'', label:'-- Select from database --'}] };
     case 'db_adIcao':
       return { ...base, label: 'AD ICAO', dbSource: 'adIcao', options: [{value:'', label:'-- Select from database --'}] };
+    case 'db_acType':
+      return { ...base, label: 'TYPE', dbSource: 'acType', options: [{value:'', label:'-- Select from database --'}] };
     default:
       return base;
   }
@@ -666,7 +668,7 @@ function getDefaultLabel(type) {
     table: 'Table', signature: 'Signature', heading: 'Heading',
     db_crewName: 'Crew Name', db_crewId: 'Crew ID', db_crewLicense: 'License Number',
     db_crew3lc: 'Crew 3LC', db_instructorTri: 'Instructor', db_pilotPosition: 'Pilot Position',
-    db_acReg: 'A/C REG', db_adIcao: 'AD ICAO',
+    db_acReg: 'A/C REG', db_adIcao: 'AD ICAO', db_acType: 'TYPE',
     db_trainingType: 'Type of Training', db_fstdId: 'FSTD ID'
   };
   return labels[type] || 'Field';
@@ -1924,7 +1926,7 @@ function renderPreviewField(field) {
       break;
     case 'db_crewName': case 'db_crewId': case 'db_crewLicense': case 'db_crew3lc':
     case 'db_instructorTri': case 'db_examinerTre': case 'db_pilotPosition':
-    case 'db_acReg': case 'db_adIcao':
+    case 'db_acReg': case 'db_adIcao': case 'db_acType':
       {
         const dbName = field.dbSource || 'unknown';
         const selId = 'db_' + field.id + '_' + Math.random().toString(36).substr(2,5);
