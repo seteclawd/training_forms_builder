@@ -235,12 +235,25 @@ function renderTemplateBuilderCanvasFromCurrentSection() {
 }
 
 async function saveCurrentSectionAsTemplate() {
+  alert('DEBUG: Save as Template clicked!');
   console.log('saveCurrentSectionAsTemplate clicked');
   
   // Make sure currentForm exists
-  if (!currentForm || !currentForm.config || !currentForm.config.sections) {
-    console.error('currentForm not initialized:', currentForm);
-    alert('Please create some fields first before saving as template.');
+  if (!currentForm) {
+    alert('Error: currentForm is not defined. Please reload the page.');
+    console.error('currentForm not defined');
+    return;
+  }
+  
+  if (!currentForm.config) {
+    alert('Error: currentForm.config is not defined.');
+    console.error('currentForm.config not defined:', currentForm);
+    return;
+  }
+  
+  if (!currentForm.config.sections) {
+    alert('Error: currentForm.config.sections is not defined.');
+    console.error('currentForm.config.sections not defined');
     return;
   }
   
@@ -264,6 +277,7 @@ async function saveCurrentSectionAsTemplate() {
 
   // Show modal
   document.getElementById('templateBuilderModal').style.display = 'flex';
+  alert('DEBUG: Modal should be visible now');
 }
 
 document.querySelectorAll('.nav-btn').forEach(btn => {
