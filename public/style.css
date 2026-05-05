@@ -679,3 +679,163 @@ body {
 .prop-group .fullscreen {
   z-index: 9999 !important;
 }
+
+
+/* ===== TEMPLATES VIEW REDESIGN ===== */
+.templates-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.templates-filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.templates-filters select {
+  padding: 6px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #475569;
+  background: #f8fafc;
+}
+
+.templates-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-new-template {
+  background: #f8fafc;
+  color: #1a365d;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-new-template:hover {
+  background: #e2e8f0;
+}
+
+.btn-new-form {
+  background: #1a365d;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-new-form:hover {
+  background: #152a4a;
+}
+
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.template-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: box-shadow 0.2s;
+}
+
+.template-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.template-card h3 {
+  font-size: 1.1rem;
+  color: #1a365d;
+  margin-bottom: 6px;
+}
+
+.template-card .meta {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+.template-card .field-count {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.template-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.template-actions .btn-use {
+  background: #1a365d;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.template-actions .btn-use:hover {
+  background: #152a4a;
+}
+
+.template-actions .btn-edit {
+  background: #e2e8f0;
+  color: #475569;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.template-actions .btn-edit:hover {
+  background: #cbd5e1;
+}
+
+.template-actions .btn-delete {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.template-actions .btn-delete:hover {
+  background: #fecaca;
+}

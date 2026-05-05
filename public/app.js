@@ -105,14 +105,18 @@ async function loadTemplates() {
       return;
     }
     grid.innerHTML = templates.map(t => `
-      <div class="form-card">
+      <div class="template-card">
         <h3>${esc(t.name)}</h3>
         <div class="meta">${t.section_type} · ${new Date(t.created_at).toLocaleDateString()}</div>
         <p style="color:#64748b;font-size:0.8rem;margin:8px 0;">${esc(t.description || '')}</p>
-        <div style="margin-top:12px;display:flex;gap:8px;">
-          <button class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;" onclick="useTemplate(${t.id})">📋 Use</button>
-          <button class="btn btn-secondary" style="padding:6px 12px;font-size:0.8rem;" onclick="editTemplate(${t.id})">✏️ Edit</button>
-          <button class="btn btn-secondary" style="padding:6px 12px;font-size:0.8rem;background:#fee2e2;color:#dc2626;" onclick="deleteTemplate(${t.id})">🗑️</button>
+        <div class="template-actions">
+          <button class="btn-use" onclick="useTemplate(${t.id})">
+            <span>📋</span> Use
+          </button>
+          <button class="btn-edit" onclick="editTemplate(${t.id})">
+            <span>✏️</span> Edit
+          </button>
+          <button class="btn-delete" onclick="deleteTemplate(${t.id})">🗑️</button>
         </div>
       </div>
     `).join('');

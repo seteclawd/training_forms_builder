@@ -28,29 +28,31 @@
     <div class="toolbar">
       <button class="btn btn-primary" onclick="showBuilder()">➕ New Form</button>
     </div>
-    <div id="formsList" class="forms-grid"></div>
+    <div id="formsList" class="templates-grid"></div>
   </div>
 
   <!-- TEMPLATES VIEW -->
   <div id="templatesView" class="view">
-    <div class="toolbar">
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <div class="templates-toolbar">
+      <div class="templates-filters">
         <select id="templateSectionFilter" onchange="loadTemplates()">
           <option value="">All Sections</option>
           <option value="session">Session Details</option>
           <option value="training">Training Details</option>
-          <option value="comments">Comments & Signatures</option>
+          <option value="comments">Comments &amp; Signatures</option>
         </select>
         <select id="newTemplateSection">
           <option value="session">Session Details</option>
           <option value="training">Training Details</option>
-          <option value="comments">Comments & Signatures</option>
+          <option value="comments">Comments &amp; Signatures</option>
         </select>
-        <button class="btn btn-success" onclick="createNewTemplate()">📝 New Template</button>
-        <button class="btn btn-primary" onclick="showBuilderWithTemplate()">🛠️ New Form from Template</button>
+      </div>
+      <div class="templates-actions">
+        <button class="btn btn-new-template" onclick="createNewTemplate()"><span class="icon">✏️</span> New Template</button>
+        <button class="btn btn-new-form" onclick="showBuilderWithTemplate()"><span class="icon">🪄</span> New Form from Template</button>
       </div>
     </div>
-    <div id="templatesList" class="forms-grid"></div>
+    <div id="templatesList" class="templates-grid"></div>
     
     <!-- Template Builder Modal -->
     <div id="templateBuilderModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
