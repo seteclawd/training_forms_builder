@@ -209,6 +209,7 @@ async function useTemplate(templateId) {
       description: '',
       config: { title: '', subtitle: '', sections: { session: [], training: [], comments: [] } }
     };
+    showBuilder();
     // Apply template fields to the appropriate section
     const fields = JSON.parse(JSON.stringify(template.fields || []));
     currentForm.config.sections[template.section_type] = [{
@@ -217,7 +218,6 @@ async function useTemplate(templateId) {
       title: template.name,
       fields: fields
     }];
-    showBuilder();
     document.getElementById('formId').value = template.name;
     // Switch to the section that has the template
     document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
