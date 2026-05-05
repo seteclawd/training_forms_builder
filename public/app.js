@@ -56,22 +56,19 @@ function showTemplates() { showView('templates'); loadTemplates(); }
 function createNewTemplate() {
   _editingTemplateId = null;
   document.getElementById('editingTemplateId').value = '';
-  document.getElementById('templateModalTitle').textContent = 'Create Section Template';
+  document.getElementById('templateModalTitle').textContent = 'Template Builder';
   document.getElementById('templateName').value = '';
   document.getElementById('templateDescription').value = '';
-  const section = document.getElementById('newTemplateSection')?.value || document.getElementById('templateSectionFilter')?.value || 'session';
+  const section = document.getElementById('templateSectionFilter')?.value || 'session';
+  document.getElementById('templateSectionType').value = section;
   currentSection = section;
+  
+  // Initialize empty template structure
   currentForm = {
     name: 'New Template',
     form_type: 'simulator',
     description: '',
     config: {
-      title: 'New Template',
-      subtitle: '',
-      formId: '',
-      formIssue: '',
-      formRevision: '',
-      formDate: '',
       sections: { session: [], training: [], comments: [] }
     }
   };
@@ -79,17 +76,16 @@ function createNewTemplate() {
     {
       id: 'fieldset_' + Date.now(),
       type: 'fieldset',
-      title: 'New Section',
+      title: 'New Sub-section',
       fields: []
     }
   ];
-  showView('builder');
-  resetBuilder();
-  renderCurrentSection();
-  startPreviewSync();
-  // Override save to save as template
-  window._saveAsTemplate = true;
-  window._templateSection = section;
+  
+  // Render empty canvas
+  renderTemplateBuilderCanvas();
+  
+  // Show modal
+  document.getElementById('templateBuilderModal').style.display = 'flex';
 }
 function showBuilder() { showView('builder'); resetBuilder(); startPreviewSync(); }
 
@@ -235,29 +231,12 @@ function renderTemplateBuilderCanvasFromCurrentSection() {
 }
 
 async function saveCurrentSectionAsTemplate() {
-  alert('DEBUG: Save as Template clicked!');
-  console.log('saveCurrentSectionAsTemplate clicked');
-  
   // Make sure currentForm exists
-  if (!currentForm) {
-    alert('Error: currentForm is not defined. Please reload the page.');
-    console.error('currentForm not defined');
+  if (!currentForm || !currentForm.config || !currentForm.config.sections) {
+    alert('Please create some fields first before saving as template.');
     return;
   }
   
-  if (!currentForm.config) {
-    alert('Error: currentForm.config is not defined.');
-    console.error('currentForm.config not defined:', currentForm);
-    return;
-  }
-  
-  if (!currentForm.config.sections) {
-    alert('Error: currentForm.config.sections is not defined.');
-    console.error('currentForm.config.sections not defined');
-    return;
-  }
-  
-  // Open the template builder modal with current section data pre-filled
   const fields = currentForm.config.sections[currentSection] || [];
   
   if (!fields || !fields.length) {
@@ -267,17 +246,15 @@ async function saveCurrentSectionAsTemplate() {
 
   _editingTemplateId = null;
   document.getElementById('editingTemplateId').value = '';
-  document.getElementById('templateModalTitle').textContent = 'Save as Template - ' + currentSection.toUpperCase();
+  document.getElementById('templateModalTitle').textContent = 'Save as Template';
   document.getElementById('templateName').value = '';
   document.getElementById('templateDescription').value = '';
-  document.getElementById('templateSectionType').value = currentSection;
-
+  
   // Render the current section fields in the modal canvas
   renderTemplateBuilderCanvasFromCurrentSection();
 
   // Show modal
   document.getElementById('templateBuilderModal').style.display = 'flex';
-  alert('DEBUG: Modal should be visible now');
 }
 
 document.querySelectorAll('.nav-btn').forEach(btn => {
