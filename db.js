@@ -55,3 +55,22 @@ db.serialize(() => {
 });
 
 module.exports = db;
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS locations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE NOT NULL
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS fstd_ids (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fstd_id TEXT NOT NULL,
+      location_name TEXT NOT NULL
+    )
+  `);
+
+});
+
+module.exports = db;

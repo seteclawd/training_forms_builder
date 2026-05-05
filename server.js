@@ -34,6 +34,29 @@ app.get("/api/crew", (req, res) => {
   });
 });
 
+// API: Get locations
+app.get('/api/locations', (req, res) => {
+  db.all('SELECT DISTINCT name FROM locations ORDER BY name', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows.map(r => r.name));
+  });
+});
+
+// API: Get FSTD IDs by location
+app.get('/api/fstd-ids', (req, res) => {
+  const { location } = req.query;
+  let query = 'SELECT DISTINCT fstd_id, location_name FROM fstd_ids';
+  let params = [];
+  if (location) {
+    query += ' WHERE location_name = ?';
+    params = [location];
+  }
+  db.all(query, params, (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
 // API: List all forms
 app.get('/api/forms', (req, res) => {
   db.all('SELECT id, name, form_type, description, config_json, created_at FROM forms ORDER BY updated_at DESC', [], (err, rows) => {
@@ -334,6 +357,46 @@ async function generateHtml(config, isPreview = false) {
         }
       });
     
+    // Populate Location and FSTD ID dropdowns
+    fetch('/api/locations').then(function(r){return r.json();}).then(function(locs){
+      document.querySelectorAll('select[data-role="location"]').forEach(function(sel){
+        locs.forEach(function(loc){
+          var opt = document.createElement('option');
+          opt.value = loc; opt.textContent = loc;
+          sel.appendChild(opt);
+        });
+      });
+    });
+    fetch('/api/fstd-ids').then(function(r){return r.json();}).then(function(fstds){
+      window.__fstdData = fstds;
+      document.querySelectorAll('select[data-role="fstdId"]').forEach(function(sel){
+        fstds.forEach(function(f){
+          var opt = document.createElement('option');
+          opt.value = f.fstd_id; opt.textContent = f.fstd_id + ' - ' + f.location_name;
+          sel.appendChild(opt);
+        });
+      });
+    });
+    // When Location changes, filter FSTD ID dropdown
+    document.querySelectorAll('select[data-role="location"]').forEach(function(locSel){
+      locSel.addEventListener('change', function(){
+        var selectedLoc = locSel.value;
+        var row = locSel.closest('.form-row') || locSel.closest('fieldset');
+        if (!row) return;
+        var fstdSel = row.querySelector('select[data-role="fstdId"]');
+        if (!fstdSel) return;
+        fstdSel.innerHTML = '<option value="">-- Select --</option>';
+        if (!window.__fstdData) return;
+        var filtered = selectedLoc ? window.__fstdData.filter(function(f){return f.location_name === selectedLoc;}) : window.__fstdData;
+        filtered.forEach(function(f){
+          var opt = document.createElement('option');
+          opt.value = f.fstd_id; opt.textContent = f.fstd_id;
+          fstdSel.appendChild(opt);
+        });
+        fstdSel.value = '';
+      });
+    });
+
     // Signature canvas drawing
     function initCanvas(canvas) {
       if (canvas._sigInit) return;
@@ -551,9 +614,13 @@ function renderFieldHtml(field) {
       break;
     case 'db_crewName': case 'db_crewId': case 'db_crewLicense': case 'db_crew3lc':
     case 'db_instructorTri': case 'db_examinerTre': case 'db_pilotPosition':
+    case 'db_location': case 'db_fstdId':
       {
         const dbName = field.dbSource || 'unknown';
-        html += `          <select name="${name}" class="db-field" data-db="${esc(dbName)}" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;">\n`;
+        const isLocation = dbName === 'location';
+        const isFstdId = dbName === 'fstdId';
+        const extraAttr = isLocation ? ' data-role="location"' : (isFstdId ? ' data-role="fstdId"' : '');
+        html += `          <select name="${name}" class="db-field" data-db="${esc(dbName)}"${extraAttr} style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;width:100%;">\n`;
         html += `            <option value="">-- Select --</option>\n`;
         html += `          </select>\n`;
       }
@@ -602,7 +669,7 @@ function renderTableHtml(field) {
         html += `                <td><select name="${esc(fieldName)}_${i}"><option value="">Select...</option><option value="yes">Yes</option><option value="no">No</option></select></td>\n`;
       } else if (colType === 'date') {
         html += `                <td><input type="date" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" onchange="if(this.value){this.classList.add('has-date');}"></td>\n`;
-      } else if (colType === 'db_crewName' || colType === 'db_crewId' || colType === 'db_crewLicense' || colType === 'db_crew3lc' || colType === 'db_instructorTri' || colType === 'db_examinerTre' || colType === 'db_pilotPosition') {
+      } else if (colType === 'db_crewName' || colType === 'db_crewId' || colType === 'db_crewLicense' || colType === 'db_crew3lc' || colType === 'db_instructorTri' || colType === 'db_examinerTre' || colType === 'db_pilotPosition' || colType === 'db_location' || colType === 'db_fstdId') {
         html += `                <td><select class="db-field" data-db="${colType.replace('db_','')}" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option value="">-- Loading... --</option></select></td>\n`;
       } else if (colType === 'multiline') {
         const mlRows = field.columnRows?.[i] || 2;
@@ -656,8 +723,8 @@ app.post('/api/update-database', upload.single('file'), (req, res) => {
 
     // Map columns (flexible header matching)
     const colMap = {};
-    const headers = Object.keys(rows[0]);
-    headers.forEach(h => {
+    var dataHeaders = Object.keys(rows[0]);
+    dataHeaders.forEach(h => {
       const lower = h.toLowerCase().trim();
       if (lower.includes('3lc') || lower === 'code') colMap.three_lc = h;
       else if (lower.includes('name') || lower === 'nombre') colMap.name = h;
@@ -668,6 +735,8 @@ app.post('/api/update-database', upload.single('file'), (req, res) => {
       else if (lower === 'tri' || lower.includes('tri')) colMap.is_tri = h;
       else if (lower === 'sfe' || lower.includes('sfe')) colMap.is_sfe = h;
       else if (lower === 'tre' || lower.includes('tre')) colMap.is_tre = h;
+      else if (lower === 'location' || lower.includes('location')) colMap.location = h;
+      else if (lower === 'fstd id' || lower.includes('fstd')) colMap.fstd_id = h;
     });
 
     let inserted = 0, updated = 0, skipped = 0;
@@ -694,9 +763,37 @@ app.post('/api/update-database', upload.single('file'), (req, res) => {
     };
 
     Promise.all(rows.map(processRow)).then(() => {
-      db.get('SELECT COUNT(*) as cnt FROM crew', [], (err, r) => {
-        res.json({success: true, inserted, updated, skipped, crewCount: r ? r.cnt : 0});
+      // Update locations and fstd_ids tables
+      db.run('DELETE FROM locations', [], () => {
+        db.run('DELETE FROM fstd_ids', [], () => {
+          const locSet = {};
+          rows.forEach(r => {
+            const loc = r[colMap.location];
+            const fstd = r[colMap.fstd_id];
+            if (loc) {
+              if (!locSet[loc]) locSet[loc] = new Set();
+              if (fstd) locSet[loc].add(String(fstd));
+            }
+          });
+          const locEntries = Object.keys(locSet);
+          let locDone = 0;
+          if (locEntries.length === 0) return finish();
+          locEntries.forEach(loc => {
+            db.run('INSERT OR IGNORE INTO locations (name) VALUES (?)', [loc], () => {
+              locSet[loc].forEach(fstd => {
+                db.run('INSERT INTO fstd_ids (fstd_id, location_name) VALUES (?, ?)', [fstd, loc], () => {});
+              });
+              locDone++;
+              if (locDone === locEntries.length) finish();
+            });
+          });
+        });
       });
+      function finish() {
+        db.get('SELECT COUNT(*) as cnt FROM crew', [], (err, r) => {
+          res.json({success: true, inserted, updated, skipped, crewCount: r ? r.cnt : 0});
+        });
+      }
     });
   } catch(err) {
     res.json({success: false, error: err.message});

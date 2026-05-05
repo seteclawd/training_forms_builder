@@ -1924,6 +1924,23 @@ function renderPreviewField(field) {
         html += `<script>setTimeout(function(){fetch('/api/crew?source=${dbName}').then(r=>r.json()).then(rows=>{var s=document.getElementById('${selId}');if(!s)return;s.innerHTML='<option value="">-- Select --</option>';rows.forEach(r=>{var v='${dbName}'==='crewName'?r.name:'${dbName}'==='crew3lc'||'${dbName}'==='crewId'?r.three_lc:'${dbName}'==='crewLicense'?(r.license_number||''):r.name;var l='${dbName}'==='crew3lc'||'${dbName}'==='crewId'?r.three_lc+' - '+r.name:r.name+(r.position?' ('+r.position+')':'');s.innerHTML+='<option value="'+v+'">'+l+'</option>';});if('${dbName}'==='crewName'){if(!window._crewData)window._crewData=rows;s.addEventListener('change',function(){var sel=rows.find(x=>x.name===s.value);var form=s.closest('form')||s.closest('.builder-canvas')||s.closest('.modal-content')||document.body;var posSel=form.querySelector('select[data-field-type="pilotPosition"]');var licSel=form.querySelector('select[data-field-type="crewLicense"]');var tlcSel=form.querySelector('select[data-field-type="crew3lc"]');setTimeout(function(){if(posSel&&sel)posSel.value=sel.position||'';if(licSel&&sel)licSel.value=sel.license_number||'';if(tlcSel&&sel)tlcSel.value=sel.three_lc||'';},300);});}}).catch(e=>{var s=document.getElementById('${selId}');if(s)s.innerHTML='<option value="">-- Error --</option>';});},100);</script>\n`;
       }
       break;
+    case 'db_location': case 'db_fstdId':
+      {
+        const dbName = field.dbSource || 'unknown';
+        const selId = 'db_' + field.id + '_' + Math.random().toString(36).substr(2,5);
+        const roleAttr = dbName === 'location' ? 'location' : 'fstdId';
+        html += `        <select class="db-field" id="${selId}" data-db="${esc(dbName)}" data-field-type="${esc(dbName)}" data-role="${roleAttr}" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px;">\n`;
+        html += `          <option value="">-- Select --</option>\n`;
+        html += `        </select>\n`;
+        html += `<script>\n`;
+        if (dbName === 'location') {
+          html += `setTimeout(function(){fetch('/api/locations').then(r=>r.json()).then(locs=>{var s=document.getElementById('${selId}');if(!s)return;s.innerHTML='<option value="">-- Select --</option>';locs.forEach(loc=>{s.innerHTML+='<option value="'+loc+'">'+loc+'</option>';});});},100);\n`;
+        } else if (dbName === 'fstdId') {
+          html += `setTimeout(function(){fetch('/api/fstd-ids').then(r=>r.json()).then(fstds=>{var s=document.getElementById('${selId}');if(!s)return;s.innerHTML='<option value="">-- Select --</option>';fstds.forEach(f=>{s.innerHTML+='<option value="'+f.fstd_id+'">'+f.fstd_id+' - '+f.location_name+'</option>';});});},100);\n`;
+        }
+        html += `</script>\n`;
+      }
+      break;
   }
   html += `      </div>\n`;
   html += `    </div>\n`; // Close preview-field-wrapper
