@@ -451,53 +451,44 @@ async function generateHtml(config, isPreview = false) {
     setTimeout(initLocFstdFilter, 300);
     setTimeout(initLocFstdFilter, 1000);
 
-    // Signature canvas drawing
-    function initCanvas(canvas) {
-      if (canvas._sigInit) return;
-      canvas._sigInit = true;
+    // Simple signature canvas - direct initialization
+    document.querySelectorAll('canvas').forEach(function(canvas) {
       var ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
       var drawing = false;
       var lastX, lastY;
-
       
-      function getPos(e) {
+      function getXY(e) {
         var rect = canvas.getBoundingClientRect();
-        var clientX, clientY;
-        if (e.touches && e.touches.length) {
-          clientX = e.touches[0].clientX;
-          clientY = e.touches[0].clientY;
+        if (rect.width === 0 || rect.height === 0) return {x: 0, y: 0};
+        var cx, cy;
+        if (e.touches && e.touches.length > 0) {
+          cx = e.touches[0].clientX;
+          cy = e.touches[0].clientY;
         } else {
-          clientX = e.clientX;
-          clientY = e.clientY;
+          cx = e.clientX;
+          cy = e.clientY;
         }
-        var scaleX = rect.width > 0 ? canvas.width / rect.width : 1;
-        var scaleY = rect.height > 0 ? canvas.height / rect.height : 1;
         return {
-          x: (clientX - rect.left) * scaleX,
-          y: (clientY - rect.top) * scaleY
+          x: (cx - rect.left) * (canvas.width / rect.width),
+          y: (cy - rect.top) * (canvas.height / rect.height)
         };
       }
       
-      function startDraw(e) {
+      canvas.addEventListener('mousedown', function(e) {
         e.preventDefault();
         drawing = true;
-        var p = getPos(e);
+        var p = getXY(e);
         lastX = p.x; lastY = p.y;
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
-        ctx.strokeStyle = '#1a365d';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-      }
+      });
       
-      function draw(e) {
+      canvas.addEventListener('mousemove', function(e) {
         if (!drawing) return;
         e.preventDefault();
-        var p = getPos(e);
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
+        var p = getXY(e);
         ctx.lineTo(p.x, p.y);
         ctx.strokeStyle = '#1a365d';
         ctx.lineWidth = 2;
@@ -505,32 +496,20 @@ async function generateHtml(config, isPreview = false) {
         ctx.lineJoin = 'round';
         ctx.stroke();
         lastX = p.x; lastY = p.y;
-      }
+      });
       
-      function stopDraw(e) {
+      function stopDrawing(e) {
         if (e) e.preventDefault();
         drawing = false;
       }
       
-      canvas.addEventListener('mousedown', startDraw);
-      canvas.addEventListener('mousemove', draw);
-      canvas.addEventListener('mouseup', stopDraw);
-      canvas.addEventListener('mouseleave', stopDraw);
-      canvas.addEventListener('touchstart', startDraw, {passive: false});
-      canvas.addEventListener('touchmove', draw, {passive: false});
-      canvas.addEventListener('touchend', stopDraw, {passive: false});
-      canvas.addEventListener('touchcancel', stopDraw, {passive: false});
-    }
-    
-    // Initialize canvases immediately and with delay
-    function initAllCanvases() {
-      document.querySelectorAll('canvas').forEach(function(c) {
-        if (!c._sigInit) initCanvas(c);
-      });
-    }
-    initAllCanvases();
-    setTimeout(initAllCanvases, 300);
-    setTimeout(initAllCanvases, 1000);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseleave', stopDrawing);
+      canvas.addEventListener('touchstart', function(e) { e.preventDefault(); drawing = true; var p = getXY(e); lastX = p.x; lastY = p.y; ctx.beginPath(); ctx.moveTo(p.x, p.y); }, {passive: false});
+      canvas.addEventListener('touchmove', function(e) { if (!drawing) return; e.preventDefault(); var p = getXY(e); ctx.lineTo(p.x, p.y); ctx.strokeStyle = '#1a365d'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); lastX = p.x; lastY = p.y; }, {passive: false});
+      canvas.addEventListener('touchend', stopDrawing, {passive: false});
+      canvas.addEventListener('touchcancel', stopDrawing, {passive: false});
+    });
     
     // Clear signature buttons
     document.querySelectorAll('.sig-clear-btn').forEach(function(btn) {
