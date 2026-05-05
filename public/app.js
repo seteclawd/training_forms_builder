@@ -2223,7 +2223,7 @@ async function loadForms() {
           <td>${esc(rev)}</td>
           <td>${esc(date)}</td>
           <td>Luis Rivas Robles</td>
-          <td><button class="btn-action pdf" onclick="event.stopPropagation();downloadFormPdf(${f.id})" title="Download PDF">📄 PDF</button></td>
+          <td><div style="display:flex;gap:4px;"><button class="btn-action pdf" onclick="event.stopPropagation();downloadFormPdf(${f.id})" title="Download PDF">📄 PDF</button><button class="btn-action" onclick="event.stopPropagation();downloadFormHtml(${f.id})" title="Download HTML" style="background:#0ea5e9;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">🌐 HTML</button></div></td>
           <td><button class="btn-action edit" onclick="event.stopPropagation();editForm(${f.id})" title="Edit">✏️ Edit</button></td>
           <td><button class="btn-action track" onclick="event.stopPropagation();trackForm(${f.id})" title="Track">Track</button></td>
         </tr>
@@ -2239,17 +2239,44 @@ async function downloadFormPdf(formId) {
     const res = await fetch(`/api/forms/${formId}`);
     const form = await res.json();
     const config = typeof form.config_json === 'string' ? JSON.parse(form.config_json) : (form.config || {});
-    const html = generateHtml(config);
-    const blob = new Blob([html], { type: 'text/html' });
+    const html = await fetch('/api/download-html', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config })
+    }).then(r => r.text());
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = function() {
+      printWindow.print();
+    };
+  } catch (err) {
+    console.error(err);
+    alert('Error generating PDF');
+  }
+}
+
+async function downloadFormHtml(formId) {
+  try {
+    const res = await fetch(`/api/forms/${formId}`);
+    const form = await res.json();
+    const config = typeof form.config_json === 'string' ? JSON.parse(form.config_json) : (form.config || {});
+    const html = await fetch('/api/download-html', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config })
+    }).then(r => r.text());
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `${config.formId || form.name || 'form'}.html`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
   } catch (err) {
     console.error(err);
-    alert('Error generating PDF');
+    alert('Error downloading HTML');
   }
 }
 
