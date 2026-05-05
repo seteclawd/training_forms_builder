@@ -316,11 +316,19 @@ function loadDraft(key) {
   var drafts = JSON.parse(localStorage.getItem('training_drafts') || '{}');
   var d = drafts[key];
   if (d && d.data) {
+    // Try to populate builder page fields
+    if(d.data.formId) document.getElementById('formId').value = d.data.formId;
+    if(d.data.formDate) document.getElementById('formDate').value = d.data.formDate;
+    if(d.data.formSubtitle || d.data.formId) document.getElementById('formSubtitle').value = d.data.formSubtitle || d.data.formId;
+    // Try to populate any form fields with name attributes
     Object.keys(d.data).forEach(function(k) {
       var el = document.querySelector('[name="'+k+'"]');
       if (el) el.value = d.data[k];
     });
     document.getElementById('draftsModal').style.display = 'none';
+    alert('Draft loaded: ' + (d.name || key));
+  } else {
+    alert('No data found in this draft.');
   }
 }
 function deleteDraft(key) {
