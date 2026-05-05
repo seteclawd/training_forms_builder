@@ -503,9 +503,9 @@ async function generateHtml(config = {}, isPreview = false) {
         else if (source === 'crew3lc' || source === 'crewId') { opt.value = r.three_lc; opt.textContent = r.three_lc; }
         else if (source === 'crewLicense') { opt.value = r.license_number || ''; opt.textContent = r.license_number || 'N/A'; }
         else if (source === 'pilotPosition') { opt.value = r.name; opt.textContent = r.name; }
-        else if (source === 'acReg') { opt.value = r.ac_reg || ''; opt.textContent = r.ac_reg || 'N/A'; }
-        else if (source === 'adIcao') { opt.value = r.ad_icao || ''; opt.textContent = r.ad_icao || 'N/A'; }
-        else if (source === 'acType') { opt.value = r.ac_type || ''; opt.textContent = r.ac_type || 'N/A'; }
+        else if (source === 'acReg') { if (!r.ac_reg) return; opt.value = r.ac_reg; opt.textContent = r.ac_reg; }
+        else if (source === 'adIcao') { if (!r.ad_icao) return; opt.value = r.ad_icao; opt.textContent = r.ad_icao; }
+        else if (source === 'acType') { if (!r.ac_type) return; opt.value = r.ac_type; opt.textContent = r.ac_type; }
         else if (source === 'instructorTri') { var prefix = (r.name === 'GFO' || r.is_sfi) ? 'SFI' : 'TRI'; opt.value = r.name; opt.textContent = prefix + ' - ' + r.name; }
         else if (source === 'examinerTre') { var prefix = (r.name === 'GFO' || r.is_sfe) ? 'SFE' : 'TRE'; opt.value = r.name; opt.textContent = prefix + ' - ' + r.name; }
         else { opt.value = r.name; opt.textContent = r.name + (r.position ? ' (' + r.position + ')' : ''); }
