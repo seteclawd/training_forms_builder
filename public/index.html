@@ -35,17 +35,15 @@
   <div id="templatesView" class="view">
     <div class="templates-toolbar">
       <div class="templates-filters">
-        <select id="templateSectionFilter" onchange="loadTemplates()">
-          <option value="">All Sections</option>
-          <option value="session">Session Details</option>
-          <option value="training">Training Details</option>
-          <option value="comments">Comments &amp; Signatures</option>
-        </select>
-        <select id="newTemplateSection">
-          <option value="session">Session Details</option>
-          <option value="training">Training Details</option>
-          <option value="comments">Comments &amp; Signatures</option>
-        </select>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:0.9rem;color:#475569;font-weight:500;">Select the Section where you want to create a new Template:</span>
+          <select id="templateSectionFilter" onchange="loadTemplates()">
+            <option value="">All Sections</option>
+            <option value="session">Session Details</option>
+            <option value="training">Training Details</option>
+            <option value="comments">Comments &amp; Signatures</option>
+          </select>
+        </div>
       </div>
       <div class="templates-actions">
         <button class="btn btn-new-template" onclick="createNewTemplate()"><span class="icon">✏️</span> New Template</button>

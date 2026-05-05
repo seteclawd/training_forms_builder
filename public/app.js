@@ -59,7 +59,7 @@ function createNewTemplate() {
   document.getElementById('templateModalTitle').textContent = 'Create Section Template';
   document.getElementById('templateName').value = '';
   document.getElementById('templateDescription').value = '';
-  const section = document.getElementById('newTemplateSection').value;
+  const section = document.getElementById('newTemplateSection')?.value || document.getElementById('templateSectionFilter')?.value || 'session';
   currentSection = section;
   currentForm = {
     name: 'New Template',
