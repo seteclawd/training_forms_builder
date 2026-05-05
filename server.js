@@ -270,6 +270,7 @@ async function generateHtml(config, isPreview = false) {
   .signature-box { border: 2px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; text-align: center; padding: 10px; }
   canvas { background: #fff; border-radius: 6px; cursor: crosshair; touch-action: none; -webkit-user-select: none; user-select: none; }
   input[type="date"].has-date::-webkit-calendar-picker-indicator { display: none; }
+  input[type="date"].has-date::-ms-clear { display: none; }
   input[type="date"].has-date::-webkit-inner-spin-button,
   input[type="date"].has-date::-webkit-outer-spin-button { display: none; }
   .form-footer { padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: center; }
