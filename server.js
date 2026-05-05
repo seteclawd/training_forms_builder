@@ -314,17 +314,19 @@ async function generateHtml(config, isPreview = false) {
         sel.appendChild(opt);
       });
     });
-    // Auto-fill Pilot Position when Crew Name changes
+    // Auto-fill Pilot Position, License, 3LC when Crew Name changes
     document.querySelectorAll('select[data-db="crewName"]').forEach(function(crewSel) {
       crewSel.addEventListener('change', function() {
         var selected = crewSel.value;
         var pilot = __crewData.find(function(r) { return r.name === selected; });
         var row = crewSel.closest('.form-row') || crewSel.closest('fieldset');
-        if (row) {
+        if (row && pilot) {
           var posSel = row.querySelector('select[data-db="pilotPosition"]');
-          if (posSel && pilot && pilot.position) {
-            posSel.value = pilot.position;
-          }
+          var licSel = row.querySelector('select[data-db="crewLicense"]');
+          var tlcSel = row.querySelector('select[data-db="crew3lc"]');
+          if (posSel && pilot.position) posSel.value = pilot.position;
+          if (licSel && pilot.license_number) licSel.value = pilot.license_number;
+          if (tlcSel && pilot.three_lc) tlcSel.value = pilot.three_lc;
         }
       });
     
