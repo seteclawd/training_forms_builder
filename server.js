@@ -367,7 +367,8 @@ async function generateHtml(config = {}, isPreview = false) {
       if(el.value) el.setAttribute('value', el.value);
     });
     var html = '<!DOCTYPE html>' + document.documentElement.outerHTML;
-    var crewName = '', crew3lc = '', instructorName = '', examinerName = '', formName = '';
+    var crewName = '', crew3lc = '', instructorName = '', examinerName = '';
+    var formName = config.formName || config.title || 'Training Form';
     Object.keys(data).forEach(function(k){
       var kl = k.toLowerCase();
       var val = data[k];
@@ -379,6 +380,7 @@ async function generateHtml(config = {}, isPreview = false) {
     var signName = instructorName || examinerName || '';
     var formId = config.subtitle || config.formId || '-';
     var dateVal = config.formDate || '';
+    Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
     Object.keys(data).forEach(function(k){ if(k.toLowerCase().indexOf('date')!==-1) dateVal = dateVal || data[k]; });
     var subject = 'Submission ' + crewName + ' - ' + formId + ' ' + formName + ' - ' + dateVal;
     var nl = String.fromCharCode(10);var body = 'Dear Training Department,'+nl+nl+'Kindly find attached the training form:'+nl+nl+'Form ID: '+formId+nl+'Form Name: '+formName+nl+'Crew Name: '+crewName+(crew3lc?' - '+crew3lc:'')+nl+'Date: '+dateVal+nl+nl+'Please find the completed form attached.'+nl+nl+'Regards,'+nl+signName;
