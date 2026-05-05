@@ -608,7 +608,7 @@ function esc(str) {
 
 // HTML Cleaner route
 app.get('/html-cleaner', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'texthtml.html'));
+  res.sendFile(path.join(__dirname, 'public', 'converter.html'));
 });
 
 const PORT = process.env.PORT || 8999;
