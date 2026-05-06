@@ -907,6 +907,11 @@ function renderProperties(field) {
   }
 
   if (field.type === 'table') {
+    html += `<div class="prop-group" style="background:#1a365d;padding:12px;border-radius:6px;margin-bottom:16px;">
+      <label style="color:#fff;margin-bottom:8px;">🎨 Visual Table Designer</label>
+      <p style="color:#93c5fd;font-size:0.8rem;margin-bottom:8px;">Open a visual editor with field picker to design your table</p>
+      <button class="btn btn-primary" onclick="designTableField('${field.id}')" style="width:100%;">🎨 Open Table Designer</button>
+    </div>`;
     html += `<div class="prop-group">
       <label>Columns</label>
       <div class="options-list" id="columnsList">`;
@@ -1855,6 +1860,162 @@ function findFieldsetContainingField(fieldId) {
     }
   }
   return null;
+}
+
+// ===== TABLE FIELD DESIGNER (Visual Editor) =====
+function designTableField(fieldId) {
+  const field = findField(fieldId);
+  if (!field) return;
+
+  // Build current HTML from columns/rows or use existing content
+  let tableHtml = field.content || '';
+  if (!tableHtml && field.columns && field.rows) {
+    tableHtml = '<table style="border-collapse:collapse;width:100%;"><thead><tr>';
+    field.columns.forEach(c => tableHtml += '<th style="border:1px solid #475569;padding:8px;background:#1e293b;color:#e2e8f0;">' + esc(c) + '</th>');
+    tableHtml += '</tr></thead><tbody>';
+    field.rows.forEach(r => {
+      tableHtml += '<tr><td style="border:1px solid #475569;padding:8px;" contenteditable="true">' + esc(r.label || r) + '</td>';
+      field.columns.slice(1).forEach(() => tableHtml += '<td style="border:1px solid #475569;padding:8px;" contenteditable="true"> </td>');
+      tableHtml += '</tr>';
+    });
+    tableHtml += '</tbody></table>';
+  }
+  if (!tableHtml) {
+    tableHtml = '<table style="border-collapse:collapse;width:100%;"><thead><tr><th style="border:1px solid #475569;padding:8px;background:#1e293b;color:#e2e8f0;">Label</th><th style="border:1px solid #475569;padding:8px;background:#1e293b;color:#e2e8f0;">Value</th></tr></thead><tbody><tr><td style="border:1px solid #475569;padding:8px;" contenteditable="true">Field 1</td><td style="border:1px solid #475569;padding:8px;" contenteditable="true"> </td></tr><tr><td style="border:1px solid #475569;padding:8px;" contenteditable="true">Field 2</td><td style="border:1px solid #475569;padding:8px;" contenteditable="true"> </td></tr></tbody></table>';
+  }
+
+  // Create modal
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:#1e293b;border-radius:12px;width:95vw;max-width:1100px;max-height:90vh;display:flex;flex-direction:column;border:1px solid #334155;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #334155;">
+        <h3 style="color:#f1f5f9;margin:0;font-size:1.1rem;">🎨 Table Designer — ${esc(field.label || 'Table')}</h3>
+        <button onclick="this.closest('div[style]').parentElement.remove()" style="background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">&times;</button>
+      </div>
+      <div style="display:flex;gap:0;flex:1;overflow:hidden;">
+        <!-- Field Picker Sidebar -->
+        <div style="width:200px;background:#0f172a;border-right:1px solid #334155;padding:12px;overflow-y:auto;">
+          <div style="color:#93c5fd;font-size:0.85rem;font-weight:600;margin-bottom:8px;">📋 Field Types</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <button class="fd-field-btn" data-type="text" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">📝 Text</button>
+            <button class="fd-field-btn" data-type="date" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">📅 Date</button>
+            <button class="fd-field-btn" data-type="number" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">🔢 Number</button>
+            <button class="fd-field-btn" data-type="signature" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">✍️ Signature</button>
+            <button class="fd-field-btn" data-type="textarea" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">📄 Multi-line</button>
+            <button class="fd-field-btn" data-type="select" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">🔽 Select</button>
+            <button class="fd-field-btn" data-type="checkbox" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">☑️ Checkbox</button>
+            <button class="fd-field-btn" data-type="radio" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">🔘 Radio</button>
+          </div>
+          <div style="color:#93c5fd;font-size:0.85rem;font-weight:600;margin:12px 0 8px;">🗄️ Database Fields</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <button class="fd-field-btn" data-type="db_crewName" data-db-name="crewName" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">👤 Crew Name</button>
+            <button class="fd-field-btn" data-type="db_crew3lc" data-db-name="crew3lc" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">👤 Crew 3LC</button>
+            <button class="fd-field-btn" data-type="db_crewLicense" data-db-name="crewLicense" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">🪪 License</button>
+            <button class="fd-field-btn" data-type="db_pilotPosition" data-db-name="pilotPosition" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">💺 Position</button>
+            <button class="fd-field-btn" data-type="db_acType" data-db-name="acType" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">✈️ A/C Type</button>
+            <button class="fd-field-btn" data-type="db_acReg" data-db-name="acReg" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">✈️ A/C Reg</button>
+            <button class="fd-field-btn" data-type="db_instructorTri" data-db-name="instructorTri" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">🎓 Instructor</button>
+            <button class="fd-field-btn" data-type="db_examinerTre" data-db-name="examinerTre" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">📝 Examiner</button>
+            <button class="fd-field-btn" data-type="db_adIcao" data-db-name="adIcao" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">🌍 AD/ICAO</button>
+          </div>
+          <div style="color:#93c5fd;font-size:0.85rem;font-weight:600;margin:12px 0 8px;">🎓 Trainer Role</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <button class="fd-field-btn" data-type="trainer" data-trainer-role="tri" style="text-align:left;background:#1e293b;color:#e2e8f0;border:1px solid #334155;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">🎓 TRI / TRE / SFI</button>
+          </div>
+          <div style="color:#64748b;font-size:0.7rem;margin-top:12px;line-height:1.4;">Click a cell in the table, then click a field type to assign it.</div>
+        </div>
+        <!-- Editor area -->
+        <div style="flex:1;display:flex;flex-direction:column;">
+          <div id="tableDesignerEditor" style="flex:1;padding:20px;overflow:auto;background:#0f172a;">
+            ${tableHtml}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:16px 20px;border-top:1px solid #334155;">
+        <button onclick="this.closest('div[style]').parentElement.remove()" style="padding:8px 20px;background:#334155;color:#e2e8f0;border:none;border-radius:6px;cursor:pointer;">Cancel</button>
+        <button id="saveDesignBtn" style="padding:8px 20px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Save Design</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Click handlers for field picker buttons
+  overlay.querySelectorAll('.fd-field-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const editor = document.getElementById('tableDesignerEditor');
+      const selected = editor.querySelector('td.selected-cell, td:focus');
+      if (!selected) { alert('Select a cell first'); return; }
+      const type = btn.dataset.type;
+      const dbName = btn.dataset.dbName || '';
+      const label = btn.textContent.trim();
+      // Set attributes on cell
+      selected.setAttribute('data-cell-type', type);
+      if (dbName) selected.setAttribute('data-db-name', dbName);
+      selected.setAttribute('data-field-label', label);
+      // Style the cell to show it has a field assigned
+      selected.style.position = 'relative';
+      selected.innerHTML = '<span style="color:#3b82f6;font-weight:bold;font-size:0.85rem;">' + label + '</span>';
+      selected.classList.add('field-assigned');
+    });
+  });
+
+  // Click on cells to select them
+  const editorDiv = document.getElementById('tableDesignerEditor');
+  editorDiv.addEventListener('click', (e) => {
+    const td = e.target.closest('td');
+    if (!td) return;
+    editorDiv.querySelectorAll('td').forEach(t => t.classList.remove('selected-cell'));
+    td.classList.add('selected-cell');
+    td.style.outline = '2px solid #3b82f6';
+    // Remove outline from others
+    editorDiv.querySelectorAll('td:not(.selected-cell)').forEach(t => t.style.outline = '');
+  });
+
+  // Save button
+  document.getElementById('saveDesignBtn').addEventListener('click', () => {
+    const editor = document.getElementById('tableDesignerEditor');
+    const table = editor.querySelector('table');
+    if (!table) return;
+    const html = table.outerHTML;
+    // Save to field
+    field.content = html;
+    field.generatedHtml = html;
+    // Parse columns and rows from table
+    const ths = table.querySelectorAll('thead th');
+    const fieldColumns = [];
+    ths.forEach(th => fieldColumns.push(th.textContent.trim()));
+    field.columns = fieldColumns.length ? fieldColumns : ['Field', 'Value'];
+    // Parse rows from tbody
+    const trs = table.querySelectorAll('tbody tr');
+    const fieldRows = [];
+    trs.forEach(tr => {
+      const firstTd = tr.querySelector('td');
+      const label = firstTd ? firstTd.textContent.trim() : '';
+      const lastTd = tr.lastElementChild;
+      const fieldType = lastTd ? (lastTd.getAttribute('data-cell-type') || 'text') : 'text';
+      fieldRows.push({ label: label, name: label.toLowerCase().replace(/[^a-z0-9]/g, '_'), rowStyles: {} });
+    });
+    field.rows = fieldRows;
+    // Save cell configs
+    const cellConfigs = {};
+    table.querySelectorAll('td[data-cell-type]').forEach((td, i) => {
+      const cfgId = 'cell_design_' + i;
+      cellConfigs[cfgId] = {
+        type: td.getAttribute('data-cell-type'),
+        dbName: td.getAttribute('data-db-name') || '',
+        label: td.getAttribute('data-field-label') || td.textContent.trim(),
+        options: [],
+        trainerRole: td.getAttribute('data-trainer-role') || ''
+      };
+    });
+    field.cellConfigs = cellConfigs;
+    // Close modal
+    overlay.remove();
+    // Refresh
+    selectField(field);
+    updatePreview();
+  });
 }
 
 // ===== TABLE MANAGEMENT =====
