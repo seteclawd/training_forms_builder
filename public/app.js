@@ -2193,7 +2193,72 @@ function renderPreviewField(field) {
       break;
     case 'imported_html':
       html += '        <div class="imported-table-wrapper" style="margin:8px 0;overflow-x:auto;">\n';
-      html += field.generatedHtml || '<p>Empty imported table</p>';
+      // Process generatedHtml to replace configured cells with functional inputs
+      let tableHtml = field.generatedHtml || '<p>Empty imported table</p>';
+      const cellConfigs = field.cellConfigs || {};
+      if (Object.keys(cellConfigs).length) {
+        // Parse and replace cells with inputs
+        Object.entries(cellConfigs).forEach(([cellId, cfg]) => {
+          const escapedId = cellId.replace(/[^a-zA-Z0-9_]/g, '');
+          let inputHtml = '';
+          const fieldName = cfg.dbName || escapedId;
+          const label = cfg.label || '';
+          
+          switch(cfg.type) {
+            case 'date':
+              inputHtml = `<input type="text" name="${esc(fieldName)}" placeholder="dd/mmm/yyyy" pattern="[0-9]{2}/[A-Za-z]{3}/[0-9]{4}" onblur="formatDate(this)" onfocus="unformatDate(this)" style="width:100%;padding:4px 6px;border:1px solid #cbd5e1;border-radius:4px;font-size:0.85rem;">`;
+              break;
+            case 'signature':
+              inputHtml = `<canvas class="signature-pad" data-field-name="${esc(fieldName)}" style="width:100%;max-width:100%;height:60px;border:1px solid #cbd5e1;border-radius:4px;cursor:crosshair;"></canvas><div style="text-align:right;"><button type="button" onclick="clearSignature(this)" style="font-size:0.7rem;color:#64748b;background:none;border:none;cursor:pointer;">Clear</button></div>`;
+              break;
+            case 'select':
+              const opts = (cfg.options || ['Option 1','Option 2']).map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+              inputHtml = `<select name="${esc(fieldName)}" style="width:100%;padding:4px 6px;border:1px solid #cbd5e1;border-radius:4px;font-size:0.85rem;"><option value="">Select...</option>${opts}</select>`;
+              break;
+            case 'radio':
+              const radios = (cfg.options || ['Yes','No']).map((o,i) => `<label style="font-size:0.8rem;margin-right:8px;"><input type="radio" name="${esc(fieldName)}" value="${esc(o)}"> ${esc(o)}</label>`).join('');
+              inputHtml = radios;
+              break;
+            case 'checkbox':
+              inputHtml = `<label style="font-size:0.8rem;"><input type="checkbox" name="${esc(fieldName)}"> ${esc(label || 'Yes')}</label>`;
+              break;
+            case 'textarea':
+              inputHtml = `<textarea name="${esc(fieldName)}" rows="3" style="width:100%;padding:4px 6px;border:1px solid #cbd5e1;border-radius:4px;font-size:0.85rem;resize:vertical;" placeholder="..."></textarea>`;
+              break;
+            case 'number':
+              inputHtml = `<input type="number" name="${esc(fieldName)}" style="width:100%;padding:4px 6px;border:1px solid #cbd5e1;border-radius:4px;font-size:0.85rem;" placeholder="...">`;
+              break;
+            case 'trainer':
+              inputHtml = `<select class="trainer-field" name="${esc(fieldName)}" data-trainer-role="${esc(cfg.trainerRole || '')}" style="width:100%;padding:4px 6px;border:1px solid #cbd5e1;border-radius:4px;font-size:0.85rem;"><option value="">-- Trainer --</option><option value="TRI">TRI - Type Rating Instructor</option><option value="TRE">TRE - Type Rating Examiner</option><option value="SFI">SFI - Synthetic Flight Instructor</option><option value="CRMI">CRMI - CRM Instructor</option><option value="INSTR">Instructor</option></select>`;
+              break;
+            case 'remarks':
+              inputHtml = `<textarea name="${esc(fieldName)}" rows="2" style="width:100%;padding:4px 6px;border:1px solid #cbd5e1;border-radius:4px;font-size:0.85rem;resize:vertical;" placeholder="Remarks..."></textarea>`;
+              break;
+            case 'static':
+            case 'heading':
+              inputHtml = `<span style="font-size:${cfg.type==='heading'?'1em':'0.9em'};font-weight:${cfg.type==='heading'?'bold':'normal'};">${esc(label)}</span>`;
+              break;
+            case 'text': default:
+              if (cfg.type && cfg.type.startsWith('db_')) {
+                const dbSource = cfg.type.replace('db_', '');
+                const selId = 'db_' + escapedId + '_' + Math.random().toString(36).substr(2,5);
+                inputHtml = `<select class="db-field" id="${selId}" data-db="${esc(dbSource)}" data-field-type="${esc(dbSource)}" style="width:100%;padding:4px 6px;border:1px solid #cbd5e1;border-radius:4px;font-size:0.85rem;"><option value="">-- Loading... --</option></select>`;
+                inputHtml += `<script>setTimeout(function(){var s=document.getElementById('${selId}');if(!s)return;var rows=window.parent._previewCrewData||[];s.innerHTML='<option value="">-- Select --</option>';var seen={};rows.forEach(function(r){var v=r.${dbSource==='crewName'?'name':dbSource==='crew3lc'||dbSource==='crewId'?'three_lc':dbSource==='crewLicense'?'license_number':dbSource==='pilotPosition'?'position':dbSource==='acReg'?'ac_reg':dbSource==='adIcao'?'ad_icao':dbSource==='acType'?'ac_type':'name'}||'';var l=r.${dbSource==='crew3lc'||dbSource==='crewId'?'three_lc':dbSource==='crewLicense'?'license_number':dbSource==='pilotPosition'?'position':dbSource==='acReg'?'ac_reg':dbSource==='adIcao'?'ad_icao':dbSource==='acType'?'ac_type':'name'}||'';if(v&&!seen[v]){seen[v]=true;s.innerHTML+='<option value="'+v+'">'+l+'</option>';}});},100);</script>`;
+              } else {
+                inputHtml = `<input type="text" name="${esc(fieldName)}" style="width:100%;padding:4px 6px;border:1px solid #cbd5e1;border-radius:4px;font-size:0.85rem;" placeholder="...">`;
+              }
+          }
+          
+          // Replace cell content with input
+          const escapedContent = (cellConfigs[cellId]?.label || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          // Match cell with data-cell-id
+          const cellRegex = new RegExp('(<(?:td|th)[^>]*data-cell-id="' + cellId + '"[^>]*>)([\s\S]*?)(<\/td|th>)', 'i');
+          tableHtml = tableHtml.replace(cellRegex, (match, openTag, content, closeTag) => {
+            return openTag + '<div style="margin-bottom:2px;"><small style="color:#64748b;font-size:0.7rem;">' + escapedContent + '</small></div>' + inputHtml + closeTag;
+          });
+        });
+      }
+      html += tableHtml;
       html += '        </div>\n';
       break;
     case 'signature':
