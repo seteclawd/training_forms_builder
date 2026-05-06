@@ -2193,9 +2193,29 @@ function renderPreviewField(field) {
       break;
     case 'imported_html':
       html += '        <div class="imported-table-wrapper" style="margin:8px 0;overflow-x:auto;">\n';
-      // Process generatedHtml to replace configured cells with functional inputs
       let tableHtml = field.generatedHtml || '<p>Empty imported table</p>';
-      const cellConfigs = field.cellConfigs || {};
+      // Merge cellConfigs from saved data AND parse HTML for data-cell-type attributes
+      const cellConfigs = { ...(field.cellConfigs || {}) };
+      // Auto-detect cell types from HTML attributes (Visual Editor assignments)
+      if (tableHtml.includes('data-cell-type') || tableHtml.includes('data-db-name')) {
+        const tmpDiv = document.createElement('div');
+        tmpDiv.innerHTML = tableHtml;
+        tmpDiv.querySelectorAll('[data-cell-id]').forEach(td => {
+          const cellId = td.getAttribute('data-cell-id');
+          const cellType = td.getAttribute('data-cell-type');
+          const dbName = td.getAttribute('data-db-name');
+          const fieldLabel = td.getAttribute('data-field-label');
+          if ((cellType || dbName) && cellId && !cellConfigs[cellId]) {
+            cellConfigs[cellId] = {
+              type: cellType || (dbName ? 'db_' + dbName : 'text'),
+              dbName: dbName || (cellType && cellType.startsWith('db_') ? cellType.replace('db_', '') : ''),
+              label: fieldLabel || td.textContent.replace(/<[^>]+>/g, '').trim().substring(0, 50),
+              options: [],
+              trainerRole: td.getAttribute('data-trainer-role') || ''
+            };
+          }
+        });
+      }
       if (Object.keys(cellConfigs).length) {
         // Parse and replace cells with inputs
         Object.entries(cellConfigs).forEach(([cellId, cfg]) => {
