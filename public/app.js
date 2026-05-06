@@ -1908,8 +1908,8 @@ function designTableField(fieldId) {
         <h3 style="color:#f1f5f9;margin:0;font-size:1.1rem;">🎨 Table Designer — ${esc(field.label || 'Table')}</h3>
         <button id="closeDesignBtn" style="background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">&times;</button>
       </div>
-      <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
-        <textarea id="${editorId}" style="display:none;">${tableHtml}</textarea>
+      <div style="flex:1;overflow:hidden;position:relative;">
+        <textarea id="${editorId}" style="width:100%;height:100%;">${tableHtml}</textarea>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-top:1px solid #334155;">
         <div style="display:flex;gap:8px;align-items:center;">
@@ -1952,13 +1952,16 @@ function designTableField(fieldId) {
   `;
   document.body.appendChild(overlay);
 
-  // Init TinyMCE with full table editing
+  // Init TinyMCE with full table editing (wait for modal to render)
+  setTimeout(() => {
   tinymce.init({
     selector: '#' + editorId,
-    height: 'calc(90vh - 140px)',
+    height: 'calc(90vh - 160px)',
     width: '100%',
     skin: 'oxide-dark',
     content_css: 'dark',
+    statusbar: true,
+    branding: false,
     plugins: [
       'table', 'advtable', 'lists', 'link', 'code', 'preview', 'fullscreen',
       'searchreplace', 'visualblocks', 'visualchars', 'charmap', 'emoticons',
@@ -2079,6 +2082,7 @@ function designTableField(fieldId) {
       });
     }
   });
+  }, 100); // end setTimeout
 }
 
 // ===== TABLE MANAGEMENT =====
