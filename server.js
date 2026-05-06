@@ -765,6 +765,47 @@ function renderFieldHtml(field) {
     html += `        <div style="${ibStyle}">${ibContent}</div>\n`;
     return html;
   }
+  if (field.type === 'imported_html') {
+    html += `        <div class="imported-table-wrapper" style="margin:8px 0;overflow-x:auto;">\n`;
+    if (field.generatedHtml) {
+      let processedHtml = field.generatedHtml;
+      const cellConfigs = field.cellConfigs || {};
+      Object.entries(cellConfigs).forEach(([key, cfg]) => {
+        let inputHtml = '';
+        const fname = field.name + '_' + key;
+        if (cfg.type === 'signature') {
+          inputHtml = '<div style="margin-top:4px;"><canvas width="200" height="60" style="width:100%;max-width:200px;height:60px;border:1px solid #e2e8f0;border-radius:4px;cursor:crosshair;"></canvas></div>';
+        } else if (cfg.type === 'date') {
+          inputHtml = '<input type="date" name="' + fname + '" style="width:100%;padding:4px;border:1px solid #e2e8f0;border-radius:4px;margin-top:4px;">';
+        } else if (cfg.type === 'select') {
+          inputHtml = '<select name="' + fname + '" style="width:100%;padding:4px;border:1px solid #e2e8f0;border-radius:4px;margin-top:4px;"><option value="">Select...</option>';
+          (cfg.options || []).forEach(o => { inputHtml += '<option value="' + o.value + '">' + o.label + '</option>'; });
+          inputHtml += '</select>';
+        } else if (cfg.type === 'db_crewName' || cfg.type === 'db_crew3lc' || cfg.type === 'db_pilotPosition' || cfg.type === 'db_crewLicense' || cfg.type === 'db_instructorTri' || cfg.type === 'db_examinerTre' || cfg.type === 'db_acReg' || cfg.type === 'db_acType' || cfg.type === 'db_adIcao' || cfg.type === 'db_location' || cfg.type === 'db_fstdId' || cfg.type === 'db_crewId') {
+          const dbSource = cfg.dbName || cfg.type.replace('db_','');
+          inputHtml = '<select class="db-field" data-db="' + dbSource + '" name="' + fname + '" style="width:100%;padding:4px;border:1px solid #e2e8f0;border-radius:4px;margin-top:4px;"><option value="">-- Loading... --</option></select>';
+          console.log('DB field:', cfg.type, '-> dbName:', dbSource);
+        } else if (cfg.type === 'checkbox') {
+          inputHtml = '<input type="checkbox" name="' + fname + '" style="margin-top:4px;">';
+        } else if (cfg.type === 'radio') {
+          inputHtml = '<input type="radio" name="' + fname + '" style="margin-top:4px;">';
+        } else if (cfg.type === 'number') {
+          inputHtml = '<input type="number" name="' + fname + '" placeholder="..." style="width:100%;padding:4px;border:1px solid #e2e8f0;border-radius:4px;margin-top:4px;">';
+        } else if (cfg.type === 'textarea') {
+          inputHtml = '<textarea name="' + fname + '" rows="2" placeholder="..." style="width:100%;padding:4px;border:1px solid #e2e8f0;border-radius:4px;margin-top:4px;"></textarea>';
+        } else {
+          inputHtml = '<input type="text" name="' + fname + '" placeholder="..." style="width:100%;padding:4px;border:1px solid #e2e8f0;border-radius:4px;margin-top:4px;">';
+        }
+        const cellIdRegex = new RegExp('(<(?:th|td)[^>]*data-cell-id="' + key + '"[^>]*>)', 'i');
+        processedHtml = processedHtml.replace(cellIdRegex, '$1' + inputHtml);
+      });
+      html += processedHtml;
+    } else {
+      html += '<p>Empty imported table</p>';
+    }
+    html += `        </div>\n`;
+    return html;
+  }
 
   const widthStyle = field.width && field.width !== 'auto' ? `flex: 0 0 ${field.width}%; max-width: ${field.width}%;` : '';
   const heightStyle = getHeightStyle(field);
@@ -847,15 +888,30 @@ function renderFieldHtml(field) {
 }
 
 function renderTableHtml(field) {
-  let html = `          <table>\n            <thead>\n              <tr>\n`;
+  // Use preserved styles if available
+  const preserveStyles = field.preserveStyles;
+  const tableStyle = field.tableStyle || '';
+  const cellStyles = field.cellStyles || {};
+  const defaultTableStyle = preserveStyles ? 'border-collapse:collapse;width:100%;' : '';
+  
+  let html = `          <table style="${tableStyle || defaultTableStyle}">\n            <thead>\n              <tr>\n`;
+  
+  // Row 0 header cells - apply preserved cell styles
   field.columns?.forEach((col, i) => {
+    const cellKey = 'cell_0_' + i;
+    const preservedStyle = preserveStyles && cellStyles[cellKey] ? cellStyles[cellKey] : '';
     const colStyle = field.columnStyles?.[i] || {};
-    let thStyle = '';
-    if (colStyle.fontWeight === 'bold') thStyle += 'font-weight:bold;';
-    if (colStyle.fontStyle === 'italic') thStyle += 'font-style:italic;';
-    if (colStyle.fontSize === 'small') thStyle += 'font-size:0.8rem;';
-    if (colStyle.fontSize === 'large') thStyle += 'font-size:1rem;';
-    html += `                <th style="${thStyle}text-align:center;">${esc(col)}</th>\n`;
+    let thStyle = preservedStyle;
+    if (!preserveStyles || !preservedStyle) {
+      if (colStyle.fontWeight === 'bold') thStyle += 'font-weight:bold;';
+      if (colStyle.fontStyle === 'italic') thStyle += 'font-style:italic;';
+      if (colStyle.fontSize === 'small') thStyle += 'font-size:0.8rem;';
+      if (colStyle.fontSize === 'large') thStyle += 'font-size:1rem;';
+    }
+    if (!thStyle.includes('text-align')) thStyle += 'text-align:center;';
+    if (preserveStyles && !thStyle.includes('border')) thStyle += 'border:1px solid #cbd5e1;';
+    if (preserveStyles && !thStyle.includes('padding')) thStyle += 'padding:8px 12px;';
+    html += `                <th style="${thStyle}">${esc(col)}</th>\n`;
   });
   html += `              </tr>\n            </thead>\n            <tbody>\n`;
 
@@ -863,39 +919,57 @@ function renderTableHtml(field) {
     const rowLabel = typeof row === 'object' ? row.label : row;
     const rowName = typeof row === 'object' ? (row.name || row.id || ('row_' + idx)) : ('row_' + idx);
     const rowStyle = (typeof row === 'object' && row.rowStyles) ? row.rowStyles : {};
-    let rowTdStyle = 'white-space:pre-line;';
-    if (rowStyle.fontStyle === 'bold') rowTdStyle += 'font-weight:bold;';
-    else if (rowStyle.fontStyle === 'italic') rowTdStyle += 'font-style:italic;';
-    else if (rowStyle.fontStyle === 'bold-italic') rowTdStyle += 'font-weight:bold;font-style:italic;';
-    if (rowStyle.fontSize === 'small') rowTdStyle += 'font-size:0.8rem;';
-    else if (rowStyle.fontSize === 'large') rowTdStyle += 'font-size:1.05rem;';
-    else if (rowStyle.fontSize === 'xlarge') rowTdStyle += 'font-size:1.15rem;';
+    
+    // Get preserved style for row label cell (col 0)
+    const labelCellKey = 'cell_' + (idx + 1) + '_0';
+    const preservedLabelStyle = preserveStyles && cellStyles[labelCellKey] ? cellStyles[labelCellKey] : '';
+    let rowTdStyle = preservedLabelStyle || 'white-space:pre-line;';
+    if (!preserveStyles || !preservedLabelStyle) {
+      if (rowStyle.fontStyle === 'bold') rowTdStyle += 'font-weight:bold;';
+      else if (rowStyle.fontStyle === 'italic') rowTdStyle += 'font-style:italic;';
+      else if (rowStyle.fontStyle === 'bold-italic') rowTdStyle += 'font-weight:bold;font-style:italic;';
+      if (rowStyle.fontSize === 'small') rowTdStyle += 'font-size:0.8rem;';
+      else if (rowStyle.fontSize === 'large') rowTdStyle += 'font-size:1.05rem;';
+      else if (rowStyle.fontSize === 'xlarge') rowTdStyle += 'font-size:1.15rem;';
+    }
+    if (preserveStyles && !rowTdStyle.includes('border')) rowTdStyle += 'border:1px solid #cbd5e1;';
+    if (preserveStyles && !rowTdStyle.includes('padding')) rowTdStyle += 'padding:8px 12px;';
     html += `              <tr>\n                <td style="${rowTdStyle}">${esc(rowLabel)}</td>\n`;
+    
     for (let i = 1; i < (field.columns?.length || 1); i++) {
       const colType = field.columnTypes?.[i] || 'text';
       const fieldName = `${field.name || field.id}_${rowName}`;
+      // Apply preserved cell styles to data cells
+      const dataCellKey = 'cell_' + (idx + 1) + '_' + i;
+      const preservedDataStyle = preserveStyles && cellStyles[dataCellKey] ? cellStyles[dataCellKey] : '';
+      let tdExtra = '';
+      if (preservedDataStyle) {
+        tdExtra = ' style="' + preservedDataStyle + '"';
+      } else if (preserveStyles) {
+        tdExtra = ' style="border:1px solid #cbd5e1;padding:8px 12px;"';
+      }
       if (colType === 'radio') {
-        html += `                <td class="radio-cell"><input type="radio" name="${esc(fieldName)}" value="${esc(field.columns[i])}"></td>\n`;
+        html += `                <td class="radio-cell"${tdExtra}><input type="radio" name="${esc(fieldName)}" value="${esc(field.columns[i])}"></td>\n`;
       } else if (colType === 'checkbox') {
-        html += `                <td class="radio-cell"><input type="checkbox" name="${esc(fieldName)}_${i}"></td>\n`;
+        html += `                <td class="radio-cell"${tdExtra}><input type="checkbox" name="${esc(fieldName)}_${i}"></td>\n`;
       } else if (colType === 'number') {
-        html += `                <td><input type="number" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></td>\n`;
+        html += `                <td${tdExtra}><input type="number" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></td>\n`;
       } else if (colType === 'select') {
-        html += `                <td><select name="${esc(fieldName)}_${i}"><option value="">Select...</option><option value="yes">Yes</option><option value="no">No</option></select></td>\n`;
+        html += `                <td${tdExtra}><select name="${esc(fieldName)}_${i}"><option value="">Select...</option><option value="yes">Yes</option><option value="no">No</option></select></td>\n`;
       } else if (colType === 'date') {
-        html += `                <td><input type="date" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" onchange="if(this.value){var d=new Date(this.value+'T00:00:00');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];this.setAttribute('data-raw',this.value);this.type='text';this.value=d.getDate()+'-'+m[d.getMonth()]+'-'+d.getFullYear();}" onfocus="if(this.getAttribute('data-raw')){this.type='date';this.value=this.getAttribute('data-raw');}"></td>\n`;
+        html += `                <td${tdExtra}><input type="date" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" onchange="if(this.value){var d=new Date(this.value+'T00:00:00');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];this.setAttribute('data-raw',this.value);this.type='text';this.value=d.getDate()+'-'+m[d.getMonth()]+'-'+d.getFullYear();}" onfocus="if(this.getAttribute('data-raw')){this.type='date';this.value=this.getAttribute('data-raw');}"></td>\n`;
       } else if (colType === 'db_crewName' || colType === 'db_crewId' || colType === 'db_crewLicense' || colType === 'db_crew3lc' || colType === 'db_instructorTri' || colType === 'db_examinerTre' || colType === 'db_pilotPosition' || colType === 'db_location' || colType === 'db_fstdId') {
-        html += `                <td><select class="db-field" data-db="${colType.replace('db_','')}" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option value="">-- Loading... --</option></select></td>\n`;
+        html += `                <td${tdExtra}><select class="db-field" data-db="${colType.replace('db_','')}" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option value="">-- Loading... --</option></select></td>\n`;
       } else if (colType === 'multiline') {
         const mlRows = field.columnRows?.[i] || 2;
-        html += `                <td><textarea rows="${mlRows}" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></textarea></td>\n`;
+        html += `                <td${tdExtra}><textarea rows="${mlRows}" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></textarea></td>\n`;
       } else if (colType === 'signature') {
         const sigH = field.columnSigHeights?.[i] || '2row';
         const sigPx = { '1row': 40, '2row': 60, '3row': 100, '4row': 150, '5row': 200 }[sigH] || 60;
         const canvasId = `${esc(fieldName)}_${i}`;
-        html += `                <td><div class="signature-box" style="position:relative;display:inline-block;width:100%;"><canvas id="${canvasId}" width="200" height="${sigPx}" style="border:1px solid #e2e8f0;border-radius:4px;cursor:crosshair;display:block;width:100%;height:${sigPx}px;touch-action:none;-webkit-touch-callout:none;" onmousedown="event.preventDefault();this._drawing=true;var r=this.getBoundingClientRect();this._lx=(event.clientX-r.left)*(this.width/r.width);this._ly=(event.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.beginPath();c.moveTo(this._lx,this._ly);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';" onmousemove="if(!this._drawing)return;event.preventDefault();var r=this.getBoundingClientRect();var x=(event.clientX-r.left)*(this.width/r.width);var y=(event.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.lineTo(x,y);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';c.stroke();this._lx=x;this._ly=y;" onmouseup="this._drawing=false" onmouseleave="this._drawing=false" ontouchstart="event.preventDefault();this._drawing=true;var r=this.getBoundingClientRect();var t=event.touches[0];this._lx=(t.clientX-r.left)*(this.width/r.width);this._ly=(t.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.beginPath();c.moveTo(this._lx,this._ly);" ontouchmove="if(!this._drawing)return;event.preventDefault();var r=this.getBoundingClientRect();var t=event.touches[0];var x=(t.clientX-r.left)*(this.width/r.width);var y=(t.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.lineTo(x,y);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';c.stroke();this._lx=x;this._ly=y;" ontouchend="this._drawing=false" ontouchcancel="this._drawing=false"></canvas><button type="button" onclick="var c=document.getElementById('${canvasId}');if(c){var x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);}" style="position:absolute;top:4px;right:4px;background:#ef4444;color:#fff;border:none;border-radius:3px;padding:2px 8px;font-size:0.7rem;cursor:pointer;pointer-events:auto;z-index:10;">Clear</button></div></td>\n`;
+        html += `                <td${tdExtra}><div class="signature-box" style="position:relative;display:inline-block;width:100%;"><canvas id="${canvasId}" width="200" height="${sigPx}" style="border:1px solid #e2e8f0;border-radius:4px;cursor:crosshair;display:block;width:100%;height:${sigPx}px;touch-action:none;-webkit-touch-callout:none;" onmousedown="event.preventDefault();this._drawing=true;var r=this.getBoundingClientRect();this._lx=(event.clientX-r.left)*(this.width/r.width);this._ly=(event.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.beginPath();c.moveTo(this._lx,this._ly);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';" onmousemove="if(!this._drawing)return;event.preventDefault();var r=this.getBoundingClientRect();var x=(event.clientX-r.left)*(this.width/r.width);var y=(event.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.lineTo(x,y);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';c.stroke();this._lx=x;this._ly=y;" onmouseup="this._drawing=false" onmouseleave="this._drawing=false" ontouchstart="event.preventDefault();this._drawing=true;var r=this.getBoundingClientRect();var t=event.touches[0];this._lx=(t.clientX-r.left)*(this.width/r.width);this._ly=(t.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.beginPath();c.moveTo(this._lx,this._ly);" ontouchmove="if(!this._drawing)return;event.preventDefault();var r=this.getBoundingClientRect();var t=event.touches[0];var x=(t.clientX-r.left)*(this.width/r.width);var y=(t.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.lineTo(x,y);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';c.stroke();this._lx=x;this._ly=y;" ontouchend="this._drawing=false" ontouchcancel="this._drawing=false"></canvas><button type="button" onclick="var c=document.getElementById('${canvasId}');if(c){var x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);}" style="position:absolute;top:4px;right:4px;background:#ef4444;color:#fff;border:none;border-radius:3px;padding:2px 8px;font-size:0.7rem;cursor:pointer;pointer-events:auto;z-index:10;">Clear</button></div></td>\n`;
       } else {
-        html += `                <td><input type="text" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></td>\n`;
+        html += `                <td${tdExtra}><input type="text" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></td>\n`;
       }
     }
     html += `              </tr>\n`;

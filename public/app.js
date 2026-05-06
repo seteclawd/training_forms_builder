@@ -2191,6 +2191,11 @@ function renderPreviewField(field) {
     case 'table':
       html += renderPreviewTable(field);
       break;
+    case 'imported_html':
+      html += '        <div class="imported-table-wrapper" style="margin:8px 0;overflow-x:auto;">\n';
+      html += field.generatedHtml || '<p>Empty imported table</p>';
+      html += '        </div>\n';
+      break;
     case 'signature':
       const sigH = getSignatureHeight(field);
       html += `        <canvas style="width:100%;max-width:200px;height:${sigH}px;border:1px solid #e2e8f0;border-radius:4px;"></canvas>

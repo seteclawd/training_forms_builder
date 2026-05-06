@@ -147,6 +147,27 @@ function parseHtml() {
   let globalRowOffset = 0;
   
   tables.forEach((table, tableIdx) => {
+    // Capture table-level styles - ALWAYS add border-collapse for imported tables
+    let tableStyle = 'border-collapse:collapse;';
+    const tableInlineStyle = table.getAttribute('style') || '';
+    if (tableInlineStyle) {
+      var tsm = {};
+      tableInlineStyle.split(';').forEach(function(s) { var parts = s.split(':'); var p = parts[0] && parts[0].trim(); var v = parts[1] && parts.slice(1).join(':').trim(); if (p && v) tsm[p] = v; });
+      ['width','border-collapse','border-spacing','margin','margin-left','margin-right'].forEach(function(prop) {
+        if (tsm[prop]) tableStyle += prop + ':' + tsm[prop] + ';';
+      });
+    }
+    if (table.getAttribute('width')) tableStyle += 'width:' + table.getAttribute('width') + (table.getAttribute('width').includes('%') ? '' : 'px') + ';';
+    tableData.tableStyle = tableStyle;
+    
+    // Capture <col> elements for column widths
+    const colWidths = {};
+    table.querySelectorAll('col').forEach((col, ci) => {
+      const w = col.getAttribute('width') || (col.style && col.style.width);
+      if (w) colWidths[ci] = w;
+    });
+    tableData.colWidths = colWidths;
+    
     const rows = table.querySelectorAll('tr');
     rows.forEach((row, rowIdx) => {
       const cells = row.querySelectorAll('td, th');
@@ -162,18 +183,30 @@ function parseHtml() {
         let bgColor = cell.getAttribute('bgcolor') || '';
         let inlineStyle = cell.getAttribute('style') || '';
         let cellStyle = '';
+        
+        // Apply column width if available
+        const colW = colWidths[colIdx];
+        if (colW) cellStyle += 'width:' + colW + ';';
+        
         if (bgColor) cellStyle += 'background-color:' + bgColor + ';';
         if (inlineStyle) {
           const sm = {};
           inlineStyle.split(';').forEach(function(s) { var parts = s.split(':'); var p = parts[0] && parts[0].trim(); var v = parts[1] && parts[1].trim(); if (p && v) sm[p] = v; });
-          if (sm['text-align']) cellStyle += 'text-align:' + sm['text-align'] + ';';
-          if (sm['font-weight']) cellStyle += 'font-weight:' + sm['font-weight'] + ';';
-          if (sm['font-style']) cellStyle += 'font-style:' + sm['font-style'] + ';';
-          if (sm['color']) cellStyle += 'color:' + sm['color'] + ';';
-          if (sm['background-color']) cellStyle += 'background-color:' + sm['background-color'] + ';';
-          if (sm['width']) cellStyle += 'width:' + sm['width'] + ';';
-          if (sm['height']) cellStyle += 'height:' + sm['height'] + ';';
+          // Capture ALL relevant CSS properties
+          var cssProps = ['text-align','font-weight','font-style','color','background-color','width','height','font-size','font-family','padding','padding-top','padding-right','padding-bottom','padding-left','border','border-color','border-width','border-style','border-radius','vertical-align','white-space','line-height','opacity','box-shadow','text-decoration'];
+          cssProps.forEach(function(prop) {
+            if (sm[prop]) cellStyle += prop + ':' + sm[prop] + ';';
+          });
+          if (sm['border-collapse']) cellStyle += 'border-collapse:' + sm['border-collapse'] + ';';
         }
+        
+        // Add default border style for imported cells
+        if (!cellStyle.includes('border')) cellStyle += 'border:1px solid #94a3b8;';
+        if (!cellStyle.includes('padding')) cellStyle += 'padding:6px 10px;';
+        
+        // Capture colspan/rowspan
+        const colspan = parseInt(cell.getAttribute('colspan')) || 1;
+        const rowspan = parseInt(cell.getAttribute('rowspan')) || 1;
         
         allCells[cellId] = {
           row: globalRowOffset + rowIdx,
@@ -187,7 +220,9 @@ function parseHtml() {
           dbName: '',
           options: [],
           label: cleanText || `Cell ${globalRowOffset + rowIdx}_${colIdx}`,
-          fieldName: `cell_${globalRowOffset + rowIdx}_${colIdx}`
+          fieldName: `cell_${globalRowOffset + rowIdx}_${colIdx}`,
+          colspan: colspan,
+          rowspan: rowspan
         };
       });
     });
@@ -353,6 +388,12 @@ function updateCell(key, value) {
 function updateCellType(type) {
   if (!selectedCell) return;
   tableData.cells[selectedCell].type = type;
+  // Auto-set dbName for db_* types
+  if (type.startsWith('db_')) {
+    tableData.cells[selectedCell].dbName = type.replace('db_', '');
+  } else {
+    tableData.cells[selectedCell].dbName = '';
+  }
   
   const optionsSection = document.getElementById('optionsSection');
   optionsSection.style.display = (type === 'select' || type === 'radio') ? 'block' : 'none';
@@ -511,18 +552,26 @@ function copyHtmlWithConfig() {
       if (cell.options && cell.options.length) attrs += ` data-options="${escHtml(cell.options.join(','))}"`;
       
       let styleAttr = '';
+      // Apply column width from col elements
+      if (tableData.colWidths && tableData.colWidths[cell.col]) styleAttr += 'width:' + tableData.colWidths[cell.col] + ';';
       if (cell.originalBgcolor) styleAttr += 'background-color:' + cell.originalBgcolor + ';';
       if (cell.originalInlineStyle) {
         var sm = {};
         cell.originalInlineStyle.split(';').forEach(function(s) { var p = s.split(':')[0] && s.split(':')[0].trim(); var v = s.split(':')[1] && s.split(':')[1].trim(); if (p && v) sm[p] = v; });
-        if (sm['text-align']) styleAttr += 'text-align:' + sm['text-align'] + ';';
-        if (sm['font-weight']) styleAttr += 'font-weight:' + sm['font-weight'] + ';';
-        if (sm['font-style']) styleAttr += 'font-style:' + sm['font-style'] + ';';
-        if (sm['color']) styleAttr += 'color:' + sm['color'] + ';';
-        if (sm['background-color']) styleAttr += 'background-color:' + sm['background-color'] + ';';
+        var cssProps2 = ['text-align','font-weight','font-style','color','background-color','font-size','font-family','padding','border','border-color','border-radius','vertical-align','white-space','line-height','width'];
+        cssProps2.forEach(function(prop) {
+          if (sm[prop]) styleAttr += prop + ':' + sm[prop] + ';';
+        });
       }
+      // Add default border if none
+      if (!styleAttr.includes('border:')) styleAttr += 'border:1px solid #94a3b8;';
+      if (!styleAttr.includes('padding:')) styleAttr += 'padding:6px 10px;';
       var styleStr = styleAttr ? ' style="' + styleAttr.replace(/"/g, '&quot;') + '"' : '';
-      html += `<${cellTag}${attrs}${styleStr}>${cell.originalContent || ''}</${cellTag}>`;
+      // Add colspan/rowspan
+      let spanAttr = '';
+      if (cell.colspan && cell.colspan > 1) spanAttr += ` colspan="${cell.colspan}"`;
+      if (cell.rowspan && cell.rowspan > 1) spanAttr += ` rowspan="${cell.rowspan}"`;
+      html += `<${cellTag}${spanAttr}${attrs}${styleStr}>${cell.originalContent || ''}</${cellTag}>`;
     });
     html += `</tr>\n`;
   }
@@ -609,7 +658,58 @@ function saveTable() {
     });
   }
   
-  // Build config
+  // Build complete HTML preserving ALL original structure (colspan, rowspan, styles)
+  let fullHtml = '<table style="border-collapse:collapse;width:100%;font-family:inherit;font-size:inherit;">';
+  const rendered = {};
+  
+  for (let r = 0; r < maxRow; r++) {
+    fullHtml += '<tr>';
+    for (let c = 0; c < maxCol; c++) {
+      const key = 'cell_' + r + '_' + c;
+      if (rendered[key]) continue;
+      const cell = tableData.cells[key];
+      if (!cell) { fullHtml += '<td style="border:1px solid #94a3b8;padding:6px 10px;">&nbsp;</td>'; continue; }
+      if (cell.rowspan > 1) for (let rs = 1; rs < cell.rowspan; rs++) rendered['cell_' + (r + rs) + '_' + c] = true;
+      const cellTag = cell.isHeader ? 'th' : 'td';
+      const spanAttr = (cell.colspan > 1 ? ' colspan="' + cell.colspan + '"' : '') + (cell.rowspan > 1 ? ' rowspan="' + cell.rowspan + '"' : '');
+      let cs = cell.cellStyle || '';
+      if (!cs.includes('border')) cs += 'border:1px solid #94a3b8;';
+      if (!cs.includes('padding')) cs += 'padding:6px 10px;';
+      let da = ' data-cell-id="' + key + '"';
+      if (cell.type !== 'text') da += ' data-cell-type="' + cell.type + '"';
+      if (cell.dbName) da += ' data-db-name="' + cell.dbName + '"';
+      if (cell.fontStyle !== 'normal') da += ' data-font-style="' + cell.fontStyle + '"';
+      if (cell.fontSize !== 'normal') da += ' data-font-size="' + cell.fontSize + '"';
+      fullHtml += '<' + cellTag + spanAttr + ' style="' + cs + '"' + da + '>' + (cell.originalContent || '') + '</' + cellTag + '>';
+    }
+    fullHtml += '</tr>';
+  }
+  fullHtml += '</table>';
+  
+  const cellConfigs = {};
+  Object.values(tableData.cells).forEach(cell => {
+    const key = 'cell_' + cell.row + '_' + cell.col;
+    if (cell.type !== 'text' || cell.dbName || cell.fontStyle !== 'normal' || cell.fontSize !== 'normal') {
+      cellConfigs[key] = { type: cell.type, dbName: cell.dbName || '', fontStyle: cell.fontStyle || 'normal', fontSize: cell.fontSize || 'normal', options: cell.options || [], label: cell.label || cell.originalContent };
+    }
+  });
+  
+  const tableField = {
+    id: 'imported_table_' + Date.now(),
+    type: 'imported_html',
+    label: 'Imported Table',
+    name: 'imported_table',
+    required: false,
+    width: '100',
+    rowGroup: 1,
+    generatedHtml: fullHtml,
+    cellConfigs: cellConfigs,
+    columns: columns,
+    columnTypes: columnTypes,
+    rows: tableRows
+  };
+  
+  // Build config for full form
   const config = {
     title: 'Imported Form',
     subtitle: '',
@@ -622,38 +722,11 @@ function saveTable() {
         id: 'fieldset_imported_' + Date.now(),
         type: 'fieldset',
         title: 'Imported Table',
-        fields: [{
-          id: 'imported_table',
-          type: 'table',
-          label: 'Table',
-          name: 'imported_table',
-          required: false,
-          width: '100',
-          rowGroup: 1,
-          columns: columns,
-          columnTypes: columnTypes,
-          columnStyles: columnStyles,
-          rows: tableRows
-        }]
+        fields: [tableField]
       }],
       training: [],
       comments: []
     }
-  };
-  
-  // Build table field config
-  const tableField = {
-    id: 'imported_table_' + Date.now(),
-    type: 'table',
-    label: 'Imported Table',
-    name: 'imported_table',
-    required: false,
-    width: '100',
-    rowGroup: 1,
-    columns: columns,
-    columnTypes: columnTypes,
-    columnStyles: columnStyles,
-    rows: tableRows
   };
   
   // Save to DB
