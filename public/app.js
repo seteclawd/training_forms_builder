@@ -2193,7 +2193,8 @@ function renderPreviewField(field) {
       break;
     case 'imported_html':
       html += '        <div class="imported-table-wrapper" style="margin:8px 0;overflow-x:auto;">\n';
-      let tableHtml = field.generatedHtml || '<p>Empty imported table</p>';
+      // Use content (from Visual Editor) if available, otherwise generatedHtml (from Table Importer)
+      let tableHtml = field.content || field.generatedHtml || '<p>Empty imported table</p>';
       // Merge cellConfigs from saved data AND parse HTML for data-cell-type attributes
       const cellConfigs = { ...(field.cellConfigs || {}) };
       // Auto-detect cell types from HTML attributes (Visual Editor assignments)
