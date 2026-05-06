@@ -1863,6 +1863,18 @@ function findFieldsetContainingField(fieldId) {
 }
 
 // ===== TABLE FIELD DESIGNER (Visual Editor) =====
+function findField(id) {
+  for (const key in currentForm.config.sections) {
+    for (const fs of currentForm.config.sections[key]) {
+      if (fs.type === 'fieldset' && fs.fields) {
+        const f = fs.fields.find(f => f.id === id);
+        if (f) return f;
+      }
+      if (fs.id === id) return fs;
+    }
+  }
+  return null;
+}
 function designTableField(fieldId) {
   const field = findField(fieldId);
   if (!field) return;
