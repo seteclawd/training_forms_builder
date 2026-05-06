@@ -7,28 +7,29 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
-  
+
   .header { background: #1a365d; padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
   .header h1 { color: #fff; font-size: 1.3rem; }
   .header a { color: #93c5fd; text-decoration: none; font-size: 0.9rem; }
-  
-  .container { max-width: 1600px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
-  
+
+  .container { max-width: 1600px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr 400px; gap: 20px; }
+
   .panel { background: #1e293b; border-radius: 10px; overflow: hidden; }
   .panel-header { background: #334155; padding: 12px 16px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
   .panel-body { padding: 16px; }
-  
+
   .btn { padding: 8px 16px; border: 1px solid #475569; border-radius: 6px; background: #334155; color: #e2e8f0; cursor: pointer; font-size: 0.85rem; }
   .btn:hover { background: #475569; }
   .btn-primary { background: #1a365d; border-color: #2563eb; }
   .btn-primary:hover { background: #1e40af; }
   .btn-success { background: #166534; border-color: #22c55e; }
   .btn-success:hover { background: #15803d; }
-  
+  .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
+
   textarea#htmlInput { width: 100%; height: 200px; padding: 12px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; font-family: monospace; font-size: 13px; resize: vertical; }
-  
+
   .table-container { overflow: auto; max-height: calc(100vh - 300px); padding: 16px; }
-  
+
   .import-table { border-collapse: collapse; width: 100%; }
   .import-table th, .import-table td { border: 1px solid #475569; padding: 8px; min-width: 100px; position: relative; }
   .import-table th { background: #334155; text-align: center; font-weight: 600; }
@@ -36,31 +37,60 @@
   .import-table td:hover { background: #334155; }
   .import-table td.selected { outline: 3px solid #3b82f6; outline-offset: -3px; }
   .import-table td.has-config { background: #1e3a5f; }
-  
+
   .cell-id { position: absolute; top: 2px; right: 2px; font-size: 0.65rem; color: #64748b; background: #1e293b; padding: 1px 4px; border-radius: 3px; }
-  .cell-type-badge { display: inline-block; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
+  .cell-type-badge { display: inline-block; font-size: 0.65rem; padding: 2px 5px; border-radius: 4px; margin-top: 2px; }
   .badge-text { background: #334155; color: #94a3b8; }
   .badge-date { background: #4c1d95; color: #c4b5fd; }
   .badge-select { background: #065f46; color: #6ee7b7; }
   .badge-signature { background: #92400e; color: #fcd34d; }
   .badge-db { background: #1e40af; color: #93c5fd; }
   .badge-number { background: #7c2d12; color: #fdba74; }
-  
+  .badge-trainer { background: #7c3aed; color: #ddd6fe; }
+  .badge-static { background: #374151; color: #d1d5db; }
+  .badge-heading { background: #1e3a5f; color: #93c5fd; }
+  .badge-crew { background: #0f766e; color: #5eead4; }
+  .badge-remarks { background: #854d0e; color: #fde047; }
+
   .form-group { margin-bottom: 12px; }
   .form-group label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px; }
-  .form-group select, .form-group input { width: 100%; padding: 8px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; font-size: 0.9rem; }
-  
+  .form-group select, .form-group input, .form-group textarea { width: 100%; padding: 8px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; font-size: 0.9rem; }
+
   .cell-preview { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; margin-bottom: 16px; }
   .cell-preview .label { font-size: 0.8rem; color: #64748b; margin-bottom: 4px; }
   .cell-preview .value { font-size: 0.95rem; }
-  
+
   .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
   .legend-item { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #94a3b8; }
   .legend-color { width: 12px; height: 12px; border-radius: 3px; }
-  
-  .section-title { font-size: 0.85rem; color: #64748b; margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
-  
-  .db-options { max-height: 150px; overflow-y: auto; }
+
+  .section-title { font-size: 0.8rem; color: #64748b; margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+
+  /* Tabs */
+  .tabs { display: flex; border-bottom: 1px solid #334155; margin-bottom: 12px; }
+  .tab { padding: 8px 12px; font-size: 0.8rem; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab:hover { color: #e2e8f0; }
+  .tab.active { color: #3b82f6; border-bottom-color: #3b82f6; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Field Picker */
+  .field-picker { background: #0f172a; border: 1px solid #334155; border-radius: 6px; max-height: 200px; overflow-y: auto; }
+  .field-item { padding: 8px 12px; border-bottom: 1px solid #1e293b; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
+  .field-item:hover { background: #1e293b; }
+  .field-item:last-child { border-bottom: none; }
+  .field-item .field-type { font-size: 0.7rem; color: #64748b; background: #334155; padding: 2px 6px; border-radius: 3px; }
+  .field-item.selected { background: #1e3a5f; border-left: 3px solid #3b82f6; }
+
+  /* Batch Actions */
+  .batch-bar { background: #1e3a5f; padding: 10px 16px; border-radius: 6px; margin-bottom: 12px; display: none; align-items: center; gap: 8px; font-size: 0.85rem; }
+  .batch-bar.visible { display: flex; }
+
+  /* Quick Assign Grid */
+  .quick-assign { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .quick-assign-btn { padding: 6px 8px; background: #334155; border: 1px solid #475569; border-radius: 4px; font-size: 0.7rem; color: #e2e8f0; cursor: pointer; text-align: center; }
+  .quick-assign-btn:hover { background: #475569; }
+  .quick-assign-btn.active { background: #1e40af; border-color: #3b82f6; }
 </style>
 </head>
 <body>
@@ -78,7 +108,7 @@
         <span>Import HTML Table</span>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-primary" onclick="parseHtml()">Parse HTML</button>
-          <button class="btn" onclick="copyHtmlWithConfig()">📋 Copy HTML with Config</button>
+          <button class="btn" onclick="copyHtmlWithConfig()">📋 Copy HTML</button>
           <button class="btn btn-success" onclick="saveTable()">📊 Generate Table</button>
         </div>
       </div>
@@ -95,7 +125,7 @@ Example:
     <tr><td>Jane</td><td>02/01/2026</td><td>Fail</td></tr>
   </tbody>
 </table>"></textarea>
-        
+
         <div class="legend">
           <div class="legend-item"><div class="legend-color" style="background:#334155;"></div> Text</div>
           <div class="legend-item"><div class="legend-color" style="background:#4c1d95;"></div> Date</div>
@@ -103,25 +133,43 @@ Example:
           <div class="legend-item"><div class="legend-color" style="background:#92400e;"></div> Signature</div>
           <div class="legend-item"><div class="legend-color" style="background:#1e40af;"></div> Database</div>
           <div class="legend-item"><div class="legend-color" style="background:#7c2d12;"></div> Number</div>
+          <div class="legend-item"><div class="legend-color" style="background:#7c3aed;"></div> Trainer</div>
+          <div class="legend-item"><div class="legend-color" style="background:#0f766e;"></div> Crew</div>
+          <div class="legend-item"><div class="legend-color" style="background:#854d0e;"></div> Remarks</div>
         </div>
       </div>
     </div>
-    
+
+    <!-- Batch Actions -->
+    <div class="batch-bar" id="batchBar">
+      <span id="batchCount">0</span> cells selected
+      <button class="btn btn-sm" onclick="batchSetType('date')">📅 Date</button>
+      <button class="btn btn-sm" onclick="batchSetType('text')">📝 Text</button>
+      <button class="btn btn-sm" onclick="batchSetType('static')">📌 Static</button>
+      <button class="btn btn-sm" onclick="batchClearSelection()">Clear</button>
+    </div>
+
     <div class="panel" style="margin-top:16px;">
       <div class="panel-header">
         <span>Table Preview</span>
-        <span style="font-size:0.8rem;color:#94a3b8;">Click a cell to configure</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <label style="font-size:0.8rem;color:#94a3b8;"><input type="checkbox" id="showCellIds" checked onchange="toggleCellIds()" style="margin-right:4px;">Show IDs</label>
+          <span style="font-size:0.8rem;color:#94a3b8;">Click cell to config · Shift+Click to multi-select</span>
+        </div>
       </div>
       <div class="table-container" id="tableContainer">
         <p style="color:#64748b;text-align:center;padding:40px;">Paste HTML table and click "Parse HTML"</p>
       </div>
     </div>
   </div>
-  
+
   <!-- Right Sidebar: Cell Configuration -->
   <div>
     <div class="panel" style="position:sticky;top:20px;">
-      <div class="panel-header">Cell Configuration</div>
+      <div class="panel-header">
+        Cell Configuration
+        <span id="cellCount" style="font-size:0.75rem;color:#94a3b8;"></span>
+      </div>
       <div class="panel-body" id="configPanel">
         <p style="color:#64748b;text-align:center;padding:20px;font-size:0.9rem;">Click a cell to configure it</p>
       </div>
@@ -132,85 +180,174 @@ Example:
 <script>
 let tableData = { cells: {} };
 let selectedCell = null;
+let selectedCells = new Set();
 
+// ============================================================
+// FIELD DEFINITIONS - Available Form Builder fields
+// ============================================================
+const FORM_BUILDER_FIELDS = [
+  // Basic
+  { id: 'text', name: 'Text Input', type: 'text', icon: '📝', category: 'Basic' },
+  { id: 'number', name: 'Number', type: 'number', icon: '🔢', category: 'Basic' },
+  { id: 'date', name: 'Date', type: 'date', icon: '📅', category: 'Basic' },
+  { id: 'textarea', name: 'Text Area', type: 'textarea', icon: '📄', category: 'Basic' },
+  { id: 'checkbox', name: 'Checkbox', type: 'checkbox', icon: '☑️', category: 'Basic' },
+  { id: 'radio', name: 'Radio', type: 'radio', icon: '⭕', category: 'Basic' },
+  { id: 'select', name: 'Dropdown', type: 'select', icon: '🔽', category: 'Basic' },
+
+  // Special
+  { id: 'signature', name: 'Signature', type: 'signature', icon: '✍️', category: 'Special' },
+  { id: 'static', name: 'Static Text', type: 'static', icon: '📌', category: 'Special' },
+  { id: 'heading', name: 'Heading', type: 'heading', icon: '📌', category: 'Special' },
+  { id: 'trainer', name: 'Trainer Name', type: 'trainer', icon: '🎓', category: 'Special' },
+  { id: 'remarks', name: 'Remarks', type: 'remarks', icon: '📝', category: 'Special' },
+
+  // Database Fields
+  { id: 'db_crewName', name: 'Crew Name', type: 'db_crewName', icon: '👤', category: 'Database' },
+  { id: 'db_pilotPosition', name: 'Pilot Position', type: 'db_pilotPosition', icon: '👤', category: 'Database' },
+  { id: 'db_crewId', name: 'Crew ID', type: 'db_crewId', icon: '🪪', category: 'Database' },
+  { id: 'db_crewLicense', name: 'License Number', type: 'db_crewLicense', icon: '📜', category: 'Database' },
+  { id: 'db_instructorTri', name: 'Instructor (TRI)', type: 'db_instructorTri', icon: '🎓', category: 'Database' },
+  { id: 'db_examinerTre', name: 'Examiner (TRE)', type: 'db_examinerTre', icon: '📝', category: 'Database' },
+  { id: 'db_acReg', name: 'A/C Registration', type: 'db_acReg', icon: '✈️', category: 'Database' },
+  { id: 'db_acType', name: 'A/C Type', type: 'db_acType', icon: '✈️', category: 'Database' },
+  { id: 'db_adIcao', name: 'AD ICAO', type: 'db_adIcao', icon: '🌍', category: 'Database' },
+  { id: 'db_crewRole', name: 'Crew Role', type: 'db_crewRole', icon: '👨‍✈️', category: 'Database' },
+];
+
+// ============================================================
+// TYPE NAMES & BADGES
+// ============================================================
+const TYPE_NAMES = {
+  text: 'Text', number: 'Number', date: 'Date', select: 'Dropdown',
+  radio: 'Radio', checkbox: 'Checkbox', textarea: 'Text Area',
+  signature: 'Signature', static: 'Static', heading: 'Heading',
+  trainer: 'Trainer', remarks: 'Remarks',
+  db_crewName: 'DB: Crew', db_pilotPosition: 'DB: Position',
+  db_crewId: 'DB: ID', db_crewLicense: 'DB: License',
+  db_instructorTri: 'DB: Instructor', db_examinerTre: 'DB: Examiner',
+  db_acReg: 'DB: A/C Reg', db_acType: 'DB: A/C Type',
+  db_adIcao: 'DB: AD ICAO', db_crewRole: 'DB: Role',
+};
+
+// ============================================================
+// PARSE HTML
+// ============================================================
 function parseHtml() {
   const html = document.getElementById('htmlInput').value;
   if (!html.trim()) { alert('Please paste HTML table first'); return; }
-  
+
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const tables = doc.querySelectorAll('table');
   if (!tables.length) { alert('No table found in HTML'); return; }
-  
-  // If multiple tables, combine them all into one tableData
+
   let allCells = {};
   let globalRowOffset = 0;
-  
+
   tables.forEach((table, tableIdx) => {
-    // Capture table-level styles - ALWAYS add border-collapse for imported tables
+    // Capture table-level styles
     let tableStyle = 'border-collapse:collapse;';
     const tableInlineStyle = table.getAttribute('style') || '';
     if (tableInlineStyle) {
-      var tsm = {};
-      tableInlineStyle.split(';').forEach(function(s) { var parts = s.split(':'); var p = parts[0] && parts[0].trim(); var v = parts[1] && parts.slice(1).join(':').trim(); if (p && v) tsm[p] = v; });
-      ['width','border-collapse','border-spacing','margin','margin-left','margin-right'].forEach(function(prop) {
+      const tsm = {};
+      tableInlineStyle.split(';').forEach(s => { const parts = s.split(':'); const p = parts[0]?.trim(); const v = parts.slice(1).join(':').trim(); if (p && v) tsm[p] = v; });
+      ['width','height','border-collapse','border-spacing','margin','margin-left','margin-right','table-layout','caption-side'].forEach(prop => {
         if (tsm[prop]) tableStyle += prop + ':' + tsm[prop] + ';';
       });
     }
     if (table.getAttribute('width')) tableStyle += 'width:' + table.getAttribute('width') + (table.getAttribute('width').includes('%') ? '' : 'px') + ';';
+    if (table.getAttribute('border')) tableStyle += 'border:' + table.getAttribute('border') + 'px solid #475569;';
     tableData.tableStyle = tableStyle;
-    
-    // Capture <col> elements for column widths
+
+    // Capture <col> elements
     const colWidths = {};
-    table.querySelectorAll('col').forEach((col, ci) => {
+    table.querySelectorAll('colgroup col').forEach((col, ci) => {
       const w = col.getAttribute('width') || (col.style && col.style.width);
       if (w) colWidths[ci] = w;
     });
     tableData.colWidths = colWidths;
-    
+
     const rows = table.querySelectorAll('tr');
     rows.forEach((row, rowIdx) => {
       const cells = row.querySelectorAll('td, th');
-      const maxCols = cells.length;
-      
-      cells.forEach((cell, colIdx) => {
-        const cellId = `cell_${globalRowOffset + rowIdx}_${colIdx}`;
+      let colOffset = 0;
+
+      cells.forEach((cell, visibleIdx) => {
+        // Calculate actual column accounting for rowspan/colspan in previous rows
+        let actualCol = colOffset;
+        while (allCells[`cell_${globalRowOffset + rowIdx}_${actualCol}`]) actualCol++;
+        colOffset = actualCol + (parseInt(cell.getAttribute('colspan')) || 1);
+
+        const cellId = `cell_${globalRowOffset + rowIdx}_${actualCol}`;
         const isHeader = cell.tagName === 'TH';
-        
+
         let cleanText = cell.textContent.trim().replace(/\s+/g, ' ');
         if (!cleanText) cleanText = '';
-        
+
+        // Capture ALL styles comprehensively
         let bgColor = cell.getAttribute('bgcolor') || '';
         let inlineStyle = cell.getAttribute('style') || '';
         let cellStyle = '';
-        
-        // Apply column width if available
-        const colW = colWidths[colIdx];
+
+        // Apply column width
+        const colW = colWidths[visibleIdx] || colWidths[actualCol];
         if (colW) cellStyle += 'width:' + colW + ';';
-        
+
         if (bgColor) cellStyle += 'background-color:' + bgColor + ';';
+
         if (inlineStyle) {
           const sm = {};
-          inlineStyle.split(';').forEach(function(s) { var parts = s.split(':'); var p = parts[0] && parts[0].trim(); var v = parts[1] && parts[1].trim(); if (p && v) sm[p] = v; });
-          // Capture ALL relevant CSS properties
-          var cssProps = ['text-align','font-weight','font-style','color','background-color','width','height','font-size','font-family','padding','padding-top','padding-right','padding-bottom','padding-left','border','border-color','border-width','border-style','border-radius','vertical-align','white-space','line-height','opacity','box-shadow','text-decoration'];
-          cssProps.forEach(function(prop) {
+          inlineStyle.split(';').forEach(s => { const parts = s.split(':'); const p = parts[0]?.trim(); const v = parts.slice(1).join(':').trim(); if (p && v) sm[p] = v; });
+
+          // Extended CSS property list - captures more specific styles
+          const cssProps = [
+            'text-align','font-weight','font-style','text-decoration','text-decoration-line',
+            'color','background-color','background','background-image',
+            'width','height','min-width','max-width','min-height','max-height',
+            'font-size','font-family','font-variant','font-weight',
+            'padding','padding-top','padding-right','padding-bottom','padding-left',
+            'margin','margin-top','margin-right','margin-bottom','margin-left',
+            'border','border-color','border-width','border-style','border-radius',
+            'border-top','border-bottom','border-left','border-right',
+            'vertical-align','white-space','line-height','letter-spacing','text-transform',
+            'opacity','box-shadow','text-shadow','overflow','overflow-wrap','word-break',
+            'display','position','z-index','transform','transition'
+          ];
+          cssProps.forEach(prop => {
             if (sm[prop]) cellStyle += prop + ':' + sm[prop] + ';';
           });
-          if (sm['border-collapse']) cellStyle += 'border-collapse:' + sm['border-collapse'] + ';';
         }
-        
-        // Add default border style for imported cells
+
+        // Default styles for imported cells
         if (!cellStyle.includes('border')) cellStyle += 'border:1px solid #94a3b8;';
         if (!cellStyle.includes('padding')) cellStyle += 'padding:6px 10px;';
-        
-        // Capture colspan/rowspan
+        if (!cellStyle.includes('text-align') && isHeader) cellStyle += 'text-align:center;';
+
         const colspan = parseInt(cell.getAttribute('colspan')) || 1;
         const rowspan = parseInt(cell.getAttribute('rowspan')) || 1;
-        
+
+        // Capture font styles separately for display
+        let fontStyle = 'normal';
+        let fontSize = 'normal';
+        const fontMatch = inlineStyle.match(/font-weight\s*:\s*bold/i);
+        const styleMatch = inlineStyle.match(/font-style\s*:\s*italic/i);
+        if (fontMatch && styleMatch) fontStyle = 'bold-italic';
+        else if (fontMatch) fontStyle = 'bold';
+        else if (styleMatch) fontStyle = 'italic';
+
+        const sizeMatch = inlineStyle.match(/font-size\s*:\s*(\d+)/);
+        if (sizeMatch) {
+          const px = parseInt(sizeMatch[1]);
+          if (px <= 12) fontSize = 'small';
+          else if (px <= 14) fontSize = 'normal';
+          else if (px <= 16) fontSize = 'large';
+          else fontSize = 'xlarge';
+        }
+
         allCells[cellId] = {
           row: globalRowOffset + rowIdx,
-          col: colIdx,
+          col: actualCol,
           originalContent: cleanText,
           originalBgcolor: bgColor,
           originalInlineStyle: inlineStyle,
@@ -219,272 +356,450 @@ function parseHtml() {
           type: 'text',
           dbName: '',
           options: [],
-          label: cleanText || `Cell ${globalRowOffset + rowIdx}_${colIdx}`,
-          fieldName: `cell_${globalRowOffset + rowIdx}_${colIdx}`,
+          label: cleanText || `Cell ${globalRowOffset + rowIdx}_${actualCol}`,
+          fieldName: `cell_${globalRowOffset + rowIdx}_${actualCol}`,
           colspan: colspan,
-          rowspan: rowspan
+          rowspan: rowspan,
+          fontStyle: fontStyle,
+          fontSize: fontSize,
         };
       });
+      globalRowOffset++;
     });
-    globalRowOffset += rows.length;
   });
-  
-  tableData = { cells: allCells };
-  
-  // Render all cells
+
+  tableData = { cells: allCells, tableStyle: tableData.tableStyle, colWidths: tableData.colWidths };
+  renderTable();
+}
+
+// ============================================================
+// RENDER TABLE
+// ============================================================
+function renderTable() {
   const container = document.getElementById('tableContainer');
   container.innerHTML = '';
   const newTable = document.createElement('table');
   newTable.className = 'import-table';
-  
-  // Find max row and column
-  const allCellKeys = Object.keys(allCells);
-  if (!allCellKeys.length) { alert('No cells found'); return; }
+  if (tableData.tableStyle) newTable.setAttribute('style', tableData.tableStyle);
+
+  const allCellKeys = Object.keys(tableData.cells);
+  if (!allCellKeys.length) { container.innerHTML = '<p style="color:#64748b;text-align:center;padding:40px;">No cells found</p>'; return; }
+
   const maxRow = Math.max(...allCellKeys.map(k => parseInt(k.split('_')[1]))) + 1;
   const maxCol = Math.max(...allCellKeys.map(k => parseInt(k.split('_')[2]))) + 1;
-  
-  // Build rows
+
+  const rendered = {};
+
   for (let r = 0; r < maxRow; r++) {
-    const rowCells = [];
-    let isHeaderRow = true;
-    for (let c = 0; c < maxCol; c++) {
-      const cell = allCells[`cell_${r}_${c}`];
-      rowCells.push(cell || null);
-      if (cell && !cell.isHeader) isHeaderRow = false;
-    }
-    
     const newRow = document.createElement('tr');
-    rowCells.forEach((cell, c) => {
-      const cellId = `cell_${r}_${c}`;
-      if (!cell) {
-        const empty = document.createElement(isHeaderRow ? 'th' : 'td');
-        empty.innerHTML = '&nbsp;';
-        newRow.appendChild(empty);
-        return;
+    for (let c = 0; c < maxCol; c++) {
+      const key = `cell_${r}_${c}`;
+      if (rendered[key]) continue;
+      const cell = tableData.cells[key];
+      if (!cell) { const empty = document.createElement('td'); empty.innerHTML = '&nbsp;'; newRow.appendChild(empty); continue; }
+
+      if (cell.rowspan > 1) for (let rs = 1; rs < cell.rowspan; rs++) rendered[`cell_${r + rs}_${c}`] = true;
+
+      const cellEl = document.createElement(cell.isHeader ? 'th' : 'td');
+      if (cell.cellStyle) cellEl.setAttribute('style', cell.cellStyle);
+      if (cell.colspan > 1) cellEl.setAttribute('colspan', cell.colspan);
+      if (cell.rowspan > 1) cellEl.setAttribute('rowspan', cell.rowspan);
+
+      cellEl.setAttribute('data-cell-id', key);
+      cellEl.innerHTML = cell.originalContent || '&nbsp;';
+
+      // Add cell ID overlay
+      const idBadge = document.createElement('div');
+      idBadge.className = 'cell-id';
+      idBadge.textContent = key.replace('cell_', '');
+      idBadge.style.display = document.getElementById('showCellIds')?.checked ? 'block' : 'none';
+      cellEl.appendChild(idBadge);
+
+      // Add type badge if configured
+      if (cell.type !== 'text') {
+        let badge = document.createElement('div');
+        badge.className = `cell-type-badge ${cell.type.startsWith('db_') ? 'badge-db' : `badge-${cell.type}`}`;
+        badge.textContent = TYPE_NAMES[cell.type] || cell.type;
+        cellEl.appendChild(badge);
       }
-      
-      const newCell = document.createElement(cell.isHeader ? 'th' : 'td');
-      if (cell.cellStyle) newCell.style.cssText = cell.cellStyle;
-      newCell.textContent = cell.originalContent || '\u00A0';
-      newCell.dataset.cellId = cellId;
-      newCell.dataset.row = r;
-      newCell.dataset.col = c;
-      
-      if (!cell.isHeader) {
-        newCell.onclick = () => selectCell(cellId);
-        const idBadge = document.createElement('span');
-        idBadge.className = 'cell-id';
-        idBadge.textContent = cellId;
-        newCell.appendChild(idBadge);
-      }
-      
-      newRow.appendChild(newCell);
-    });
+
+      if (cell.type !== 'text' || cell.dbName) cellEl.classList.add('has-config');
+      if (selectedCells.has(key)) cellEl.classList.add('selected');
+
+      cellEl.onclick = (e) => handleCellClick(key, e);
+      newRow.appendChild(cellEl);
+    }
     newTable.appendChild(newRow);
   }
-  
+
   container.appendChild(newTable);
+  updateCellCount();
 }
 
-function selectCell(cellId) {
-  // Deselect previous
-  document.querySelectorAll('.import-table td.selected').forEach(el => el.classList.remove('selected'));
-  
-  const cellEl = document.querySelector(`[data-cell-id="${cellId}"]`);
-  if (!cellEl) return;
-  cellEl.classList.add('selected');
-  selectedCell = cellId;
-  
-  const data = tableData.cells[cellId];
-  renderConfigPanel(data);
+// ============================================================
+// CELL SELECTION
+// ============================================================
+function handleCellClick(key, event) {
+  if (event.shiftKey) {
+    // Multi-select
+    if (selectedCells.has(key)) selectedCells.delete(key);
+    else selectedCells.add(key);
+    selectedCell = key;
+    updateBatchBar();
+    renderTable();
+    renderConfigPanel(tableData.cells[key]);
+  } else {
+    // Single select
+    selectedCell = key;
+    selectedCells.clear();
+    selectedCells.add(key);
+    renderTable();
+    renderConfigPanel(tableData.cells[key]);
+  }
 }
 
+function updateBatchBar() {
+  const bar = document.getElementById('batchBar');
+  const count = document.getElementById('batchCount');
+  if (selectedCells.size > 1) {
+    bar.classList.add('visible');
+    count.textContent = selectedCells.size;
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function batchSetType(type) {
+  selectedCells.forEach(key => {
+    if (tableData.cells[key]) {
+      tableData.cells[key].type = type;
+      if (type.startsWith('db_')) tableData.cells[key].dbName = type.replace('db_', '');
+    }
+  });
+  renderTable();
+  if (selectedCell) renderConfigPanel(tableData.cells[selectedCell]);
+}
+
+function batchClearSelection() {
+  selectedCells.clear();
+  updateBatchBar();
+  renderTable();
+}
+
+function toggleCellIds() {
+  document.querySelectorAll('.cell-id').forEach(el => {
+    el.style.display = document.getElementById('showCellIds').checked ? 'block' : 'none';
+  });
+}
+
+function updateCellCount() {
+  const total = Object.keys(tableData.cells).length;
+  const configured = Object.values(tableData.cells).filter(c => c.type !== 'text' || c.dbName).length;
+  document.getElementById('cellCount').textContent = `${configured}/${total} configured`;
+}
+
+// ============================================================
+// CONFIG PANEL WITH TABS & FIELD PICKER
+// ============================================================
 function renderConfigPanel(data) {
   const panel = document.getElementById('configPanel');
-  const cellEl = document.querySelector(`[data-cell-id="${data.row}_${data.col}"]`);
-  
+
+  // Group fields by category
+  const categories = {};
+  FORM_BUILDER_FIELDS.forEach(f => {
+    if (!categories[f.category]) categories[f.category] = [];
+    categories[f.category].push(f);
+  });
+
   panel.innerHTML = `
     <div class="cell-preview">
       <div class="label">Cell Content</div>
-      <div class="value">${data.originalContent || '<em style="color:#64748b;">Empty</em>'}</div>
-      <div style="color:#64748b;font-size:0.75rem;margin-top:4px;">Row ${data.row} · Col ${data.col} · ID: ${data.fieldName}</div>
+      <div class="value" style="word-break:break-word;">${data.originalContent || '<em style="color:#64748b;">Empty</em>'}</div>
+      <div style="color:#64748b;font-size:0.7rem;margin-top:4px;">Row ${data.row} · Col ${data.col} · ID: <code style="background:#334155;padding:1px 4px;border-radius:3px;">${data.fieldName}</code></div>
     </div>
-    
-    <div class="form-group">
-      <label>Field Label</label>
-      <input type="text" id="cfg_label" value="${escAttr(data.label)}" onchange="updateCell('label', this.value)">
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this, 'tab-field')">Field</div>
+      <div class="tab" onclick="switchTab(this, 'tab-style')">Style</div>
+      <div class="tab" onclick="switchTab(this, 'tab-picker')">Field Picker</div>
     </div>
-    
-    <div class="form-group">
-      <label>Field Name (for form data)</label>
-      <input type="text" id="cfg_fieldName" value="${escAttr(data.fieldName)}" onchange="updateCell('fieldName', this.value)">
-    </div>
-    
-    <div class="form-group">
-      <label>Cell Type</label>
-      <select id="cfg_type" onchange="updateCellType(this.value)">
-        <option value="text" ${data.type === 'text' ? 'selected' : ''}>📝 Text Input</option>
-        <option value="number" ${data.type === 'number' ? 'selected' : ''}>🔢 Number</option>
-        <option value="date" ${data.type === 'date' ? 'selected' : ''}>📅 Date</option>
-        <option value="select" ${data.type === 'select' ? 'selected' : ''}>🔽 Dropdown</option>
-        <option value="radio" ${data.type === 'radio' ? 'selected' : ''}>⭕ Radio</option>
-        <option value="checkbox" ${data.type === 'checkbox' ? 'selected' : ''}>☑️ Checkbox</option>
-        <option value="textarea" ${data.type === 'textarea' ? 'selected' : ''}>📄 Text Area</option>
-        <option value="signature" ${data.type === 'signature' ? 'selected' : ''}>✍️ Signature</option>
-        <option value="db_crewName" ${data.type === 'db_crewName' ? 'selected' : ''}>👤 Crew Name (DB)</option>
-        <option value="db_pilotPosition" ${data.type === 'db_pilotPosition' ? 'selected' : ''}>👤 Pilot Position (DB)</option>
-        <option value="db_crewId" ${data.type === 'db_crewId' ? 'selected' : ''}>🪪 Crew ID (DB)</option>
-        <option value="db_crewLicense" ${data.type === 'db_crewLicense' ? 'selected' : ''}>📜 License Number (DB)</option>
-        <option value="db_instructorTri" ${data.type === 'db_instructorTri' ? 'selected' : ''}>🎓 Instructor (DB)</option>
-        <option value="db_examinerTre" ${data.type === 'db_examinerTre' ? 'selected' : ''}>📝 Examiner (DB)</option>
-        <option value="static" ${data.type === 'static' ? 'selected' : ''}>📌 Static Text (no input)</option>
-        <option value="heading" ${data.type === 'heading' ? 'selected' : ''}>📌 Heading</option>
-      </select>
-    </div>
-    
-    <div class="form-group">
-      <label>Font Style</label>
-      <select id="cfg_fontStyle" onchange="updateCell('fontStyle', this.value)">
-        <option value="normal" ${(data.fontStyle || 'normal') === 'normal' ? 'selected' : ''}>Regular</option>
-        <option value="bold" ${data.fontStyle === 'bold' ? 'selected' : ''}>Bold</option>
-        <option value="italic" ${data.fontStyle === 'italic' ? 'selected' : ''}>Italic</option>
-        <option value="bold-italic" ${data.fontStyle === 'bold-italic' ? 'selected' : ''}>Bold + Italic</option>
-      </select>
-    </div>
-    
-    <div class="form-group">
-      <label>Font Size</label>
-      <select id="cfg_fontSize" onchange="updateCell('fontSize', this.value)">
-        <option value="small" ${(data.fontSize || 'normal') === 'small' ? 'selected' : ''}>Small (12px)</option>
-        <option value="normal" ${(data.fontSize || 'normal') === 'normal' ? 'selected' : ''}>Normal (14px)</option>
-        <option value="large" ${data.fontSize === 'large' ? 'selected' : ''}>Large (16px)</option>
-        <option value="xlarge" ${data.fontSize === 'xlarge' ? 'selected' : ''}>X-Large (18px)</option>
-      </select>
-    </div>
-    
-    <div id="optionsSection" style="display:${data.type === 'select' || data.type === 'radio' ? 'block' : 'none'};">
+
+    <!-- TAB: Field Config -->
+    <div class="tab-content active" id="tab-field">
       <div class="form-group">
-        <label>Options (one per line)</label>
-        <textarea id="cfg_options" rows="4" onchange="updateCell('options', this.value.split('\\n').filter(o=>o.trim()))" style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;font-size:0.9rem;">${(data.options || []).join('\n')}</textarea>
+        <label>Field Label</label>
+        <input type="text" id="cfg_label" value="${escAttr(data.label)}" onchange="updateCell('label', this.value)">
+      </div>
+      <div class="form-group">
+        <label>Field Name (for form data)</label>
+        <input type="text" id="cfg_fieldName" value="${escAttr(data.fieldName)}" onchange="updateCell('fieldName', this.value)">
+      </div>
+      <div class="form-group">
+        <label>Cell Type</label>
+        <select id="cfg_type" onchange="updateCellType(this.value)">
+          <optgroup label="Basic">
+            <option value="text" ${data.type === 'text' ? 'selected' : ''}>📝 Text Input</option>
+            <option value="number" ${data.type === 'number' ? 'selected' : ''}>🔢 Number</option>
+            <option value="date" ${data.type === 'date' ? 'selected' : ''}>📅 Date</option>
+            <option value="select" ${data.type === 'select' ? 'selected' : ''}>🔽 Dropdown</option>
+            <option value="radio" ${data.type === 'radio' ? 'selected' : ''}>⭕ Radio</option>
+            <option value="checkbox" ${data.type === 'checkbox' ? 'selected' : ''}>☑️ Checkbox</option>
+            <option value="textarea" ${data.type === 'textarea' ? 'selected' : ''}>📄 Text Area</option>
+          </optgroup>
+          <optgroup label="Special">
+            <option value="signature" ${data.type === 'signature' ? 'selected' : ''}>✍️ Signature</option>
+            <option value="trainer" ${data.type === 'trainer' ? 'selected' : ''}>🎓 Trainer Name</option>
+            <option value="remarks" ${data.type === 'remarks' ? 'selected' : ''}>📝 Remarks</option>
+            <option value="static" ${data.type === 'static' ? 'selected' : ''}>📌 Static Text</option>
+            <option value="heading" ${data.type === 'heading' ? 'selected' : ''}>📌 Heading</option>
+          </optgroup>
+          <optgroup label="Database">
+            <option value="db_crewName" ${data.type === 'db_crewName' ? 'selected' : ''}>👤 Crew Name</option>
+            <option value="db_pilotPosition" ${data.type === 'db_pilotPosition' ? 'selected' : ''}>👤 Pilot Position</option>
+            <option value="db_crewId" ${data.type === 'db_crewId' ? 'selected' : ''}>🪪 Crew ID</option>
+            <option value="db_crewLicense" ${data.type === 'db_crewLicense' ? 'selected' : ''}>📜 License Number</option>
+            <option value="db_instructorTri" ${data.type === 'db_instructorTri' ? 'selected' : ''}>🎓 Instructor (TRI)</option>
+            <option value="db_examinerTre" ${data.type === 'db_examinerTre' ? 'selected' : ''}>📝 Examiner (TRE)</option>
+            <option value="db_acReg" ${data.type === 'db_acReg' ? 'selected' : ''}>✈️ A/C Registration</option>
+            <option value="db_acType" ${data.type === 'db_acType' ? 'selected' : ''}>✈️ A/C Type</option>
+            <option value="db_adIcao" ${data.type === 'db_adIcao' ? 'selected' : ''}>🌍 AD ICAO</option>
+            <option value="db_crewRole" ${data.type === 'db_crewRole' ? 'selected' : ''}>👨‍✈️ Crew Role</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div id="optionsSection" style="display:${data.type === 'select' || data.type === 'radio' ? 'block' : 'none'};">
+        <div class="form-group">
+          <label>Options (one per line)</label>
+          <textarea id="cfg_options" rows="3" onchange="updateCell('options', this.value.split('\\n').filter(o=>o.trim()))">${(data.options || []).join('\n')}</textarea>
+        </div>
+      </div>
+
+      <!-- DB Options preview -->
+      <div id="dbOptionsSection" style="display:${data.type === 'trainer' ? 'block' : 'none'};">
+        <div class="form-group">
+          <label>Trainer Role</label>
+          <select id="cfg_trainerRole" onchange="updateCell('trainerRole', this.value)">
+            <option value="">Any</option>
+            <option value="TRI" ${data.trainerRole === 'TRI' ? 'selected' : ''}>TRI (Type Rating Instructor)</option>
+            <option value="TRE" ${data.trainerRole === 'TRE' ? 'selected' : ''}>TRE (Type Rating Examiner)</option>
+            <option value="SFI" ${data.trainerRole === 'SFI' ? 'selected' : ''}>SFI (Synthetic Flight Instructor)</option>
+            <option value="CRMI" ${data.trainerRole === 'CRMI' ? 'selected' : ''}>CRMI (CRM Instructor)</option>
+            <option value="INSTR" ${data.trainerRole === 'INSTR' ? 'selected' : ''}>INSTR (Instructor)</option>
+          </select>
+        </div>
       </div>
     </div>
-    
+
+    <!-- TAB: Style Config -->
+    <div class="tab-content" id="tab-style">
+      <div class="form-group">
+        <label>Font Style</label>
+        <select id="cfg_fontStyle" onchange="updateCell('fontStyle', this.value)">
+          <option value="normal" ${(data.fontStyle || 'normal') === 'normal' ? 'selected' : ''}>Regular</option>
+          <option value="bold" ${data.fontStyle === 'bold' ? 'selected' : ''}>Bold</option>
+          <option value="italic" ${data.fontStyle === 'italic' ? 'selected' : ''}>Italic</option>
+          <option value="bold-italic" ${data.fontStyle === 'bold-italic' ? 'selected' : ''}>Bold + Italic</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Font Size</label>
+        <select id="cfg_fontSize" onchange="updateCell('fontSize', this.value)">
+          <option value="small" ${(data.fontSize || 'normal') === 'small' ? 'selected' : ''}>Small (12px)</option>
+          <option value="normal" ${(data.fontSize || 'normal') === 'normal' ? 'selected' : ''}>Normal (14px)</option>
+          <option value="large" ${data.fontSize === 'large' ? 'selected' : ''}>Large (16px)</option>
+          <option value="xlarge" ${data.fontSize === 'xlarge' ? 'selected' : ''}>X-Large (18px)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Text Color</label>
+        <input type="color" id="cfg_color" value="${extractStyleValue(data.cellStyle, 'color') || '#e2e8f0'}" onchange="updateCellStyle('color', this.value)" style="height:36px;padding:2px;">
+      </div>
+      <div class="form-group">
+        <label>Background Color</label>
+        <input type="color" id="cfg_bgColor" value="${extractStyleValue(data.cellStyle, 'background-color') || '#1e293b'}" onchange="updateCellStyle('background-color', this.value)" style="height:36px;padding:2px;">
+      </div>
+      <div class="form-group">
+        <label>Text Align</label>
+        <select id="cfg_textAlign" onchange="updateCellStyle('text-align', this.value)">
+          <option value="">Default</option>
+          <option value="left" ${extractStyleValue(data.cellStyle, 'text-align') === 'left' ? 'selected' : ''}>Left</option>
+          <option value="center" ${extractStyleValue(data.cellStyle, 'text-align') === 'center' ? 'selected' : ''}>Center</option>
+          <option value="right" ${extractStyleValue(data.cellStyle, 'text-align') === 'right' ? 'selected' : ''}>Right</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Original Inline Style</label>
+        <textarea rows="3" readonly style="font-size:0.7rem;font-family:monospace;opacity:0.7;">${data.originalInlineStyle || '(none)'}</textarea>
+      </div>
+    </div>
+
+    <!-- TAB: Field Picker -->
+    <div class="tab-content" id="tab-picker">
+      <div class="form-group">
+        <label>Quick Search</label>
+        <input type="text" id="fieldSearch" placeholder="Search fields..." oninput="filterFields(this.value)">
+      </div>
+      <div class="field-picker" id="fieldPicker">
+        ${Object.entries(categories).map(([cat, fields]) => `
+          <div class="section-title" style="padding:8px 12px 4px;background:#1e293b;">${cat}</div>
+          ${fields.map(f => `
+            <div class="field-item" data-field-id="${f.id}" data-field-type="${f.type}" onclick="pickField('${f.id}', '${f.type}', '${f.name}')">
+              <span>${f.icon}</span>
+              <span style="flex:1;">${f.name}</span>
+              <span class="field-type">${f.type}</span>
+            </div>
+          `).join('')}
+        `).join('')}
+      </div>
+    </div>
+
     <div style="margin-top:16px;display:flex;gap:8px;">
-      <button class="btn btn-primary" onclick="applyConfig()">Apply</button>
-      <button class="btn" onclick="resetCell()">Reset</button>
+      <button class="btn btn-primary" onclick="applyConfig()">✅ Apply</button>
+      <button class="btn" onclick="resetCell()">🔄 Reset</button>
     </div>
   `;
 }
 
-function escAttr(str) {
-  return (str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+function extractStyleValue(styleStr, prop) {
+  if (!styleStr) return null;
+  const match = styleStr.match(new RegExp(prop + '\\s*:\\s*([^;]+)'));
+  return match ? match[1].trim() : null;
 }
 
-function updateCell(key, value) {
+function updateCellStyle(prop, value) {
   if (!selectedCell) return;
-  tableData.cells[selectedCell][key] = value;
+  const cell = tableData.cells[selectedCell];
+  // Remove existing prop
+  cell.cellStyle = cell.cellStyle.replace(new RegExp(prop + '\\s*:\\s*[^;]+;?'), '');
+  // Add new value
+  if (value) cell.cellStyle += prop + ':' + value + ';';
 }
 
+function switchTab(el, tabId) {
+  el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  el.closest('.panel-body').querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+}
+
+function filterFields(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.field-item').forEach(el => {
+    const name = el.querySelector('span:nth-child(2)').textContent.toLowerCase();
+    const type = el.dataset.fieldType.toLowerCase();
+    el.style.display = (name.includes(q) || type.includes(q)) ? 'flex' : 'none';
+  });
+}
+
+function pickField(fieldId, fieldType, fieldName) {
+  if (!selectedCell) return;
+  tableData.cells[selectedCell].type = fieldType;
+  if (fieldType.startsWith('db_')) {
+    tableData.cells[selectedCell].dbName = fieldType.replace('db_', '');
+  }
+  if (!tableData.cells[selectedCell].label || tableData.cells[selectedCell].label === tableData.cells[selectedCell].originalContent) {
+    tableData.cells[selectedCell].label = fieldName;
+  }
+
+  // Highlight selected field
+  document.querySelectorAll('.field-item').forEach(el => el.classList.remove('selected'));
+  document.querySelector(`.field-item[data-field-id="${fieldId}"]`)?.classList.add('selected');
+
+  renderConfigPanel(tableData.cells[selectedCell]);
+  renderTable();
+}
+
+// ============================================================
+// CELL TYPE UPDATE
+// ============================================================
 function updateCellType(type) {
   if (!selectedCell) return;
   tableData.cells[selectedCell].type = type;
-  // Auto-set dbName for db_* types
   if (type.startsWith('db_')) {
     tableData.cells[selectedCell].dbName = type.replace('db_', '');
   } else {
     tableData.cells[selectedCell].dbName = '';
   }
-  
+
+  // Show/hide sections
   const optionsSection = document.getElementById('optionsSection');
-  optionsSection.style.display = (type === 'select' || type === 'radio') ? 'block' : 'none';
-  
-  // Update cell display
-  const cellEl = document.querySelector(`[data-cell-id="${selectedCell}"]`);
-  if (cellEl) {
-    cellEl.classList.toggle('has-config', type !== 'text');
-    // Update or add type badge
-    let badge = cellEl.querySelector('.cell-type-badge');
-    if (!badge) {
-      badge = document.createElement('div');
-      cellEl.insertBefore(badge, cellEl.querySelector('.cell-id'));
-    }
-    const typeNames = {
-      text: 'Text', number: 'Number', date: 'Date', select: 'Dropdown',
-      radio: 'Radio', checkbox: 'Checkbox', textarea: 'Text Area',
-      signature: 'Signature', db_crewName: 'DB: Crew', db_pilotPosition: 'DB: Position',
-      db_crewId: 'DB: ID', db_crewLicense: 'DB: License',
-      db_instructorTri: 'DB: Instructor', db_examinerTre: 'DB: Examiner', db_acReg: 'DB: A/C REG', db_adIcao: 'DB: AD ICAO', db_acType: 'DB: TYPE',
-      static: 'Static', heading: 'Heading'
-    };
-    const badgeClass = type.startsWith('db_') ? 'badge-db' : `badge-${type}`;
-    badge.className = `cell-type-badge ${badgeClass}`;
-    badge.textContent = typeNames[type] || type;
-  }
+  if (optionsSection) optionsSection.style.display = (type === 'select' || type === 'radio') ? 'block' : 'none';
+  const dbOptionsSection = document.getElementById('dbOptionsSection');
+  if (dbOptionsSection) dbOptionsSection.style.display = (type === 'trainer') ? 'block' : 'none';
+
+  renderTable();
 }
 
-
-
+// ============================================================
+// APPLY / RESET / SAVE / COPY
+// ============================================================
 function applyConfig() {
   if (!selectedCell) return;
   const data = tableData.cells[selectedCell];
   const cellEl = document.querySelector(`[data-cell-id="${selectedCell}"]`);
   if (!cellEl) return;
-  
-  // Build cell content
-  let content = data.originalContent || "";
-  let inputHtml = "";
-  
-  if (data.type === "date") {
-    inputHtml = `<input type="text" placeholder="dd/mmm/yyyy" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;">`;
-  } else if (data.type === "signature") {
-    inputHtml = `<canvas style="width:100%;max-width:100%;height:40px;border:1px solid #475569;border-radius:4px;background:#0f172a;cursor:crosshair;"></canvas>`;
-  } else if (data.type === "select" || data.type === "radio" || data.type === "checkbox") {
-    const opts = (data.options || []).map(o => `<option>${o}</option>`).join("");
-    inputHtml = `<select style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;"><option value="">Select...</option>${opts}</select>`;
-  } else if (data.type.startsWith("db_")) {
-    inputHtml = `<select class="db-field" data-db="${data.type.replace("db_","")}" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;"><option value="">-- Loading... --</option></select>`;
-  } else if (data.type === "textarea") {
-    inputHtml = `<textarea rows="3" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;resize:vertical;" placeholder="..."></textarea>`;
-  } else if (data.type === "number") {
-    inputHtml = `<input type="number" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;" placeholder="...">`;
-  } else if (data.type === "static" || data.type === "heading") {
-    content = data.label || content;
-    inputHtml = "";
-  } else if (data.type === "heading") {
-    content = `<strong>${data.label || content}</strong>`;
-    inputHtml = "";
+
+  // Update content display
+  let content = data.originalContent || '';
+  let inputHtml = '';
+
+  switch (data.type) {
+    case 'date':
+      inputHtml = `<input type="text" placeholder="dd/mmm/yyyy" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;">`;
+      break;
+    case 'signature':
+      inputHtml = `<canvas style="width:100%;max-width:100%;height:40px;border:1px solid #475569;border-radius:4px;background:#0f172a;cursor:crosshair;"></canvas>`;
+      break;
+    case 'select':
+    case 'radio':
+      const opts = (data.options || []).map(o => `<option>${o}</option>`).join('');
+      inputHtml = `<select style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;"><option value="">Select...</option>${opts}</select>`;
+      break;
+    case 'checkbox':
+      inputHtml = `<label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;"><input type="checkbox"> ${(data.originalContent || '').replace(/<[^>]+>/g, '')}</label>`;
+      content = '';
+      break;
+    case 'trainer':
+      inputHtml = `<select class="trainer-field" data-trainer-role="${data.trainerRole || ''}" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;"><option value="">-- Trainer --</option></select>`;
+      break;
+    case 'remarks':
+      inputHtml = `<textarea rows="2" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;resize:vertical;" placeholder="Remarks..."></textarea>`;
+      break;
+    default:
+      if (data.type.startsWith('db_')) {
+        inputHtml = `<select class="db-field" data-db="${data.type.replace('db_', '')}" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;"><option value="">-- Loading... --</option></select>`;
+      } else if (data.type === 'textarea') {
+        inputHtml = `<textarea rows="3" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;resize:vertical;" placeholder="..."></textarea>`;
+      } else if (data.type === 'number') {
+        inputHtml = `<input type="number" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;" placeholder="...">`;
+      } else if (data.type === 'static' || data.type === 'heading') {
+        inputHtml = `<span style="font-size:${data.type === 'heading' ? '1.1em' : '1em'};font-weight:${data.type === 'heading' ? 'bold' : 'normal'};">${content}</span>`;
+        content = '';
+      } else if (data.type === 'trainer') {
+        inputHtml = `<input type="text" placeholder="Trainer Name" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;">`;
+      } else if (data.type === 'remarks') {
+        inputHtml = `<textarea rows="2" placeholder="Remarks..." style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;resize:vertical;"></textarea>`;
+      } else {
+        inputHtml = `<input type="text" style="width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;" placeholder="...">`;
+      }
   }
-  
-  // Render cell
-  let style = "";
-  if (data.fontStyle === "bold") style += "font-weight:bold;";
-  else if (data.fontStyle === "italic") style += "font-style:italic;";
-  else if (data.fontStyle === "bold-italic") style += "font-weight:bold;font-style:italic;";
-  if (data.fontSize === "small") style += "font-size:0.75rem;";
-  else if (data.fontSize === "large") style += "font-size:0.95rem;";
-  else if (data.fontSize === "xlarge") style += "font-size:1.1rem;";
-  
-  cellEl.innerHTML = `<div style="${style}">${content}</div>${inputHtml}<span class="cell-id">${selectedCell}</span>`;
-  cellEl.classList.add("has-config");
-  
-  // Load DB data if needed
-  if (data.type.startsWith("db_")) {
-    const sel = cellEl.querySelector(".db-field");
-    if (sel) {
-      fetch(`/api/crew?source=${data.type.replace("db_","")}`)
-        .then(r => r.json())
-        .then(rows => {
-          sel.innerHTML = "<option value=\"\">-- Select --</option>";
-          rows.forEach(r => {
-            const val = data.type === "db_crewName" ? r.name : data.type === "db_crew3lc" || data.type === "db_crewId" ? r.three_lc : data.type === "db_pilotPosition" ? r.position : r.name;
-            const lbl = data.type === "db_crew3lc" || data.type === "db_crewId" ? r.three_lc + " - " + r.name : r.name;
-            sel.innerHTML += `<option value="${val}">${lbl}</option>`;
-          });
-        });
-    }
-  }
-  
-  alert(`Cell ${selectedCell} configured as: ${data.type}`);
+
+  // Apply font styling
+  let extraStyle = '';
+  if (data.fontStyle === 'bold') extraStyle += 'font-weight:bold;';
+  else if (data.fontStyle === 'italic') extraStyle += 'font-style:italic;';
+  else if (data.fontStyle === 'bold-italic') extraStyle += 'font-weight:bold;font-style:italic;';
+
+  const sizeMap = { small: '12px', normal: '14px', large: '16px', xlarge: '18px' };
+  if (data.fontSize && data.fontSize !== 'normal') extraStyle += `font-size:${sizeMap[data.fontSize]};`;
+
+  cellEl.innerHTML = content + inputHtml;
+  cellEl.setAttribute('style', cellEl.getAttribute('style') + extraStyle);
+  cellEl.classList.add('has-config');
+
+  renderTable();
 }
 
 function resetCell() {
@@ -495,205 +810,113 @@ function resetCell() {
   data.options = [];
   data.fontStyle = 'normal';
   data.fontSize = 'normal';
-  
-  const cellEl = document.querySelector(`[data-cell-id="${selectedCell}"]`);
-  if (cellEl) {
-    cellEl.classList.remove('has-config');
-    cellEl.querySelector('.cell-type-badge')?.remove();
-  }
-  
   renderConfigPanel(data);
-}
-
-function copyHtmlWithConfig() {
-  const cells = Object.values(tableData.cells);
-  if (!cells.length) { alert('No table parsed yet'); return; }
-  
-  // Group cells by row
-  const rows = {};
-  cells.forEach(cell => {
-    if (!rows[cell.row]) rows[cell.row] = [];
-    rows[cell.row].push(cell);
-  });
-  
-  // Build enriched HTML with config as data attributes
-  let html = '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;">\n';
-  
-  // Get max columns
-  const maxCol = Math.max(...cells.map(c => c.col)) + 1;
-  const maxRow = Math.max(...cells.map(c => c.row)) + 1;
-  
-  // Build header row (row 0 if all cells in row 0 are headers)
-  for (let r = 0; r < maxRow; r++) {
-    const rowCells = [];
-    for (let c = 0; c < maxCol; c++) {
-      const cell = tableData.cells[`cell_${r}_${c}`];
-      if (cell) rowCells.push(cell); else rowCells.push(null);
-    }
-    
-    const isHeaderRow = rowCells.every(c => c === null || (c && c.originalContent && c.type === 'text' && !c.type.startsWith('db_')));
-    const cellTag = r === 0 ? 'th' : 'td';
-    
-    html += `  <tr>`;
-    rowCells.forEach(cell => {
-      if (!cell) {
-        html += `<${cellTag}></${cellTag}>`;
-        return;
-      }
-      
-      // Build data attributes from config
-      let attrs = '';
-      if (cell.type !== 'text') attrs += ` data-type="${cell.type}"`;
-      if (cell.dbName) attrs += ` data-db="${cell.dbName}"`;
-      if (cell.fontStyle && cell.fontStyle !== 'normal') attrs += ` data-font-style="${cell.fontStyle}"`;
-      if (cell.fontSize && cell.fontSize !== 'normal') attrs += ` data-font-size="${cell.fontSize}"`;
-      if (cell.fieldName) attrs += ` data-field-name="${cell.fieldName}"`;
-      if (cell.label && cell.label !== cell.originalContent) attrs += ` data-label="${escHtml(cell.label)}"`;
-      if (cell.options && cell.options.length) attrs += ` data-options="${escHtml(cell.options.join(','))}"`;
-      
-      let styleAttr = '';
-      // Apply column width from col elements
-      if (tableData.colWidths && tableData.colWidths[cell.col]) styleAttr += 'width:' + tableData.colWidths[cell.col] + ';';
-      if (cell.originalBgcolor) styleAttr += 'background-color:' + cell.originalBgcolor + ';';
-      if (cell.originalInlineStyle) {
-        var sm = {};
-        cell.originalInlineStyle.split(';').forEach(function(s) { var p = s.split(':')[0] && s.split(':')[0].trim(); var v = s.split(':')[1] && s.split(':')[1].trim(); if (p && v) sm[p] = v; });
-        var cssProps2 = ['text-align','font-weight','font-style','color','background-color','font-size','font-family','padding','border','border-color','border-radius','vertical-align','white-space','line-height','width'];
-        cssProps2.forEach(function(prop) {
-          if (sm[prop]) styleAttr += prop + ':' + sm[prop] + ';';
-        });
-      }
-      // Add default border if none
-      if (!styleAttr.includes('border:')) styleAttr += 'border:1px solid #94a3b8;';
-      if (!styleAttr.includes('padding:')) styleAttr += 'padding:6px 10px;';
-      var styleStr = styleAttr ? ' style="' + styleAttr.replace(/"/g, '&quot;') + '"' : '';
-      // Add colspan/rowspan
-      let spanAttr = '';
-      if (cell.colspan && cell.colspan > 1) spanAttr += ` colspan="${cell.colspan}"`;
-      if (cell.rowspan && cell.rowspan > 1) spanAttr += ` rowspan="${cell.rowspan}"`;
-      html += `<${cellTag}${spanAttr}${attrs}${styleStr}>${cell.originalContent || ''}</${cellTag}>`;
-    });
-    html += `</tr>\n`;
-  }
-  
-  html += '</table>';
-  
-  // Also copy a JSON config summary
-  const config = {
-    cells: cells.map(c => ({
-      id: `cell_${c.row}_${c.col}`,
-      field: c.fieldName,
-      label: c.label,
-      type: c.type,
-      dbSource: c.type.startsWith('db_') ? c.type.replace('db_', '') : undefined,
-      fontStyle: c.fontStyle,
-      fontSize: c.fontSize,
-      options: c.options?.length ? c.options : undefined
-    })).filter(c => c.type !== 'text' || c.fontStyle !== 'normal' || c.fontSize !== 'normal')
-  };
-  
-  const fullOutput = `<!-- Cell Config JSON -->\n<!-- ${JSON.stringify(config)} -->\n\n${html}`;
-  
-  navigator.clipboard.writeText(fullOutput).then(() => {
-    alert('HTML with config copied to clipboard!');
-  });
-}
-
-function escHtml(str) {
-  return (str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  renderTable();
 }
 
 function saveTable() {
   const cells = Object.values(tableData.cells);
   if (!cells.length) { alert('No table parsed yet'); return; }
-  
+
   const maxCol = Math.max(...cells.map(c => c.col)) + 1;
   const maxRow = Math.max(...cells.map(c => c.row)) + 1;
-  
-  // Build columns array (first col = row labels)
-  const columns = ['Area'];
-  for (let c = 1; c < maxCol; c++) {
+
+  // Build columns array
+  const columns = [];
+  for (let c = 0; c < maxCol; c++) {
     const headerCell = tableData.cells[`cell_0_${c}`];
-    columns.push(headerCell ? headerCell.originalContent : `Col ${c}`);
+    columns.push(headerCell ? (headerCell.originalContent || `Col ${c}`) : `Col ${c}`);
   }
-  
+
   // Build column types
-  const columnTypes = ['text'];
-  for (let c = 1; c < maxCol; c++) {
+  const columnTypes = [];
+  for (let c = 0; c < maxCol; c++) {
     let colType = 'text';
-    for (let r = 1; r < maxRow; r++) {
+    for (let r = 0; r < maxRow; r++) {
       const cell = tableData.cells[`cell_${r}_${c}`];
-      if (cell && cell.type !== 'text') {
-        colType = cell.type === 'date' ? 'date' : cell.type === 'signature' ? 'signature' : cell.type === 'select' ? 'select' : cell.type === 'checkbox' ? 'checkbox' : cell.type === 'radio' ? 'radio' : 'text';
-        break;
-      }
+      if (cell && cell.type !== 'text') { colType = cell.type; break; }
     }
     columnTypes.push(colType);
   }
-  
-  // Build rows (skip header row 0)
+
+  // Build rows
   const tableRows = [];
-  for (let r = 1; r < maxRow; r++) {
+  for (let r = 0; r < maxRow; r++) {
     const labelCell = tableData.cells[`cell_${r}_0`];
-    const rowLabel = labelCell ? labelCell.originalContent : `Row ${r}`;
+    const rowLabel = labelCell ? (labelCell.label || labelCell.originalContent) : `Row ${r}`;
     const fieldName = labelCell ? labelCell.fieldName : `row_${r}`;
-    const fontStyle = labelCell ? (labelCell.fontStyle || 'normal') : 'normal';
-    const fontSize = labelCell ? (labelCell.fontSize || 'normal') : 'normal';
-    
     tableRows.push({
       id: fieldName,
       label: rowLabel,
       name: fieldName,
-      rowStyles: { fontStyle, fontSize }
+      rowStyles: { fontStyle: labelCell?.fontStyle || 'normal', fontSize: labelCell?.fontSize || 'normal' }
     });
   }
-  
-  // Build column styles
-  const columnStyles = [];
-  for (let c = 0; c < maxCol; c++) {
-    const headerCell = tableData.cells[`cell_0_${c}`];
-    columnStyles.push({
-      fontStyle: headerCell?.fontStyle || 'normal',
-      fontSize: headerCell?.fontSize || 'normal'
-    });
-  }
-  
-  // Build complete HTML preserving ALL original structure (colspan, rowspan, styles)
-  let fullHtml = '<table style="border-collapse:collapse;width:100%;font-family:inherit;font-size:inherit;">';
+
+  // Build complete HTML preserving ALL original structure
+  let fullHtml = '<table';
+  if (tableData.tableStyle) fullHtml += ' style="' + tableData.tableStyle + '"';
+  fullHtml += '>';
+
   const rendered = {};
-  
   for (let r = 0; r < maxRow; r++) {
     fullHtml += '<tr>';
     for (let c = 0; c < maxCol; c++) {
-      const key = 'cell_' + r + '_' + c;
+      const key = `cell_${r}_${c}`;
       if (rendered[key]) continue;
       const cell = tableData.cells[key];
       if (!cell) { fullHtml += '<td style="border:1px solid #94a3b8;padding:6px 10px;">&nbsp;</td>'; continue; }
-      if (cell.rowspan > 1) for (let rs = 1; rs < cell.rowspan; rs++) rendered['cell_' + (r + rs) + '_' + c] = true;
+
+      if (cell.rowspan > 1) for (let rs = 1; rs < cell.rowspan; rs++) rendered[`cell_${r + rs}_${c}`] = true;
+
       const cellTag = cell.isHeader ? 'th' : 'td';
-      const spanAttr = (cell.colspan > 1 ? ' colspan="' + cell.colspan + '"' : '') + (cell.rowspan > 1 ? ' rowspan="' + cell.rowspan + '"' : '');
+      let spanAttr = '';
+      if (cell.colspan > 1) spanAttr += ' colspan="' + cell.colspan + '"';
+      if (cell.rowspan > 1) spanAttr += ' rowspan="' + cell.rowspan + '"';
+
+      // Preserve all original cell style
       let cs = cell.cellStyle || '';
       if (!cs.includes('border')) cs += 'border:1px solid #94a3b8;';
       if (!cs.includes('padding')) cs += 'padding:6px 10px;';
+
+      // Add font overrides if configured
+      if (cell.fontStyle === 'bold') cs += 'font-weight:bold;';
+      else if (cell.fontStyle === 'italic') cs += 'font-style:italic;';
+      else if (cell.fontStyle === 'bold-italic') cs += 'font-weight:bold;font-style:italic;';
+      const sizeMap = { small: '12px', normal: '14px', large: '16px', xlarge: '18px' };
+      if (cell.fontSize && cell.fontSize !== 'normal') cs += 'font-size:' + sizeMap[cell.fontSize] + ';';
+
+      // Data attributes for server-side rendering
       let da = ' data-cell-id="' + key + '"';
       if (cell.type !== 'text') da += ' data-cell-type="' + cell.type + '"';
       if (cell.dbName) da += ' data-db-name="' + cell.dbName + '"';
+      if (cell.trainerRole) da += ' data-trainer-role="' + cell.trainerRole + '"';
       if (cell.fontStyle !== 'normal') da += ' data-font-style="' + cell.fontStyle + '"';
       if (cell.fontSize !== 'normal') da += ' data-font-size="' + cell.fontSize + '"';
+
       fullHtml += '<' + cellTag + spanAttr + ' style="' + cs + '"' + da + '>' + (cell.originalContent || '') + '</' + cellTag + '>';
     }
     fullHtml += '</tr>';
   }
   fullHtml += '</table>';
-  
+
+  // Build cellConfigs for server
   const cellConfigs = {};
   Object.values(tableData.cells).forEach(cell => {
     const key = 'cell_' + cell.row + '_' + cell.col;
-    if (cell.type !== 'text' || cell.dbName || cell.fontStyle !== 'normal' || cell.fontSize !== 'normal') {
-      cellConfigs[key] = { type: cell.type, dbName: cell.dbName || '', fontStyle: cell.fontStyle || 'normal', fontSize: cell.fontSize || 'normal', options: cell.options || [], label: cell.label || cell.originalContent };
+    if (cell.type !== 'text' || cell.dbName || cell.fontStyle !== 'normal' || cell.fontSize !== 'normal' || cell.trainerRole) {
+      cellConfigs[key] = {
+        type: cell.type,
+        dbName: cell.dbName || '',
+        fontStyle: cell.fontStyle || 'normal',
+        fontSize: cell.fontSize || 'normal',
+        options: cell.options || [],
+        label: cell.label || cell.originalContent,
+        trainerRole: cell.trainerRole || ''
+      };
     }
   });
-  
+
   const tableField = {
     id: 'imported_table_' + Date.now(),
     type: 'imported_html',
@@ -708,8 +931,7 @@ function saveTable() {
     columnTypes: columnTypes,
     rows: tableRows
   };
-  
-  // Build config for full form
+
   const config = {
     title: 'Imported Form',
     subtitle: '',
@@ -723,35 +945,88 @@ function saveTable() {
         type: 'fieldset',
         title: 'Imported Table',
         fields: [tableField]
-      }],
-      training: [],
-      comments: []
+      }]
     }
   };
-  
-  // Save to DB
-  const tableName = prompt('Name this table:', 'Imported Table');
-  if (!tableName) return;
-  
-  fetch('/api/saved-tables', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: tableName,
-      description: 'Generated from HTML table import',
-      config: tableField
-    })
-  })
-  .then(r => r.json())
-  .then(data => {
-    alert(`Table saved! ID: ${data.id}\nYou can now add it from "Saved Tables" in the Forms Builder Field Types.`);
-  })
-  .catch(err => {
-    console.error(err);
-    alert('Error saving table');
+
+  // Copy to clipboard
+  navigator.clipboard.writeText(JSON.stringify(config, null, 2)).then(() => {
+    alert('✅ Table config copied to clipboard!\n\n' + Object.keys(cellConfigs).length + ' cells configured\n' + fullHtml.length + ' chars HTML');
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = JSON.stringify(config, null, 2);
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('✅ Table config copied to clipboard!');
   });
 }
-</script>
 
+function copyHtmlWithConfig() {
+  const cells = Object.values(tableData.cells);
+  if (!cells.length) { alert('No table parsed yet'); return; }
+
+  const maxCol = Math.max(...cells.map(c => c.col)) + 1;
+  const maxRow = Math.max(...cells.map(c => c.row)) + 1;
+
+  let fullHtml = '<table';
+  if (tableData.tableStyle) fullHtml += ' style="' + tableData.tableStyle + '"';
+  fullHtml += '>';
+
+  const rendered = {};
+  for (let r = 0; r < maxRow; r++) {
+    fullHtml += '<tr>';
+    for (let c = 0; c < maxCol; c++) {
+      const key = `cell_${r}_${c}`;
+      if (rendered[key]) continue;
+      const cell = tableData.cells[key];
+      if (!cell) { fullHtml += '<td style="border:1px solid #94a3b8;padding:6px 10px;">&nbsp;</td>'; continue; }
+
+      if (cell.rowspan > 1) for (let rs = 1; rs < cell.rowspan; rs++) rendered[`cell_${r + rs}_${c}`] = true;
+
+      const cellTag = cell.isHeader ? 'th' : 'td';
+      let spanAttr = '';
+      if (cell.colspan > 1) spanAttr += ' colspan="' + cell.colspan + '"';
+      if (cell.rowspan > 1) spanAttr += ' rowspan="' + cell.rowspan + '"';
+
+      let cs = cell.cellStyle || '';
+      if (!cs.includes('border')) cs += 'border:1px solid #94a3b8;';
+      if (!cs.includes('padding')) cs += 'padding:6px 10px;';
+      if (cell.fontStyle === 'bold') cs += 'font-weight:bold;';
+      else if (cell.fontStyle === 'italic') cs += 'font-style:italic;';
+      else if (cell.fontStyle === 'bold-italic') cs += 'font-weight:bold;font-style:italic;';
+      const sizeMap = { small: '12px', normal: '14px', large: '16px', xlarge: '18px' };
+      if (cell.fontSize && cell.fontSize !== 'normal') cs += 'font-size:' + sizeMap[cell.fontSize] + ';';
+
+      let da = ' data-cell-id="' + key + '"';
+      if (cell.type !== 'text') da += ' data-cell-type="' + cell.type + '"';
+      if (cell.dbName) da += ' data-db-name="' + cell.dbName + '"';
+      if (cell.trainerRole) da += ' data-trainer-role="' + cell.trainerRole + '"';
+
+      fullHtml += '<' + cellTag + spanAttr + ' style="' + cs + '"' + da + '>' + (cell.originalContent || '') + '</' + cellTag + '>';
+    }
+    fullHtml += '</tr>';
+  }
+  fullHtml += '</table>';
+
+  navigator.clipboard.writeText(fullHtml).then(() => {
+    alert('✅ HTML with config copied to clipboard!');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = fullHtml;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('✅ HTML with config copied to clipboard!');
+  });
+}
+
+function escAttr(str) {
+  return (str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+</script>
 </body>
 </html>
