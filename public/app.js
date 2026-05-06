@@ -2197,46 +2197,24 @@ function renderPreviewField(field) {
       let tableHtml = field.content || field.generatedHtml || '<p>Empty imported table</p>';
       // Merge cellConfigs from saved data AND parse HTML for data-cell-type attributes
       const cellConfigs = { ...(field.cellConfigs || {}) };
-      // Auto-detect cell types from HTML - find ALL tds/ths with data-cell-type or data-db-name
-      const cellTypePattern = /<(td|th)([^>]*?)data-cell-type=['"]([^'"]+)['"]([^>]*?)>/gi;
-      let match;
-      while ((match = cellTypePattern.exec(tableHtml)) !== null) {
-        const fullTag = match[0];
-        const tagBefore = match[2] + match[4]; // content before and after data-cell-type
-        const cellIdMatch = tagBefore.match(/data-cell-id="([^"]+)"/);
-        const dbMatch = fullTag.match(/data-db-name=['"]([^'"]+)['"]);
-        const labelMatch = fullTag.match(/data-field-label=['"]([^'"]+)['"]);
-        const trainerMatch = fullTag.match(/data-trainer-role=['"]([^'"]+)['"]);
-        const cellType = match[3];
-        const cellId = cellIdMatch ? cellIdMatch[1] : 'cell_' + match.index;
-        if (!cellConfigs[cellId]) {
+      // Auto-detect cell types from HTML attributes (Visual Editor assignments)
+      if (tableHtml.includes('data-cell-type') || tableHtml.includes('data-db-name')) {
+        const tmpDiv = document.createElement('div');
+        tmpDiv.innerHTML = tableHtml;
+        tmpDiv.querySelectorAll('[data-cell-type], [data-db-name]').forEach(td => {
+          const cellType = td.getAttribute('data-cell-type');
+          const dbName = td.getAttribute('data-db-name');
+          if (!cellType && !dbName) return;
+          const cellId = td.getAttribute('data-cell-id') || ('ve_' + td.closest('table')?.querySelectorAll('[data-cell-type], [data-db-name]').indexOf(td));
+          if (cellConfigs[cellId]) return;
           cellConfigs[cellId] = {
-            type: cellType,
-            dbName: dbMatch ? dbMatch[1] : (cellType.startsWith('db_') ? cellType.replace('db_', '') : ''),
-            label: labelMatch ? labelMatch[1] : '',
+            type: cellType || (dbName ? 'db_' + dbName : 'text'),
+            dbName: dbName || (cellType && cellType.startsWith('db_') ? cellType.replace('db_', '') : ''),
+            label: td.getAttribute('data-field-label') || td.textContent.replace(/<[^>]+>/g, '').trim().substring(0, 50),
             options: [],
-            trainerRole: trainerMatch ? trainerMatch[1] : ''
+            trainerRole: td.getAttribute('data-trainer-role') || ''
           };
-        }
-      }
-      // Also detect data-db-name without data-cell-type
-      const dbNamePattern = /<(td|th)([^>]*?)data-db-name=['"]([^'"]+)['"]([^>]*?)>/gi;
-      while ((match = dbNamePattern.exec(tableHtml)) !== null) {
-        const fullTag = match[0];
-        const tagBefore = match[2] + match[4];
-        const cellIdMatch = tagBefore.match(/data-cell-id="([^"]+)"/);
-        const labelMatch = fullTag.match(/data-field-label="([^"]+)"/);
-        const dbName = match[3];
-        const cellId = cellIdMatch ? cellIdMatch[1] : 'cell_' + match.index;
-        if (!cellConfigs[cellId] && !fullTag.includes('data-cell-type=')) {
-          cellConfigs[cellId] = {
-            type: 'db_' + dbName,
-            dbName: dbName,
-            label: labelMatch ? labelMatch[1] : '',
-            options: [],
-            trainerRole: ''
-          };
-        }
+        });
       }
       if (Object.keys(cellConfigs).length) {
         // Parse and replace cells with inputs
@@ -2291,19 +2269,19 @@ function renderPreviewField(field) {
               }
           }
           
-          // Replace cell content - use data-cell-type as marker since data-cell-id may not exist
-          const escapedContent = (cfg.label || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          // Build replacement pattern based on what attributes we have
-          let replacePattern;
-          if (cfg.type.startsWith('db_') && cfg.dbName) {
-            replacePattern = new RegExp('(<(?:td|th)[^>]*data-db-name=['"]' + cfg.dbName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '['"][^>]*>)([\\s\\S]*?)(<\\/(?:td|th)>)', 'i');
-          } else {
-            replacePattern = new RegExp('(<(?:td|th)[^>]*data-cell-type=['"]' + cfg.type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '['"][^>]*>)([\\s\\S]*?)(<\\/(?:td|th)>)', 'i');
+          // Replace cell content with input using data-cell-type or data-db-name
+          const escapedContent = (cfg.label || cfg.dbName || cfg.type || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          let replaced = false;
+          if (cfg.dbName) {
+            const dbRegex = new RegExp('(<(?:td|th)[^>]*data-db-name=["\']' + cfg.dbName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '["\'][^>]*>)([\s\S]*?)(<\/td|th>)', 'i');
+            const newHtml = tableHtml.replace(dbRegex, (m, open, content, close) => { replaced = true; return open + '<div style="margin-bottom:2px;"><small style="color:#64748b;font-size:0.7rem;">' + escapedContent + '</small></div>' + inputHtml + close; });
+            if (replaced) tableHtml = newHtml;
           }
-          const newTableHtml = tableHtml.replace(replacePattern, (match, openTag, content, closeTag) => {
-            return openTag + '<div style="margin:2px 0;"><small style="color:#64748b;font-size:0.7rem;">' + escapedContent + '</small></div>' + inputHtml + closeTag;
-          });
-          if (newTableHtml !== tableHtml) tableHtml = newTableHtml;
+          if (!replaced && cfg.type) {
+            const typeRegex = new RegExp('(<(?:td|th)[^>]*data-cell-type=["\']' + cfg.type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '["\'][^>]*>)([\s\S]*?)(<\/td|th>)', 'i');
+            const newHtml = tableHtml.replace(typeRegex, (m, open, content, close) => { return open + '<div style="margin-bottom:2px;"><small style="color:#64748b;font-size:0.7rem;">' + escapedContent + '</small></div>' + inputHtml + close; });
+            tableHtml = newHtml;
+          }
         });
       }
       html += tableHtml;
