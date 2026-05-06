@@ -1960,26 +1960,38 @@ function designTableField(fieldId) {
     skin: 'oxide-dark',
     content_css: 'dark',
     plugins: [
-      'table', 'lists', 'link', 'code', 'preview', 'fullscreen',
-      'searchreplace', 'visualblocks', 'charmap', 'emoticons',
-      'insertdatetime', 'hr', 'nonbreaking', 'save'
+      'table', 'advtable', 'lists', 'link', 'code', 'preview', 'fullscreen',
+      'searchreplace', 'visualblocks', 'visualchars', 'charmap', 'emoticons',
+      'insertdatetime', 'hr', 'nonbreaking', 'save', 'pagebreak',
+      'anchor', 'media', 'image', 'codesample', 'spellchecker'
     ],
     toolbar: [
-      'undo redo | formatselect fontselect fontsizeselect | bold italic underline strikethrough | forecolor backcolor | removeformat',
-      'alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent',
-      'table tableprops tablecellprops tableinsertrowbefore tableinsertrowafter tabledeleterow',
+      'undo redo | cut copy paste pastetext',
+      'formatselect fontselect fontsizeselect | bold italic underline strikethrough superscript subscript',
+      'forecolor backcolor | alignleft aligncenter alignright alignjustify | lineheight',
+      'bullist numlist | outdent indent | blockquote | removeformat',
+      'link image media | hr charmap emoticons codesample anchor | nonbreaking pagebreak',
+      'table | tableprops tablecellprops deletetable',
+      'tableinsertrowbefore tableinsertrowafter tabledeleterow',
       'tableinsertcolbefore tableinsertcolafter tabledeletecol',
-      'tablecellbackgroundcolor tablecellbordercolor tablecellborderstyle tablecellborderwidth tablecellwidth',
-      'tablecellvaligntoggle tablecellpadding',
-      'link image hr charmap emoticons nonbreaking',
-      'code preview fullscreen searchreplace save'
+      'tablecellbackgroundcolor tablecellbordercolor tablecellborderstyle tablecellborderwidth tablecellwidth tablecellpadding',
+      'tablecellvaligntoggle',
+      'tablemergecells tablesplitcell',
+      'tablesort',
+      'searchreplace | code | preview | fullscreen | save | help'
     ].join(' | '),
     menubar: 'file edit insert view format table tools',
     menu: {
+      file: { title: 'File', items: 'newdocument restoredraft | preview print' },
+      edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext pasteword | selectall | searchreplace' },
+      insert: { title: 'Insert', items: 'link image media insertdatetime table | charmap emoticons anchor hr pagebreak nonbreaking codesample' },
+      view: { title: 'View', items: 'code visualaid visualchars visualblocks | preview fullscreen' },
+      format: { title: 'Format', items: 'bold italic underline strikethrough superscript subscript | forecolor backcolor | formats | fontfontsizes fontsizes align lineheight | removeformat' },
       table: {
         title: 'Table',
-        items: 'inserttable tableprops tablecellprops | deletetable | row column cell | tableinsertrowbefore tableinsertrowafter tabledeleterow tableinsertcolbefore tableinsertcolafter tabledeletecol | tablecellbackgroundcolor tablecellbordercolor tablecellborderstyle tablecellborderwidth tablecellwidth tablecellpadding tablecellvaligntoggle | tablesort'
-      }
+        items: 'inserttable tableprops tablecellprops | deletetable | tableinsertrowbefore tableinsertrowafter tabledeleterow tableinsertcolbefore tableinsertcolafter tabledeletecol | tableinsertrow tableappendrow | tablecellbackgroundcolor tablecellbordercolor tablecellborderstyle tablecellborderwidth tablecellwidth tablecellpadding tablecellvaligntoggle tablecellverticalalign tablecellsizing | tablemergecells tablesplitcell tablemergerows tablesplitrows tablemergecolumns tablesplitcolumns | tablesort tabletableresize tablecellselection'
+      },
+      tools: { title: 'Tools', items: 'spellchecker wordcount | code' }
     },
     font_formats: 'Arial=arial,helvetica,sans-serif; Calibri=calibri,arial,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Times New Roman=times new roman,times; Verdana=verdana,geneva; Cambria=cambria,serif; Consolas=consolas,monospace',
     fontsize_formats: '8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 20pt 24pt 28pt 32pt 36pt 48pt',
