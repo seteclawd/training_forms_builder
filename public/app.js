@@ -3063,7 +3063,7 @@ function initInfoBlockEditor(fieldId, initialContent) {
         'quickbars', 'autosave', 'imagetools', 'textpattern', 'autoresize'
       ],
       toolbar1: 'undo redo | formatselect fontselect fontsizeselect | bold italic underline strikethrough | forecolor backcolor | subscript superscript | removeformat',
-      toolbar2: 'alignleft aligncenter alignright alignjustify | outdent indent | bullist numlist | table | link image media anchor codesample | hr nonbreaking pagebreak',
+      toolbar2: 'alignleft aligncenter alignright alignjustify | outdent indent | bullist numlist | table assignField | link image media anchor codesample | hr nonbreaking pagebreak',
       toolbar3: 'cut copy paste pastetext | searchreplace | code preview print save fullscreen | insertdatetime charmap emoticons | template | help wordcount',
       quickbars_selection_toolbar: 'bold italic | quicklink h2 h3 blockquote quickimage quicktable',
       quickbars_insert_toolbar: 'quickimage quicktable | hr',
@@ -3238,7 +3238,7 @@ function initInfoBlockEditor(fieldId, initialContent) {
       paste_data_images: true,
       smart_paste: true,
       browser_spellcheck: true,
-      contextmenu: 'link image table codesample',
+      contextmenu: 'link image table codesample assignField',
       textpattern_patterns: [
         { start: '*', end: '*', format: 'italic' },
         { start: '**', end: '**', format: 'bold' },
@@ -3255,6 +3255,107 @@ function initInfoBlockEditor(fieldId, initialContent) {
       autosave_restore_when_empty: false,
       autosave_retention: '2m',
       setup: function(editor) {
+        // Field picker dialog for table cells
+        const fieldTypes = [
+          { text: '📝 Text Input', value: 'text' },
+          { text: '🔢 Number', value: 'number' },
+          { text: '📅 Date', value: 'date' },
+          { text: '🔽 Dropdown', value: 'select' },
+          { text: '⭕ Radio', value: 'radio' },
+          { text: '☑️ Checkbox', value: 'checkbox' },
+          { text: '📄 Text Area', value: 'textarea' },
+          { text: '✍️ Signature', value: 'signature' },
+          { text: '🎓 Trainer Name', value: 'trainer' },
+          { text: '📝 Remarks', value: 'remarks' },
+          { text: '📌 Static Text', value: 'static' },
+          { text: '📌 Heading', value: 'heading' },
+          { text: '👤 Crew Name', value: 'db_crewName' },
+          { text: '👤 Pilot Position', value: 'db_pilotPosition' },
+          { text: '🪪 Crew ID', value: 'db_crewId' },
+          { text: '📜 License Number', value: 'db_crewLicense' },
+          { text: '🎓 Instructor (TRI)', value: 'db_instructorTri' },
+          { text: '📝 Examiner (TRE)', value: 'db_examinerTre' },
+          { text: '✈️ A/C Registration', value: 'db_acReg' },
+          { text: '✈️ A/C Type', value: 'db_acType' },
+          { text: '🌍 AD ICAO', value: 'db_adIcao' },
+          { text: '👨‍✈️ Crew Role', value: 'db_crewRole' },
+        ];
+
+        editor.ui.registry.addButton('assignField', {
+          icon: 'border-width',
+          tooltip: 'Assign Field to Cell',
+          onAction: function() {
+            const selectedElm = editor.selection.getNode();
+            const td = selectedElm.closest('td, th');
+            if (!td) {
+              editor.notificationManager.open({ text: 'Select a table cell first', type: 'warning', timeout: 2000 });
+              return;
+            }
+            const currentType = td.getAttribute('data-cell-type') || 'text';
+            editor.windowManager.open({
+              title: 'Assign Field to Cell',
+              body: {
+                type: 'panel',
+                items: [
+                  { type: 'htmlpanel', html: '<div style="padding:8px 0;font-size:13px;color:#94a3b8;">Cell: ' + (td.textContent.substring(0, 40) || '(empty)') + '...</div>' },
+                  { type: 'listbox', name: 'fieldType', label: 'Field Type', items: fieldTypes, value: currentType },
+                  { type: 'input', name: 'fieldName', label: 'Field Name (db column)', value: td.getAttribute('data-db-name') || '' },
+                  { type: 'input', name: 'fieldLabel', label: 'Field Label', value: td.getAttribute('data-field-label') || td.textContent.trim().substring(0, 50) }
+                ]
+              },
+              buttons: [
+                { type: 'cancel', text: 'Cancel' },
+                { type: 'submit', text: 'Apply', primary: true, buttonType: 'danger' }
+              ],
+              onSubmit: function(api) {
+                const data = api.getData();
+                const type = data.fieldType;
+                const dbName = data.fieldName || (type.startsWith('db_') ? type.replace('db_', '') : '');
+                const label = data.fieldLabel;
+
+                // Set data attributes
+                if (type !== 'text') td.setAttribute('data-cell-type', type);
+                else td.removeAttribute('data-cell-type');
+
+                if (dbName) td.setAttribute('data-db-name', dbName);
+                else td.removeAttribute('data-db-name');
+
+                if (label) td.setAttribute('data-field-label', label);
+                td.removeAttribute('data-field-label');
+
+                // Visual indicator - add/remove badge
+                let badge = td.querySelector('.cell-field-badge');
+                if (type !== 'text') {
+                  if (!badge) {
+                    badge = editor.getDoc().createElement('span');
+                    badge.className = 'cell-field-badge';
+                    badge.style.cssText = 'display:inline-block;font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px;background:#1e40af;color:#93c5fd;font-weight:normal;';
+                    td.appendChild(badge);
+                  }
+                  const typeNames = { text:'Text',number:'Number',date:'Date',select:'Dropdown',radio:'Radio',checkbox:'Checkbox',textarea:'Text Area',signature:'Signature',trainer:'Trainer',remarks:'Remarks',static:'Static',heading:'Heading',db_crewName:'Crew',db_pilotPosition:'Position',db_crewId:'ID',db_crewLicense:'License',db_instructorTri:'Instructor',db_examinerTre:'Examiner',db_acReg:'A/C Reg',db_acType:'A/C Type',db_adIcao:'AD ICAO',db_crewRole:'Role' };
+                  badge.textContent = typeNames[type] || type;
+                } else if (badge) {
+                  badge.remove();
+                }
+
+                editor.fire('change');
+                api.close();
+              }
+            });
+          }
+        });
+
+        editor.ui.registry.addMenuItem('assignField', {
+          text: '🏷️ Assign Field Type',
+          icon: 'border-width',
+          onAction: function() {
+            const selectedElm = editor.selection.getNode();
+            const td = selectedElm.closest('td, th');
+            if (!td) return;
+            editor.ui.registry.getAll().buttons.assignField.onAction();
+          }
+        });
+
         editor.ui.registry.addButton('customSave', {
           icon: 'save',
           tooltip: 'Save Content',
