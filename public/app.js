@@ -2198,15 +2198,15 @@ function renderPreviewField(field) {
       // Merge cellConfigs from saved data AND parse HTML for data-cell-type attributes
       const cellConfigs = { ...(field.cellConfigs || {}) };
       // Auto-detect cell types from HTML - find ALL tds/ths with data-cell-type or data-db-name
-      const cellTypePattern = /<(td|th)([^>]*?)data-cell-type="([^"]+)"([^>]*?)>/gi;
+      const cellTypePattern = /<(td|th)([^>]*?)data-cell-type=['"]([^'"]+)['"]([^>]*?)>/gi;
       let match;
       while ((match = cellTypePattern.exec(tableHtml)) !== null) {
         const fullTag = match[0];
         const tagBefore = match[2] + match[4]; // content before and after data-cell-type
         const cellIdMatch = tagBefore.match(/data-cell-id="([^"]+)"/);
-        const dbMatch = fullTag.match(/data-db-name="([^"]+)"/);
-        const labelMatch = fullTag.match(/data-field-label="([^"]+)"/);
-        const trainerMatch = fullTag.match(/data-trainer-role="([^"]+)"/);
+        const dbMatch = fullTag.match(/data-db-name=['"]([^'"]+)['"]);
+        const labelMatch = fullTag.match(/data-field-label=['"]([^'"]+)['"]);
+        const trainerMatch = fullTag.match(/data-trainer-role=['"]([^'"]+)['"]);
         const cellType = match[3];
         const cellId = cellIdMatch ? cellIdMatch[1] : 'cell_' + match.index;
         if (!cellConfigs[cellId]) {
@@ -2220,7 +2220,7 @@ function renderPreviewField(field) {
         }
       }
       // Also detect data-db-name without data-cell-type
-      const dbNamePattern = /<(td|th)([^>]*?)data-db-name="([^"]+)"([^>]*?)>/gi;
+      const dbNamePattern = /<(td|th)([^>]*?)data-db-name=['"]([^'"]+)['"]([^>]*?)>/gi;
       while ((match = dbNamePattern.exec(tableHtml)) !== null) {
         const fullTag = match[0];
         const tagBefore = match[2] + match[4];
@@ -2296,9 +2296,9 @@ function renderPreviewField(field) {
           // Build replacement pattern based on what attributes we have
           let replacePattern;
           if (cfg.type.startsWith('db_') && cfg.dbName) {
-            replacePattern = new RegExp('(<(?:td|th)[^>]*data-db-name="' + cfg.dbName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"[^>]*>)([\s\S]*?)(<\/(?:td|th)>)', 'i');
+            replacePattern = new RegExp('(<(?:td|th)[^>]*data-db-name=['"]' + cfg.dbName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '['"][^>]*>)([\\s\\S]*?)(<\\/(?:td|th)>)', 'i');
           } else {
-            replacePattern = new RegExp('(<(?:td|th)[^>]*data-cell-type="' + cfg.type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"[^>]*>)([\s\S]*?)(<\/(?:td|th)>)', 'i');
+            replacePattern = new RegExp('(<(?:td|th)[^>]*data-cell-type=['"]' + cfg.type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '['"][^>]*>)([\\s\\S]*?)(<\\/(?:td|th)>)', 'i');
           }
           const newTableHtml = tableHtml.replace(replacePattern, (match, openTag, content, closeTag) => {
             return openTag + '<div style="margin:2px 0;"><small style="color:#64748b;font-size:0.7rem;">' + escapedContent + '</small></div>' + inputHtml + closeTag;
