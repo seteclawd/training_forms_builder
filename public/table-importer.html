@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- EDIT MODE: add ?edit=true&fieldId=X&html=<encoded_html> to edit an existing table -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1035,6 +1036,138 @@ function copyHtmlWithConfig() {
 function escAttr(str) {
   return (str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+
+// ===== EDIT MODE (loaded from Form Builder) =====
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('edit') !== 'true') return;
+
+  const fieldId = params.get('fieldId');
+  const htmlParam = params.get('html');
+  if (!htmlParam) return;
+
+  // Decode HTML
+  const html = decodeURIComponent(htmlParam);
+
+  // Put HTML into textarea and parse it
+  const textarea = document.getElementById('htmlInput');
+  if (textarea) {
+    textarea.value = html;
+    // Auto-parse
+    setTimeout(() => {
+      parseHtml();
+    }, 200);
+  }
+
+  // Change save button to postMessage mode
+  setTimeout(() => {
+    const genBtn = document.querySelector('.btn-success');
+    if (genBtn) {
+      genBtn.textContent = '💾 Save to Form Builder';
+      genBtn.onclick = function() {
+        const cells = Object.values(tableData.cells);
+        if (!cells.length) { alert('No table data'); return; }
+
+        const maxCol = Math.max(...cells.map(c => c.col)) + 1;
+        const maxRow = Math.max(...cells.map(c => c.row)) + 1;
+
+        // Build columns
+        const columns = [];
+        for (let c = 0; c < maxCol; c++) {
+          const h = tableData.cells[`cell_0_${c}`];
+          columns.push(h ? (h.originalContent || `Col ${c}`) : `Col ${c}`);
+        }
+
+        // Build column types
+        const columnTypes = [];
+        for (let c = 0; c < maxCol; c++) {
+          let ct = 'text';
+          for (let r = 0; r < maxRow; r++) {
+            const cell = tableData.cells[`cell_${r}_${c}`];
+            if (cell && cell.type !== 'text') { ct = cell.type; break; }
+          }
+          columnTypes.push(ct);
+        }
+
+        // Build rows
+        const tableRows = [];
+        for (let r = 0; r < maxRow; r++) {
+          const lc = tableData.cells[`cell_${r}_0`];
+          tableRows.push({
+            id: lc ? lc.fieldName : `row_${r}`,
+            label: lc ? (lc.label || lc.originalContent) : `Row ${r}`,
+            name: lc ? lc.fieldName : `row_${r}`,
+            rowStyles: { fontStyle: lc?.fontStyle || 'normal', fontSize: lc?.fontSize || 'normal' }
+          });
+        }
+
+        // Build HTML
+        let fullHtml = '<table';
+        if (tableData.tableStyle) fullHtml += ' style="' + tableData.tableStyle + '"';
+        fullHtml += '>';
+        const rendered = {};
+        for (let r = 0; r < maxRow; r++) {
+          fullHtml += '<tr>';
+          for (let c = 0; c < maxCol; c++) {
+            const key = `cell_${r}_${c}`;
+            if (rendered[key]) continue;
+            const cell = tableData.cells[key];
+            if (!cell) { fullHtml += '<td style="border:1px solid #94a3b8;padding:6px;">&nbsp;</td>'; continue; }
+            if (cell.rowspan > 1) for (let rs = 1; rs < cell.rowspan; rs++) rendered[`cell_${r + rs}_${c}`] = true;
+            const tag = cell.isHeader ? 'th' : 'td';
+            let span = '';
+            if (cell.colspan > 1) span += ' colspan="' + cell.colspan + '"';
+            if (cell.rowspan > 1) span += ' rowspan="' + cell.rowspan + '"';
+            let cs = cell.cellStyle || '';
+            if (!cs.includes('border')) cs += 'border:1px solid #94a3b8;';
+            if (!cs.includes('padding')) cs += 'padding:6px 10px;';
+            if (cell.fontStyle === 'bold') cs += 'font-weight:bold;';
+            if (cell.fontStyle === 'italic') cs += 'font-style:italic;';
+            if (cell.fontStyle === 'bold-italic') cs += 'font-weight:bold;font-style:italic;';
+            const sm = { small: '12px', normal: '14px', large: '16px', xlarge: '18px' };
+            if (cell.fontSize && cell.fontSize !== 'normal') cs += 'font-size:' + sm[cell.fontSize] + ';';
+            let da = ' data-cell-id="' + key + '"';
+            if (cell.type !== 'text') da += ' data-cell-type="' + cell.type + '"';
+            if (cell.dbName) da += ' data-db-name="' + cell.dbName + '"';
+            if (cell.trainerRole) da += ' data-trainer-role="' + cell.trainerRole + '"';
+            fullHtml += '<' + tag + span + ' style="' + cs + '"' + da + '>' + (cell.originalContent || '') + '</' + tag + '>';
+          }
+          fullHtml += '</tr>';
+        }
+        fullHtml += '</table>';
+
+        // Build cellConfigs
+        const cellConfigs = {};
+        Object.values(tableData.cells).forEach(cell => {
+          const key = 'cell_' + cell.row + '_' + cell.col;
+          if (cell.type !== 'text' || cell.dbName || cell.fontStyle !== 'normal' || cell.fontSize !== 'normal' || cell.trainerRole) {
+            cellConfigs[key] = {
+              type: cell.type, dbName: cell.dbName || '',
+              fontStyle: cell.fontStyle || 'normal', fontSize: cell.fontSize || 'normal',
+              options: cell.options || [],
+              label: cell.label || cell.originalContent,
+              trainerRole: cell.trainerRole || ''
+            };
+          }
+        });
+
+        // Post back to parent
+        window.parent.postMessage({
+          type: 'tableDesignerSave',
+          fieldId: fieldId,
+          generatedHtml: fullHtml,
+          cellConfigs: cellConfigs,
+          columns: columns,
+          columnTypes: columnTypes,
+          rows: tableRows
+        }, '*');
+
+        alert('✅ Saved! Returning to Form Builder...');
+        window.close();
+      };
+    }
+  }, 500);
+})();
 </script>
 </body>
 </html>
