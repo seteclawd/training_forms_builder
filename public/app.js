@@ -1902,51 +1902,111 @@ function designTableField(fieldId) {
   const overlay = document.createElement('div');
   overlay.id = modalId;
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;';
+  // Cell property controls HTML
+  const cellPropsHtml = `
+    <div style="background:#0f172a;border-left:1px solid #334155;width:260px;padding:0;overflow-y:auto;font-size:0.8rem;">
+      <div style="padding:12px;border-bottom:1px solid #334155;"><span style="color:#f59e0b;font-weight:700;font-size:0.9rem;">⚙️ Cell / Row / Column Properties</span></div>
+      <div style="padding:10px 12px;border-bottom:1px solid #334155;">
+        <div style="color:#93c5fd;font-weight:600;margin-bottom:8px;">📏 Size</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Col Width</label><input id="cpColWidth" type="text" placeholder="e.g. 150px" style="width:100%;padding:4px 6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;"></div>
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Row Height</label><input id="cpRowHeight" type="text" placeholder="e.g. 40px" style="width:100%;padding:4px 6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;"></div>
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Cell Padding</label><input id="cpCellPad" type="text" placeholder="e.g. 8px" style="width:100%;padding:4px 6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;"></div>
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Min Width</label><input id="cpMinWidth" type="text" placeholder="e.g. 80px" style="width:100%;padding:4px 6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;"></div>
+        </div>
+      </div>
+      <div style="padding:10px 12px;border-bottom:1px solid #334155;">
+        <div style="color:#93c5fd;font-weight:600;margin-bottom:8px;">🎨 Colors</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Background</label><input id="cpBgColor" type="color" value="#1e293b" style="width:100%;height:30px;border:1px solid #475569;border-radius:4px;background:#1e293b;cursor:pointer;"></div>
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Text Color</label><input id="cpTextColor" type="color" value="#e2e8f0" style="width:100%;height:30px;border:1px solid #475569;border-radius:4px;background:#1e293b;cursor:pointer;"></div>
+        </div>
+      </div>
+      <div style="padding:10px 12px;border-bottom:1px solid #334155;">
+        <div style="color:#93c5fd;font-weight:600;margin-bottom:8px;">🔲 Borders</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Width</label><input id="cpBorderW" type="text" placeholder="e.g. 2px" style="width:100%;padding:4px 6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;"></div>
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Color</label><input id="cpBorderColor" type="color" value="#475569" style="width:100%;height:30px;border:1px solid #475569;border-radius:4px;background:#1e293b;cursor:pointer;"></div>
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Style</label><select id="cpBorderStyle" style="width:100%;padding:4px 6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;"><option value="solid">Solid</option><option value="dashed">Dashed</option><option value="dotted">Dotted</option><option value="double">Double</option><option value="none">None</option></select></div>
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Radius</label><input id="cpBorderRadius" type="text" placeholder="e.g. 4px" style="width:100%;padding:4px 6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;"></div>
+        </div>
+      </div>
+      <div style="padding:10px 12px;border-bottom:1px solid #334155;">
+        <div style="color:#93c5fd;font-weight:600;margin-bottom:8px;">📝 Font</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Family</label><select id="cpFontFamily" style="width:100%;padding:4px 6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;"><option value="">Default</option><option value="Arial">Arial</option><option value="Calibri">Calibri</option><option value="Cambria">Cambria</option><option value="Georgia">Georgia</option><option value="Times New Roman">Times New Roman</option><option value="Verdana">Verdana</option><option value="Courier New">Courier New</option><option value="Consolas">Consolas</option></select></div>
+          <div><label style="color:#94a3b8;font-size:0.7rem;display:block;">Size</label><select id="cpFontSize" style="width:100%;padding:4px 6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;"><option value="">Default</option><option value="8pt">8pt</option><option value="9pt">9pt</option><option value="10pt">10pt</option><option value="11pt">11pt</option><option value="12pt">12pt</option><option value="14pt">14pt</option><option value="16pt">16pt</option><option value="18pt">18pt</option><option value="20pt">20pt</option><option value="24pt">24pt</option><option value="28pt">28pt</option><option value="32pt">32pt</option><option value="36pt">36pt</option></select></div>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:8px;">
+          <button id="cpBold" style="flex:1;padding:6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;font-weight:bold;">B</button>
+          <button id="cpItalic" style="flex:1;padding:6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;font-style:italic;">I</button>
+          <button id="cpUnderline" style="flex:1;padding:6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;text-decoration:underline;">U</button>
+        </div>
+      </div>
+      <div style="padding:10px 12px;border-bottom:1px solid #334155;">
+        <div style="color:#93c5fd;font-weight:600;margin-bottom:8px;">📌 Alignment</div>
+        <div style="display:flex;gap:4px;">
+          <button id="cpAlignLeft" style="flex:1;padding:6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;">⬅</button>
+          <button id="cpAlignCenter" style="flex:1;padding:6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;">⬛</button>
+          <button id="cpAlignRight" style="flex:1;padding:6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;">➡</button>
+          <button id="cpAlignJustify" style="flex:1;padding:6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;">◻</button>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:6px;">
+          <button id="cpVAlignTop" style="flex:1;padding:6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;font-size:0.7rem;">⬆ Top</button>
+          <button id="cpVAlignMid" style="flex:1;padding:6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;font-size:0.7rem;">⬛ Mid</button>
+          <button id="cpVAlignBot" style="flex:1;padding:6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;font-size:0.7rem;">⬇ Bot</button>
+        </div>
+      </div>
+      <div style="padding:10px 12px;border-bottom:1px solid #334155;">
+        <div style="color:#93c5fd;font-weight:600;margin-bottom:8px;">🔧 Actions</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+          <button id="cpInsRowAbove" style="padding:5px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;font-size:0.75rem;">↑ Row Above</button>
+          <button id="cpInsRowBelow" style="padding:5px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;font-size:0.75rem;">↓ Row Below</button>
+          <button id="cpInsColLeft" style="padding:5px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;font-size:0.75rem;">← Col Left</button>
+          <button id="cpInsColRight" style="padding:5px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;cursor:pointer;font-size:0.75rem;">→ Col Right</button>
+          <button id="cpDelRow" style="padding:5px;background:#7f1d1d;border:1px solid #475569;border-radius:4px;color:#fca5a5;cursor:pointer;font-size:0.75rem;">🗑 Delete Row</button>
+          <button id="cpDelCol" style="padding:5px;background:#7f1d1d;border:1px solid #475569;border-radius:4px;color:#fca5a5;cursor:pointer;font-size:0.75rem;">🗑 Delete Col</button>
+          <button id="cpMergeCells" style="padding:5px;background:#1e3a5f;border:1px solid #475569;border-radius:4px;color:#93c5fd;cursor:pointer;font-size:0.75rem;grid-column:span 2;">🔗 Merge Selected Cells</button>
+        </div>
+      </div>
+      <div style="padding:10px 12px;">
+        <div style="color:#93c5fd;font-weight:600;margin-bottom:8px;">📋 Assign Field Type</div>
+        <select id="cpAssignSelect" style="width:100%;padding:6px;background:#1e293b;border:1px solid #475569;border-radius:4px;color:#e2e8f0;margin-bottom:6px;">
+          <option value="">— Select field type —</option>
+          <optgroup label="Input Types">
+            <option value="text">📝 Text</option><option value="date">📅 Date</option><option value="number">🔢 Number</option>
+            <option value="signature">✍️ Signature</option><option value="textarea">📄 Multi-line</option><option value="select">🔽 Select</option>
+            <option value="checkbox">☑️ Checkbox</option><option value="radio">🔘 Radio</option>
+          </optgroup>
+          <optgroup label="Database Fields">
+            <option value="db_crewName">👤 Crew Name</option><option value="db_crew3lc">👤 Crew 3LC</option>
+            <option value="db_crewLicense">🪪 License</option>
+            <option value="db_pilotPosition">💺 Position</option>
+            <option value="db_acType">✈️ A/C Type</option><option value="db_acReg">✈️ A/C Reg</option>
+            <option value="db_instructorTri">🎓 Instructor</option><option value="db_examinerTre">📝 Examiner</option><option value="db_adIcao">🌍 AD/ICAO</option>
+          </optgroup>
+          <optgroup label="Trainer"><option value="trainer">🎓 TRI/TRE/SFI</option></optgroup>
+        </select>
+        <button id="cpAssignBtn" style="width:100%;padding:6px;background:#1d4ed8;border:none;border-radius:4px;color:#fff;cursor:pointer;">Assign to Cell</button>
+      </div>
+    </div>
+  `;
+
   overlay.innerHTML = `
-    <div style="background:#1e293b;border-radius:12px;width:98vw;max-width:1400px;height:90vh;display:flex;flex-direction:column;border:1px solid #334155;">
+    <div style="background:#1e293b;border-radius:12px;width:98vw;max-width:1500px;height:90vh;display:flex;flex-direction:column;border:1px solid #334155;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-bottom:1px solid #334155;">
         <h3 style="color:#f1f5f9;margin:0;font-size:1.1rem;">🎨 Table Designer — ${esc(field.label || 'Table')}</h3>
         <button id="closeDesignBtn" style="background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;">&times;</button>
       </div>
-      <div style="flex:1;overflow:hidden;position:relative;">
-        <textarea id="${editorId}" style="width:100%;height:100%;">${tableHtml}</textarea>
+      <div style="flex:1;overflow:hidden;display:flex;">
+        <div style="flex:1;overflow:auto;position:relative;">
+          <textarea id="${editorId}">${tableHtml}</textarea>
+        </div>
+        ${cellPropsHtml}
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-top:1px solid #334155;">
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span style="color:#93c5fd;font-size:0.8rem;">Assign field to selected cell:</span>
-          <select id="fdAssignSelect" style="padding:4px 8px;border:1px solid #475569;border-radius:4px;background:#0f172a;color:#e2e8f0;font-size:0.8rem;">
-            <option value="">— Select field type —</option>
-            <optgroup label="Input Types">
-              <option value="text">📝 Text</option>
-              <option value="date">📅 Date</option>
-              <option value="number">🔢 Number</option>
-              <option value="signature">✍️ Signature</option>
-              <option value="textarea">📄 Multi-line</option>
-              <option value="select">🔽 Select dropdown</option>
-              <option value="checkbox">☑️ Checkbox</option>
-              <option value="radio">🔘 Radio</option>
-            </optgroup>
-            <optgroup label="Database Fields">
-              <option value="db_crewName">👤 Crew Name</option>
-              <option value="db_crew3lc">👤 Crew 3LC</option>
-              <option value="db_crewLicense">🪪 License</option>
-              <option value="db_pilotPosition">💺 Position</option>
-              <option value="db_acType">✈️ A/C Type</option>
-              <option value="db_acReg">✈️ A/C Reg</option>
-              <option value="db_instructorTri">🎓 Instructor (TRI)</option>
-              <option value="db_examinerTre">📝 Examiner (TRE)</option>
-              <option value="db_adIcao">🌍 AD/ICAO</option>
-            </optgroup>
-            <optgroup label="Trainer">
-              <option value="trainer">🎓 TRI / TRE / SFI</option>
-            </optgroup>
-          </select>
-          <button id="fdAssignBtn" style="padding:4px 12px;background:#1d4ed8;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.8rem;">Assign</button>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button id="fdCancelBtn" style="padding:8px 20px;background:#334155;color:#e2e8f0;border:none;border-radius:6px;cursor:pointer;">Cancel</button>
-          <button id="fdSaveBtn" style="padding:8px 20px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">💾 Save Design</button>
-        </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid #334155;">
+        <button id="fdCancelBtn" style="padding:8px 20px;background:#334155;color:#e2e8f0;border:none;border-radius:6px;cursor:pointer;">Cancel</button>
+        <button id="fdSaveBtn" style="padding:8px 20px;background:#1d4ed8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">💾 Save Design</button>
       </div>
     </div>
   `;
@@ -1968,33 +2028,16 @@ function designTableField(fieldId) {
       'insertdatetime', 'hr', 'nonbreaking', 'save', 'pagebreak',
       'anchor', 'media', 'image', 'codesample', 'spellchecker'
     ],
-    toolbar: [
-      'undo redo | cut copy paste pastetext',
-      'formatselect fontselect fontsizeselect | bold italic underline strikethrough superscript subscript',
-      'forecolor backcolor | alignleft aligncenter alignright alignjustify | lineheight',
-      'bullist numlist | outdent indent | blockquote | removeformat',
-      'link image media | hr charmap emoticons codesample anchor | nonbreaking pagebreak',
-      'table | tableprops tablecellprops deletetable',
-      'tableinsertrowbefore tableinsertrowafter tabledeleterow',
-      'tableinsertcolbefore tableinsertcolafter tabledeletecol',
-      'tablecellbackgroundcolor tablecellbordercolor tablecellborderstyle tablecellborderwidth tablecellwidth tablecellpadding',
-      'tablecellvaligntoggle',
-      'tablemergecells tablesplitcell',
-      'tablesort',
-      'searchreplace | code | preview | fullscreen | save | help'
-    ].join(' | '),
+    toolbar: 'undo redo | cut copy paste pastetext | formatselect fontselect fontsizeselect | bold italic underline strikethrough superscript subscript | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | blockquote | removeformat | link image media | hr charmap emoticons codesample anchor | nonbreaking pagebreak | table tableprops deletetable | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol | tablemergecells tablesplitcell | searchreplace code preview fullscreen save help',
     menubar: 'file edit insert view format table tools',
     menu: {
       file: { title: 'File', items: 'newdocument restoredraft | preview print' },
-      edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext pasteword | selectall | searchreplace' },
-      insert: { title: 'Insert', items: 'link image media insertdatetime table | charmap emoticons anchor hr pagebreak nonbreaking codesample' },
-      view: { title: 'View', items: 'code visualaid visualchars visualblocks | preview fullscreen' },
-      format: { title: 'Format', items: 'bold italic underline strikethrough superscript subscript | forecolor backcolor | formats | fontfontsizes fontsizes align lineheight | removeformat' },
-      table: {
-        title: 'Table',
-        items: 'inserttable tableprops tablecellprops | deletetable | tableinsertrowbefore tableinsertrowafter tabledeleterow tableinsertcolbefore tableinsertcolafter tabledeletecol | tableinsertrow tableappendrow | tablecellbackgroundcolor tablecellbordercolor tablecellborderstyle tablecellborderwidth tablecellwidth tablecellpadding tablecellvaligntoggle tablecellverticalalign tablecellsizing | tablemergecells tablesplitcell tablemergerows tablesplitrows tablemergecolumns tablesplitcolumns | tablesort tabletableresize tablecellselection'
-      },
-      tools: { title: 'Tools', items: 'spellchecker wordcount | code' }
+      edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
+      insert: { title: 'Insert', items: 'link image media table | charmap emoticons anchor hr pagebreak nonbreaking codesample' },
+      view: { title: 'View', items: 'code visualaid | preview fullscreen' },
+      format: { title: 'Format', items: 'bold italic underline strikethrough superscript subscript | forecolor backcolor | align | removeformat' },
+      table: { title: 'Table', items: 'inserttable tableprops | deletetable | tableinsertrowbefore tableinsertrowafter tabledeleterow | tableinsertcolbefore tableinsertcolafter tabledeletecol | tablemergecells tablesplitcell' },
+      tools: { title: 'Tools', items: 'code' }
     },
     font_formats: 'Arial=arial,helvetica,sans-serif; Calibri=calibri,arial,sans-serif; Courier New=courier new,courier; Georgia=georgia,palatino; Times New Roman=times new roman,times; Verdana=verdana,geneva; Cambria=cambria,serif; Consolas=consolas,monospace',
     fontsize_formats: '8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 20pt 24pt 28pt 32pt 36pt 48pt',
@@ -2017,21 +2060,138 @@ function designTableField(fieldId) {
       });
     },
     init_instance_callback: function(editor) {
-      // Field assignment button
-      document.getElementById('fdAssignBtn').addEventListener('click', () => {
-        const select = document.getElementById('fdAssignSelect');
+      const body = editor.getBody();
+      body.style.cursor = 'cell';
+
+      // Track selected cell
+      editor.on('Click NodeChange', function(e) {
+        const td = (e.element || editor.selection.getNode()).closest ? (e.element || editor.selection.getNode()).closest('td,th') : null;
+        if (td) {
+          window._fdSelectedCell = td;
+          // Update property panel inputs
+          const cs = window.getComputedStyle(td);
+          document.getElementById('cpBgColor').value = rgbToHex(cs.backgroundColor);
+          document.getElementById('cpTextColor').value = rgbToHex(cs.color);
+          document.getElementById('cpCellPad').value = (td.style.padding || '').replace('px','') || '';
+          document.getElementById('cpColWidth').value = (td.style.width || '').replace('px','') || '';
+          document.getElementById('cpMinWidth').value = (td.style.minWidth || '').replace('px','') || '';
+          document.getElementById('cpRowHeight').value = (td.parentElement ? td.parentElement.style.height || '' : '').replace('px','') || '';
+          const bw = td.style.borderWidth || '';
+          document.getElementById('cpBorderW').value = bw;
+          document.getElementById('cpBorderColor').value = rgbToHex(td.style.borderColor) || '#475569';
+          document.getElementById('cpBorderStyle').value = td.style.borderStyle || 'solid';
+          document.getElementById('cpBorderRadius').value = td.style.borderRadius || '';
+          document.getElementById('cpFontFamily').value = (cs.fontFamily || '').replace(/["']/g,'').split(',')[0] || '';
+          document.getElementById('cpFontSize').value = cs.fontSize || '';
+        }
+      });
+
+      function getSelTd() { return window._fdSelectedCell; }
+
+      // SIZE controls
+      document.getElementById('cpColWidth').addEventListener('change', function() { const td = getSelTd(); if(td) td.style.width = this.value; });
+      document.getElementById('cpMinWidth').addEventListener('change', function() { const td = getSelTd(); if(td) td.style.minWidth = this.value; });
+      document.getElementById('cpRowHeight').addEventListener('change', function() { const td = getSelTd(); if(td && td.parentElement) td.parentElement.style.height = this.value; });
+      document.getElementById('cpCellPad').addEventListener('change', function() { const td = getSelTd(); if(td) td.style.padding = this.value; });
+
+      // COLOR controls
+      document.getElementById('cpBgColor').addEventListener('input', function() { const td = getSelTd(); if(td) td.style.backgroundColor = this.value; });
+      document.getElementById('cpTextColor').addEventListener('input', function() { const td = getSelTd(); if(td) td.style.color = this.value; });
+
+      // BORDER controls
+      document.getElementById('cpBorderW').addEventListener('change', function() { const td = getSelTd(); if(td) td.style.borderWidth = this.value; });
+      document.getElementById('cpBorderColor').addEventListener('input', function() { const td = getSelTd(); if(td) { td.style.borderColor = this.value; td.style.borderStyle = td.style.borderStyle || 'solid'; } });
+      document.getElementById('cpBorderStyle').addEventListener('change', function() { const td = getSelTd(); if(td) td.style.borderStyle = this.value; });
+      document.getElementById('cpBorderRadius').addEventListener('change', function() { const td = getSelTd(); if(td) td.style.borderRadius = this.value; });
+
+      // FONT controls
+      document.getElementById('cpFontFamily').addEventListener('change', function() { const td = getSelTd(); if(td) td.style.fontFamily = this.value; });
+      document.getElementById('cpFontSize').addEventListener('change', function() { const td = getSelTd(); if(td) td.style.fontSize = this.value; });
+      document.getElementById('cpBold').addEventListener('click', function() { const td = getSelTd(); if(td) td.style.fontWeight = td.style.fontWeight === 'bold' ? 'normal' : 'bold'; this.style.background = td.style.fontWeight === 'bold' ? '#1d4ed8' : '#1e293b'; });
+      document.getElementById('cpItalic').addEventListener('click', function() { const td = getSelTd(); if(td) td.style.fontStyle = td.style.fontStyle === 'italic' ? 'normal' : 'italic'; this.style.background = td.style.fontStyle === 'italic' ? '#1d4ed8' : '#1e293b'; });
+      document.getElementById('cpUnderline').addEventListener('click', function() { const td = getSelTd(); if(td) td.style.textDecoration = td.style.textDecoration === 'underline' ? 'none' : 'underline'; this.style.background = td.style.textDecoration === 'underline' ? '#1d4ed8' : '#1e293b'; });
+
+      // ALIGNMENT controls
+      document.getElementById('cpAlignLeft').addEventListener('click', function() { const td = getSelTd(); if(td) td.style.textAlign = 'left'; });
+      document.getElementById('cpAlignCenter').addEventListener('click', function() { const td = getSelTd(); if(td) td.style.textAlign = 'center'; });
+      document.getElementById('cpAlignRight').addEventListener('click', function() { const td = getSelTd(); if(td) td.style.textAlign = 'right'; });
+      document.getElementById('cpAlignJustify').addEventListener('click', function() { const td = getSelTd(); if(td) td.style.textAlign = 'justify'; });
+      document.getElementById('cpVAlignTop').addEventListener('click', function() { const td = getSelTd(); if(td) td.style.verticalAlign = 'top'; });
+      document.getElementById('cpVAlignMid').addEventListener('click', function() { const td = getSelTd(); if(td) td.style.verticalAlign = 'middle'; });
+      document.getElementById('cpVAlignBot').addEventListener('click', function() { const td = getSelTd(); if(td) td.style.verticalAlign = 'bottom'; });
+
+      // ROW/COLUMN actions
+      document.getElementById('cpInsRowAbove').addEventListener('click', function() {
+        const td = getSelTd(); if(!td || !td.parentElement) return;
+        const tr = td.parentElement;
+        const newRow = tr.cloneNode(true);
+        newRow.querySelectorAll('td,th').forEach(c => { c.innerHTML = ''; c.removeAttribute('data-cell-type'); c.removeAttribute('data-db-name'); c.removeAttribute('data-field-label'); c.style.cssText = '';
+        });
+        tr.parentNode.insertBefore(newRow, tr);
+      });
+      document.getElementById('cpInsRowBelow').addEventListener('click', function() {
+        const td = getSelTd(); if(!td || !td.parentElement) return;
+        const tr = td.parentElement;
+        const newRow = tr.cloneNode(true);
+        newRow.querySelectorAll('td,th').forEach(c => { c.innerHTML = ''; c.removeAttribute('data-cell-type'); c.removeAttribute('data-db-name'); c.removeAttribute('data-field-label'); c.style.cssText = '';
+        });
+        tr.parentNode.insertBefore(newRow, tr.nextSibling);
+      });
+      document.getElementById('cpInsColLeft').addEventListener('click', function() {
+        const td = getSelTd(); if(!td) return;
+        const table = td.closest('table');
+        const idx = Array.from(td.parentElement.children).indexOf(td);
+        table.querySelectorAll('tr').forEach(tr => {
+          const cell = tr.children[idx];
+          const newCell = (cell.tagName === 'TH') ? document.createElement('th') : document.createElement('td');
+          newCell.style.cssText = cell.style.cssText;
+          newCell.innerHTML = '';
+          tr.insertBefore(newCell, cell);
+        });
+      });
+      document.getElementById('cpInsColRight').addEventListener('click', function() {
+        const td = getSelTd(); if(!td) return;
+        const table = td.closest('table');
+        const idx = Array.from(td.parentElement.children).indexOf(td);
+        table.querySelectorAll('tr').forEach(tr => {
+          const cell = tr.children[idx];
+          const newCell = (cell.tagName === 'TH') ? document.createElement('th') : document.createElement('td');
+          newCell.style.cssText = cell.style.cssText;
+          newCell.innerHTML = '';
+          tr.insertBefore(newCell, cell.nextSibling);
+        });
+      });
+      document.getElementById('cpDelRow').addEventListener('click', function() {
+        const td = getSelTd(); if(!td || !td.parentElement) return;
+        if(confirm('Delete this row?')) td.parentElement.remove();
+      });
+      document.getElementById('cpDelCol').addEventListener('click', function() {
+        const td = getSelTd(); if(!td) return;
+        if(!confirm('Delete this column?')) return;
+        const table = td.closest('table');
+        const idx = Array.from(td.parentElement.children).indexOf(td);
+        table.querySelectorAll('tr').forEach(tr => { if(tr.children[idx]) tr.children[idx].remove(); });
+      });
+      document.getElementById('cpMergeCells').addEventListener('click', function() {
+        alert('To merge: select cells with mouse (Ctrl+click), then use Table > Merge Cells from the menu bar.');
+      });
+
+      // FIELD ASSIGNMENT
+      document.getElementById('cpAssignBtn').addEventListener('click', function() {
+        const select = document.getElementById('cpAssignSelect');
         const type = select.value;
-        if (!type) { alert('Select a field type first'); return; }
-        const td = window._fdSelectedCell;
-        if (!td) { alert('Select a cell in the table first'); return; }
-        const dbName = type.startsWith('db_') ? type.replace('db_', '') : '';
+        if(!type) { alert('Select a field type'); return; }
+        const td = getSelTd();
+        if(!td) { alert('Select a cell first'); return; }
+        const dbName = type.startsWith('db_') ? type.replace('db_','') : '';
         const label = select.options[select.selectedIndex].textContent.trim();
         td.setAttribute('data-cell-type', type);
-        if (dbName) td.setAttribute('data-db-name', dbName);
+        if(dbName) td.setAttribute('data-db-name', dbName);
         td.setAttribute('data-field-label', label);
-        td.innerHTML = '<span class="cell-field-badge" style="color:#3b82f6;font-weight:bold;font-size:0.85rem;">' + label + '</span>';
+        td.innerHTML = '<span style="color:#3b82f6;font-weight:bold;font-size:0.85rem;">' + label + '</span>';
         td.style.background = '#1e3a5f';
       });
+
       // Cancel
       document.getElementById('fdCancelBtn').addEventListener('click', () => {
         tinymce.get(editorId)?.remove();
@@ -2041,16 +2201,16 @@ function designTableField(fieldId) {
         tinymce.get(editorId)?.remove();
         overlay.remove();
       });
+
       // Save
       document.getElementById('fdSaveBtn').addEventListener('click', () => {
         const html = editor.getContent();
         field.content = html;
         field.generatedHtml = html;
-        // Parse table structure
         const tmp = document.createElement('div');
         tmp.innerHTML = html;
         const table = tmp.querySelector('table');
-        if (table) {
+        if(table) {
           const ths = table.querySelectorAll('thead th');
           const fieldColumns = [];
           ths.forEach(th => fieldColumns.push(th.textContent.trim()));
@@ -2061,8 +2221,7 @@ function designTableField(fieldId) {
             const firstTd = tr.querySelector('td');
             fieldRows.push({ label: firstTd ? firstTd.textContent.trim() : '', name: (firstTd ? firstTd.textContent.trim() : '').toLowerCase().replace(/[^a-z0-9]/g, '_'), rowStyles: {} });
           });
-          if (fieldRows.length) field.rows = fieldRows;
-          // Parse cell configs
+          if(fieldRows.length) field.rows = fieldRows;
           const cellConfigs = {};
           table.querySelectorAll('td[data-cell-type],th[data-cell-type]').forEach((td, i) => {
             cellConfigs['cell_design_' + i] = {
@@ -2073,7 +2232,7 @@ function designTableField(fieldId) {
               trainerRole: td.getAttribute('data-trainer-role') || ''
             };
           });
-          if (Object.keys(cellConfigs).length) field.cellConfigs = cellConfigs;
+          if(Object.keys(cellConfigs).length) field.cellConfigs = cellConfigs;
         }
         tinymce.get(editorId)?.remove();
         overlay.remove();
@@ -2082,7 +2241,14 @@ function designTableField(fieldId) {
       });
     }
   });
-  }, 100); // end setTimeout
+  }, 100);
+
+  function rgbToHex(rgb) {
+    if(!rgb || rgb.startsWith('#')) return rgb || '#000000';
+    const m = rgb.match(/\d+/g);
+    if(!m || m.length < 3) return '#000000';
+    return '#' + m.slice(0,3).map(x => parseInt(x).toString(16).padStart(2,'0')).join('');
+  }
 }
 
 // ===== TABLE MANAGEMENT =====
