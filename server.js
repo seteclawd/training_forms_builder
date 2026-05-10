@@ -252,6 +252,7 @@ async function generateHtml(config = {}, isPreview = false) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>${esc(config.title || 'Training Form')}</title>
 <style>
+  @page { size: A4 portrait; margin: 15mm 15mm 25mm 15mm; }
   * { box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; font-size: 16px; }
   .container { max-width: 1000px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); overflow: hidden; }
@@ -287,6 +288,7 @@ async function generateHtml(config = {}, isPreview = false) {
   canvas { background: #fff; border-radius: 6px; cursor: crosshair; touch-action: none; -webkit-user-select: none; user-select: none; }
 
   .form-footer { padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: center; }
+  .print-footer { display: none; }  /* hidden on screen */
   .btn { padding: 14px 28px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; }
   .btn-primary { background: #1a365d; color: #fff; }
   .btn-secondary { background: #e2e8f0; color: #475569; }
@@ -298,8 +300,35 @@ async function generateHtml(config = {}, isPreview = false) {
   .tag-fail { background: #fee2e2; color: #991b1b; }
   @media (max-width: 600px) { .form-group { min-width: 100%; } th, td { font-size: 0.8rem; padding: 8px 4px; } }
   @media print {
+    body { background: #fff; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .container { max-width: 100%; box-shadow: none; border-radius: 0; }
+    .tabs, .tab-btn, .form-footer, .btn, #draftsModal { display: none !important; }
+    .tab-content { display: block !important; padding: 0; page-break-before: auto; }
+    fieldset { page-break-inside: avoid; break-inside: avoid; }
+    .header { page-break-inside: avoid; }
     input:placeholder-shown { border-color: transparent !important; }
     input:placeholder-shown::placeholder { display: none; }
+    /* A4 print footer: fixed at bottom of every page, repeated on each sheet */
+    .print-footer {
+      display: flex !important;
+      page-break-inside: avoid;
+      position: fixed;
+      bottom: 0;
+      left: 15mm;
+      right: 15mm;
+      height: 18mm;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10pt;
+      color: #475569;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 4mm;
+      background: #fff;
+      z-index: 9999;
+    }
+    .print-footer-left { text-align: left; flex: 1; }
+    .print-footer-center { text-align: center; flex: 1; }
+    .print-footer-right { text-align: right; flex: 1; }
   }
 </style>
 </head>
@@ -352,6 +381,12 @@ async function generateHtml(config = {}, isPreview = false) {
     </div>
   </div>
 </div>
+<!-- Print footer: hidden on screen, shown in print at page bottom -->
+<div class="print-footer" id="printFooterTemplate">
+  <div class="print-footer-left">Form ID: <span class="print-form-id">${esc(config.subtitle || config.formId || '-')}</span></div>
+  <div class="print-footer-center">Crew: <span class="print-crew-name">-</span></div>
+  <div class="print-footer-right">Page <span class="print-page-num">1</span> of <span class="print-total-pages">1</span></div>
+</div>
 <script>
   var config = JSON.parse(atob('${Buffer.from(JSON.stringify(config)).toString('base64')}'));
   function showTab(n) {
@@ -382,14 +417,26 @@ async function generateHtml(config = {}, isPreview = false) {
       if(el.type === 'checkbox' || el.type === 'radio') return;
       if(el.value) el.setAttribute('value', el.value);
     });
-    var html = '<!DOCTYPE html>' + document.documentElement.outerHTML;
+    // Collect crew data first for print footer
     var crewName = '', crew3lc = '', instructorName = '', examinerName = '', dateVal = '';
+    var selCrew = form.querySelector('select[data-db="crewName"]');
+    if(selCrew && selCrew.value) crewName = selCrew.value;
+    if(!crewName) {
+      form.querySelectorAll('input, select').forEach(function(el){
+        if(crewName) return;
+        var nm = (el.name || '').toLowerCase();
+        if(nm.indexOf('crew') !== -1 && nm.indexOf('3lc') === -1 && nm.indexOf('license') === -1 && el.value) crewName = el.value;
+      });
+    }
+    document.querySelectorAll('.print-crew-name').forEach(function(el) {
+      if(crewName) el.textContent = crewName;
+    });
+
+    var html = '<!DOCTYPE html>' + document.documentElement.outerHTML;
     var formName = config.formId || config.formName || config.title || 'Training Form';
     var formId = config.subtitle || config.formId || '-';
     dateVal = config.formDate || '';
-    // Get values from actual DOM elements (more reliable for dynamic selects)
-    var selCrew = form.querySelector('select[data-db="crewName"]');
-    if(selCrew && selCrew.value) crewName = selCrew.value;
+    // Get remaining values from actual DOM elements
     var sel3lc = form.querySelector('select[data-db="crew3lc"]');
     if(sel3lc && sel3lc.value) crew3lc = sel3lc.value;
     var selInstr = form.querySelector('select[data-db="instructorTri"]');
@@ -448,7 +495,62 @@ async function generateHtml(config = {}, isPreview = false) {
     var mailto = 'mailto:luis.rivas@texelair.com?cc=luis.rivas@texelair.com&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
     setTimeout(function(){ window.location.href = mailto; }, 500);
   }
-  window.downloadForm = function() { var html = document.documentElement.outerHTML; var blob = new Blob([html], {type: 'text/html;charset=utf-8'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = (document.title || 'training-form') + '.html'; document.body.appendChild(a); a.click(); setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100); };
+  window.downloadForm = function() {
+    // Update crew name in print footer from form data before saving
+    var form = document.getElementById('trainingForm');
+    var crewName = '';
+    
+    // Inject a print-footer clone into every tab-content section so each page gets one
+    var footerTemplate = document.getElementById('printFooterTemplate');
+    if (footerTemplate) {
+      var existingClones = document.querySelectorAll('.print-footer-clone');
+      existingClones.forEach(function(el) { el.remove(); });
+      var tabContents = document.querySelectorAll('.tab-content');
+      tabContents.forEach(function(tc) {
+        var clone = footerTemplate.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.style.display = '';
+        clone.classList.add('print-footer-clone');
+        tc.appendChild(clone);
+      });
+    }
+    if (form) {
+      var crewSel = form.querySelector('select[data-db="crewName"]');
+      if (crewSel && crewSel.value) crewName = crewSel.value;
+      if (!crewName) {
+        form.querySelectorAll('input, select').forEach(function(el) {
+          if (crewName) return;
+          var nm = (el.name || '').toLowerCase();
+          if (nm.indexOf('crew') !== -1 && nm.indexOf('3lc') === -1 && nm.indexOf('license') === -1 && el.value) crewName = el.value;
+        });
+      }
+    }
+    document.querySelectorAll('.print-crew-name').forEach(function(el) {
+      el.textContent = crewName || '-';
+    });
+    // Estimate page count for A4
+    var pageH = 1123; // A4 height in px at 96dpi
+    var totalH = document.documentElement.scrollHeight || document.body.scrollHeight;
+    var pageCount = Math.max(1, Math.ceil(totalH / pageH));
+    document.querySelectorAll('.print-total-pages').forEach(function(el) {
+      el.textContent = pageCount;
+    });
+    // Set page numbers on each print-footer clone
+    var footers = document.querySelectorAll('.print-footer-clone, #printFooterTemplate');
+    footers.forEach(function(f, i) {
+      var num = f.querySelector('.print-page-num');
+      if (num) num.textContent = i + 1;
+    });
+    var html = document.documentElement.outerHTML;
+    var blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = (document.title || 'training-form') + '.html';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  };
 
   function showDrafts() {
     document.getElementById('draftsModal').style.display = 'flex';
