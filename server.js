@@ -869,6 +869,9 @@ function renderFieldHtml(field) {
     case 'table':
       html += renderTableHtml(field);
       break;
+    case 'saved_table':
+      html += renderSavedTableHtml(field);
+      break;
     case 'signature':
       const sigH = getSignatureHeight(field);
       html += `          <div class="signature-box">\n            <p style="margin:0 0 8px;color:#64748b;font-size:0.85rem;">${esc(field.label)}</p>\n            <canvas id="${name}" width="400" height="${sigH}" style="width:100%;max-width:400px;height:${sigH}px;touch-action:none;-webkit-touch-callout:none;" onmousedown="event.preventDefault();this._drawing=true;var r=this.getBoundingClientRect();var x=(event.clientX-r.left)*(this.width/Math.max(r.width,1));var y=(event.clientY-r.top)*(this.height/Math.max(r.height,1));var c=this.getContext('2d');c.beginPath();c.moveTo(x,y);this._lx=x;this._ly=y;" onmousemove="if(!this._drawing)return;event.preventDefault();var r=this.getBoundingClientRect();var x=(event.clientX-r.left)*(this.width/Math.max(r.width,1));var y=(event.clientY-r.top)*(this.height/Math.max(r.height,1));var c=this.getContext('2d');c.beginPath();c.moveTo(this._lx,this._ly);c.lineTo(x,y);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';c.stroke();this._lx=x;this._ly=y;" onmouseup="this._drawing=false" onmouseleave="this._drawing=false" ontouchstart="event.preventDefault();this._drawing=true;var r=this.getBoundingClientRect();var t=event.touches[0];var x=(t.clientX-r.left)*(this.width/Math.max(r.width,1));var y=(t.clientY-r.top)*(this.height/Math.max(r.height,1));var c=this.getContext('2d');c.beginPath();c.moveTo(x,y);this._lx=x;this._ly=y;" ontouchmove="if(!this._drawing)return;event.preventDefault();var r=this.getBoundingClientRect();var t=event.touches[0];var x=(t.clientX-r.left)*(this.width/Math.max(r.width,1));var y=(t.clientY-r.top)*(this.height/Math.max(r.height,1));var c=this.getContext('2d');c.beginPath();c.moveTo(this._lx,this._ly);c.lineTo(x,y);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';c.stroke();this._lx=x;this._ly=y;" ontouchend="this._drawing=false" ontouchcancel="this._drawing=false"></canvas>\n          </div>\n`;
@@ -986,6 +989,79 @@ function renderTableHtml(field) {
   });
 
   html += `            </tbody>\n          </table>\n`;
+  return html;
+}
+
+function renderSavedTableHtml(field) {
+  const td = field;
+  const rows = td.rows || 0;
+  const cols = td.cols || 0;
+  const cells = td.cells || {};
+  const tableStyle = td.tableStyle || { backgroundColor: '#1e293b', padding: '0px', borderSpacing: '0px' };
+  const headerRows = td.headerRows || [];
+
+  let html = '<div style="background:' + esc(tableStyle.backgroundColor || '#1e293b') + ';padding:' + esc(tableStyle.padding || '0px') + ';overflow-x:auto;">';
+  html += '<table style="border-collapse:separate;border-spacing:' + esc(tableStyle.borderSpacing || '0px') + ';width:100%;">';
+
+  for (let r = 0; r < rows; r++) {
+    html += '<tr>';
+    for (let c = 0; c < cols; c++) {
+      const key = `${r},${c}`;
+      const cell = cells[key];
+      if (!cell) continue;
+      if (cell.mergeHidden) continue;
+
+      const tag = headerRows.includes(r) ? 'th' : 'td';
+      let styleStr = '';
+      if (cell.style) {
+        const parts = [];
+        for (const [k, v] of Object.entries(cell.style)) {
+          if (v !== '' && v !== null && v !== undefined) {
+            parts.push(`${k.replace(/[A-Z]/g, m => '-' + m.toLowerCase())}:${v}`);
+          }
+        }
+        styleStr = parts.join(';');
+      }
+      let attrs = '';
+      if (cell.colspan > 1) attrs += ` colspan="${cell.colspan}"`;
+      if (cell.rowspan > 1) attrs += ` rowspan="${cell.rowspan}"`;
+      if (styleStr) attrs += ` style="${styleStr}"`;
+
+      let cellHtml = '';
+      const ft = cell.fieldType;
+      const fcfg = cell.fieldConfig;
+      const cName = `${field.name || field.id || 'table'}_${r}_${c}`;
+
+      if (ft === 'date') {
+        cellHtml = `<input type="date" name="${cName}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" onchange="if(this.value){var d=new Date(this.value+'T00:00:00');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];this.setAttribute('data-raw',this.value);this.type='text';this.value=d.getDate()+'-'+m[d.getMonth()]+'-'+d.getFullYear();}" onfocus="if(this.getAttribute('data-raw')){this.type='date';this.value=this.getAttribute('data-raw');}">`;
+      } else if (ft === 'dropdown') {
+        const opts = (fcfg?.options || []).map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
+        cellHtml = `<select name="${cName}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option value="">-- Select --</option>${opts}</select>`;
+      } else if (ft === 'number') {
+        cellHtml = `<input type="number" name="${cName}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" placeholder="...">`;
+      } else if (ft === 'signature') {
+        cellHtml = `<canvas id="${cName}" width="200" height="60" style="width:100%;height:60px;border:1px solid #cbd5e1;border-radius:4px;cursor:crosshair;" onmousedown="event.preventDefault();this._drawing=true;var r=this.getBoundingClientRect();this._lx=(event.clientX-r.left)*(this.width/r.width);this._ly=(event.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.beginPath();c.moveTo(this._lx,this._ly);" onmousemove="if(!this._drawing)return;event.preventDefault();var r=this.getBoundingClientRect();var x=(event.clientX-r.left)*(this.width/r.width);var y=(event.clientY-r.top)*(this.height/r.height);var c=this.getContext('2d');c.lineTo(x,y);c.strokeStyle='#1a365d';c.lineWidth=2;c.lineCap='round';c.stroke();this._lx=x;this._ly=y;" onmouseup="this._drawing=false" onmouseleave="this._drawing=false"></canvas>`;
+      } else if (ft && ft.startsWith('db_')) {
+        const dbSource = fcfg?.dbSource || ft.replace('db_', '');
+        const isLoc = dbSource === 'location';
+        const isFstd = dbSource === 'fstdId';
+        const extraAttr = isLoc ? ' data-role="location"' : (isFstd ? ' data-role="fstdId"' : '');
+        const cls = isLoc || isFstd ? '' : ' class="db-field"';
+        cellHtml = `<select name="${cName}"${cls} data-db="${esc(dbSource)}"${extraAttr} style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option value="">-- Select --</option></select>`;
+      } else if (ft === 'checkbox') {
+        cellHtml = `<input type="checkbox" name="${cName}" style="width:18px;height:18px;">`;
+      } else if (ft === 'textarea') {
+        cellHtml = `<textarea name="${cName}" rows="3" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" placeholder="..."></textarea>`;
+      } else {
+        cellHtml = `<input type="text" name="${cName}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" placeholder="${esc(cell.content || '')}">`;
+      }
+
+      html += `<${tag}${attrs}>${cellHtml}</${tag}>`;
+    }
+    html += '</tr>';
+  }
+
+  html += '</table></div>';
   return html;
 }
 

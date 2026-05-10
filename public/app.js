@@ -745,6 +745,7 @@ function renderFieldset(fs) {
         .then(data => {
           const tableField = data.config;
           tableField.id = 'table_' + Date.now();
+          tableField.type = 'saved_table';
           const fieldset = currentForm.config.sections[currentSection].find(f => f.id === fs.id);
           if (fieldset) {
             fieldset.fields.push(tableField);
@@ -2262,6 +2263,9 @@ function renderPreviewField(field) {
     case 'table':
       html += renderPreviewTable(field);
       break;
+    case 'saved_table':
+      html += renderPreviewSavedTable(field);
+      break;
     case 'imported_html':
       html += '        <div class="imported-table-wrapper" style="margin:8px 0;overflow-x:auto;">\n';
       // Use content (from Visual Editor) if available, otherwise generatedHtml (from Table Importer)
@@ -2490,6 +2494,73 @@ function renderPreviewTable(field) {
     html += `            </tr>\n`;
   });
   html += `          </tbody>\n        </table>\n`;
+  return html;
+}
+
+function renderPreviewSavedTable(field) {
+  const td = field;
+  const rows = td.rows || 0;
+  const cols = td.cols || 0;
+  const cells = td.cells || {};
+  const tableStyle = td.tableStyle || { backgroundColor: '#1e293b', padding: '0px', borderSpacing: '0px' };
+  const headerRows = td.headerRows || [];
+
+  let html = `<div style="background:${esc(tableStyle.backgroundColor || '#1e293b')};padding:${esc(tableStyle.padding || '0px')};overflow-x:auto;">`;
+  html += `<table style="border-collapse:separate;border-spacing:${esc(tableStyle.borderSpacing || '0px')};width:100%;">`;
+
+  for (let r = 0; r < rows; r++) {
+    html += '<tr>';
+    for (let c = 0; c < cols; c++) {
+      const key = `${r},${c}`;
+      const cell = cells[key];
+      if (!cell) continue;
+      if (cell.mergeHidden) continue;
+
+      const tag = headerRows.includes(r) ? 'th' : 'td';
+      let styleStr = '';
+      if (cell.style) {
+        const parts = [];
+        for (const [k, v] of Object.entries(cell.style)) {
+          if (v !== '' && v !== null && v !== undefined) {
+            parts.push(`${k.replace(/[A-Z]/g, m => '-' + m.toLowerCase())}:${v}`);
+          }
+        }
+        styleStr = parts.join(';');
+      }
+      let attrs = '';
+      if (cell.colspan > 1) attrs += ` colspan="${cell.colspan}"`;
+      if (cell.rowspan > 1) attrs += ` rowspan="${cell.rowspan}"`;
+      if (styleStr) attrs += ` style="${styleStr}"`;
+
+      let cellHtml = '';
+      const ft = cell.fieldType;
+      const fcfg = cell.fieldConfig;
+
+      if (ft === 'date') {
+        cellHtml = `<input type="date" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;">`;
+      } else if (ft === 'dropdown') {
+        const opts = (fcfg?.options || []).map(o => `<option>${esc(o)}</option>`).join('');
+        cellHtml = `<select style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option>-- Select --</option>${opts}</select>`;
+      } else if (ft === 'number') {
+        cellHtml = `<input type="number" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" placeholder="...">`;
+      } else if (ft === 'signature') {
+        cellHtml = `<canvas style="width:100%;height:60px;border:1px solid #cbd5e1;border-radius:4px;"></canvas>`;
+      } else if (ft && ft.startsWith('db_')) {
+        cellHtml = `<select style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option>-- Select --</option></select>`;
+      } else if (ft === 'checkbox') {
+        cellHtml = `<input type="checkbox" style="width:18px;height:18px;">`;
+      } else if (ft === 'textarea') {
+        cellHtml = `<textarea rows="3" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"></textarea>`;
+      } else {
+        cellHtml = `<input type="text" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" placeholder="${esc(cell.content || '')}">`;
+      }
+
+      html += `<${tag}${attrs}>${cellHtml}</${tag}>`;
+    }
+    html += '</tr>';
+  }
+
+  html += '</table></div>';
   return html;
 }
 
