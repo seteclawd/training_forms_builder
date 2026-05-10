@@ -252,7 +252,15 @@ async function generateHtml(config = {}, isPreview = false) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>${esc(config.title || 'Training Form')}</title>
 <style>
-  @page { size: A4 portrait; margin: 15mm 15mm 25mm 15mm; }
+@page {
+  size: A4 portrait; 
+  margin: 15mm 15mm 25mm 15mm;
+  @bottom-center {
+    content: "Page " counter(page) " of " counter(pages);
+    font-size: 10pt;
+    color: #475569;
+  }
+}
   * { box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; font-size: 16px; }
   .container { max-width: 1000px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); overflow: hidden; }
@@ -308,27 +316,21 @@ async function generateHtml(config = {}, isPreview = false) {
     .header { page-break-inside: avoid; }
     input:placeholder-shown { border-color: transparent !important; }
     input:placeholder-shown::placeholder { display: none; }
-    /* A4 print footer: fixed at bottom of every page, repeated on each sheet */
-    .print-footer {
+    /* Footer for each section — inserted by JS, appears at end of section */
+    .print-footer-clone {
       display: flex !important;
       page-break-inside: avoid;
-      position: fixed;
-      bottom: 0;
-      left: 15mm;
-      right: 15mm;
-      height: 18mm;
       align-items: center;
       justify-content: space-between;
       font-size: 10pt;
       color: #475569;
       border-top: 1px solid #cbd5e1;
       padding-top: 4mm;
+      margin-top: 10mm;
       background: #fff;
-      z-index: 9999;
     }
-    .print-footer-left { text-align: left; flex: 1; }
-    .print-footer-center { text-align: center; flex: 1; }
-    .print-footer-right { text-align: right; flex: 1; }
+    /* Hide original footer template on print */
+    #printFooterTemplate { display: none !important; }
   }
 </style>
 </head>
@@ -384,8 +386,7 @@ async function generateHtml(config = {}, isPreview = false) {
 <!-- Print footer: hidden on screen, shown in print at page bottom -->
 <div class="print-footer" id="printFooterTemplate">
   <div class="print-footer-left">Form ID: <span class="print-form-id">${esc(config.subtitle || config.formId || '-')}</span></div>
-  <div class="print-footer-center">Crew: <span class="print-crew-name">-</span></div>
-  <div class="print-footer-right">Page <span class="print-page-num">1</span> of <span class="print-total-pages">1</span></div>
+  <div class="print-footer-right">Crew: <span class="print-crew-name">-</span></div>
 </div>
 <script>
   var config = JSON.parse(atob('${Buffer.from(JSON.stringify(config)).toString('base64')}'));
@@ -527,19 +528,6 @@ async function generateHtml(config = {}, isPreview = false) {
     }
     document.querySelectorAll('.print-crew-name').forEach(function(el) {
       el.textContent = crewName || '-';
-    });
-    // Estimate page count for A4
-    var pageH = 1123; // A4 height in px at 96dpi
-    var totalH = document.documentElement.scrollHeight || document.body.scrollHeight;
-    var pageCount = Math.max(1, Math.ceil(totalH / pageH));
-    document.querySelectorAll('.print-total-pages').forEach(function(el) {
-      el.textContent = pageCount;
-    });
-    // Set page numbers on each print-footer clone
-    var footers = document.querySelectorAll('.print-footer-clone, #printFooterTemplate');
-    footers.forEach(function(f, i) {
-      var num = f.querySelector('.print-page-num');
-      if (num) num.textContent = i + 1;
     });
     var html = document.documentElement.outerHTML;
     var blob = new Blob([html], {type: 'text/html;charset=utf-8'});

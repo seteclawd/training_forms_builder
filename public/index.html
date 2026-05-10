@@ -321,6 +321,12 @@ function loadDraft(key) {
   var drafts = JSON.parse(localStorage.getItem('training_drafts') || '{}');
   var d = drafts[key];
   if (d && d.data) {
+    // Switch to builder view first so fields are visible
+    if (typeof showBuilder === 'function') {
+      showBuilder(true);
+    } else if (typeof showView === 'function') {
+      showView('builder');
+    }
     // Try to populate builder page fields
     if(d.data.formId) document.getElementById('formId').value = d.data.formId;
     if(d.data.formDate) document.getElementById('formDate').value = d.data.formDate;

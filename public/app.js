@@ -132,7 +132,11 @@ function createNewTemplate() {
   // Show modal
   document.getElementById('templateBuilderModal').style.display = 'flex';
 }
-function showBuilder() { showView('builder'); resetBuilder(); startPreviewSync(); }
+function showBuilder(withData) {
+  showView('builder');
+  if (!withData) resetBuilder();
+  startPreviewSync();
+}
 
 // ===== TEMPLATE MANAGEMENT =====
 let templateSections = { session: [], training: [], comments: [] };
