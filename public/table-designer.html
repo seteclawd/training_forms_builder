@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Table Designer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; overflow: hidden; }
+
+  /* Header */
+  .header { background: #1a365d; padding: 12px 20px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+  .header h1 { color: #fff; font-size: 1.2rem; }
+  .header a { color: #93c5fd; text-decoration: none; font-size: 0.85rem; }
+
+  /* Layout */
+  .app { display: flex; flex-direction: column; height: 100vh; }
+  .main { display: grid; grid-template-columns: 1fr 380px; gap: 0; flex: 1; overflow: hidden; }
+
+  /* Toolbar */
+  .toolbar { background: #1e293b; border-bottom: 1px solid #334155; padding: 8px 12px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+  .toolbar-group { display: flex; align-items: center; gap: 2px; padding: 0 6px; border-right: 1px solid #334155; }
+  .toolbar-group:last-child { border-right: none; }
+  .tb-btn { padding: 5px 10px; background: #334155; border: 1px solid #475569; border-radius: 4px; color: #e2e8f0; cursor: pointer; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px; min-height: 28px; }
+  .tb-btn:hover { background: #475569; }
+  .tb-btn.active { background: #1e40af; border-color: #3b82f6; }
+  .tb-btn svg { width: 14px; height: 14px; fill: currentColor; }
+  .tb-sep { width: 1px; height: 20px; background: #475569; margin: 0 4px; }
+  .tb-select { padding: 4px 6px; background: #334155; border: 1px solid #475569; border-radius: 4px; color: #e2e8f0; font-size: 0.8rem; cursor: pointer; }
+  .tb-color { padding: 0; width: 28px; height: 24px; border: 1px solid #475569; border-radius: 4px; cursor: pointer; background: none; }
+
+  /* Table Work Area */
+  .workarea { overflow: auto; padding: 16px; background: #0f172a; position: relative; }
+
+  /* Designer Table */
+  .design-table { border-collapse: collapse; background: #1e293b; user-select: none; }
+  .design-table th, .design-table td {
+    border: 1px solid #475569;
+    padding: 6px 8px;
+    min-width: 80px;
+    min-height: 32px;
+    position: relative;
+    vertical-align: top;
+    background: #1e293b;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    cursor: cell;
+    transition: outline 0.05s;
+    overflow: hidden;
+  }
+  .design-table th { background: #334155; font-weight: 600; text-align: center; }
+  .design-table td:hover { background: #253654; }
+  .design-table td.selected, .design-table th.selected {
+    outline: 2px solid #3b82f6;
+    outline-offset: -2px;
+    background: #1e3a5f !important;
+  }
+  .design-table td.editing, .design-table th.editing {
+    outline: 2px solid #22c55e;
+    outline-offset: -2px;
+    cursor: text;
+    user-select: text;
+  }
+  .design-table td.merge-hidden { display: none; }
+
+  /* Resize handles */
+  .resize-handle-col {
+    position: absolute; right: -3px; top: 0; bottom: 0; width: 6px;
+    cursor: col-resize; z-index: 5; opacity: 0; transition: opacity 0.15s;
+  }
+  .resize-handle-row {
+    position: absolute; bottom: -3px; left: 0; right: 0; height: 6px;
+    cursor: row-resize; z-index: 5; opacity: 0; transition: opacity 0.15s;
+  }
+  .design-table th:hover .resize-handle-col, .design-table td:hover .resize-handle-col,
+  .design-table th:hover .resize-handle-row, .design-table td:hover .resize-handle-row { opacity: 1; }
+  .resizing * { cursor: col-resize !important; user-select: none !important; }
+  .resizing-row * { cursor: row-resize !important; user-select: none !important; }
+
+  /* Context menu */
+  .ctx-menu {
+    position: absolute; background: #1e293b; border: 1px solid #475569; border-radius: 6px;
+    padding: 4px 0; min-width: 180px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    display: none;
+  }
+  .ctx-item { padding: 7px 14px; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #e2e8f0; }
+  .ctx-item:hover { background: #334155; }
+  .ctx-sep { height: 1px; background: #475569; margin: 4px 0; }
+
+  /* Sidebar */
+  .sidebar { background: #1e293b; border-left: 1px solid #334155; overflow-y: auto; }
+  .panel-header { background: #334155; padding: 10px 14px; font-weight: 600; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+  .panel-body { padding: 12px 14px; }
+
+  .form-group { margin-bottom: 10px; }
+  .form-group label { display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 3px; }
+  .form-group select, .form-group input, .form-group textarea {
+    width: 100%; padding: 6px 8px; background: #0f172a; color: #e2e8f0;
+    border: 1px solid #334155; border-radius: 5px; font-size: 0.85rem;
+  }
+  .form-group input[type="color"] { padding: 2px; height: 30px; }
+
+  .badge { display: inline-block; font-size: 0.65rem; padding: 2px 5px; border-radius: 4px; margin-top: 2px; }
+  .badge-text { background: #334155; color: #94a3b8; }
+  .badge-date { background: #4c1d95; color: #c4b5fd; }
+  .badge-select { background: #065f46; color: #6ee7b7; }
+  .badge-signature { background: #92400e; color: #fcd34d; }
+  .badge-db { background: #1e40af; color: #93c5fd; }
+  .badge-number { background: #7c2d12; color: #fdba74; }
+  .badge-trainer { background: #7c3aed; color: #ddd6fe; }
+  .badge-static { background: #374151; color: #d1d5db; }
+  .badge-heading { background: #1e3a5f; color: #93c5fd; }
+  .badge-crew { background: #0f766e; color: #5eead4; }
+  .badge-remarks { background: #854d0e; color: #fde047; }
+  .badge-checkbox { background: #065f46; color: #6ee7b7; }
+  .badge-radio { background: #7c3aed; color: #ddd6fe; }
+  .badge-textarea { background: #334155; color: #94a3b8; }
+
+  .field-picker { background: #0f172a; border: 1px solid #334155; border-radius: 5px; max-height: 220px; overflow-y: auto; }
+  .field-item { padding: 6px 10px; border-bottom: 1px solid #1e293b; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
+  .field-item:hover { background: #1e293b; }
+  .field-item.selected { background: #1e3a5f; border-left: 3px solid #3b82f6; }
+  .field-item .ft { font-size: 0.65rem; color: #64748b; background: #334155; padding: 1px 4px; border-radius: 3px; }
+
+  .quick-assign { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; }
+  .qa-btn { padding: 5px 4px; background: #334155; border: 1px solid #475569; border-radius: 3px; font-size: 0.68rem; color: #e2e8f0; cursor: pointer; text-align: center; }
+  .qa-btn:hover { background: #475569; }
+
+  .info-text { color: #64748b; font-size: 0.78rem; text-align: center; padding: 12px; }
+
+  /* Bottom status bar */
+  .statusbar { background: #0f172a; border-top: 1px solid #334155; padding: 4px 12px; font-size: 0.72rem; color: #64748b; display: flex; gap: 16px; flex-shrink: 0; }
+
+  /* Empty state */
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; }
+  .empty-state p { color: #94a3b8; font-size: 0.9rem; }
+
+  /* Modal for create table */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; align-items: center; justify-content: center; }
+  .modal-overlay.visible { display: flex; }
+  .modal-box { background: #1e293b; border: 1px solid #475569; border-radius: 8px; padding: 20px; width: 320px; }
+  .modal-box h3 { margin: 0 0 12px; font-size: 1rem; color: #f1f5f9; }
+  .modal-box .form-group label { font-size: 0.8rem; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header (hidden in embed mode) -->
+  <div class="header" id="mainHeader">
+    <h1>🎨 Table Designer</h1>
+    <a href="/">← Forms</a>
+    <a href="/converter.html">← Converter</a>
+    <a href="/table-importer.html">📊 Importer</a>
+    <span style="flex:1;"></span>
+    <span style="font-size:0.75rem;color:#94a3b8;">Click cell to edit · Shift+Click range · Ctrl+Click multi · Right-click menu</span>
+  </div>
+
+  <!-- Embed Save Button -->
+  <div class="header" id="embedHeader" style="display:none;">
+    <h1>🎨 Table Designer</h1>
+    <span style="flex:1;"></span>
+    <button class="tb-btn" style="background:#166534;border-color:#22c55e;" onclick="saveToParent()">💾 Save to Form Builder</button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar" id="toolbar">
+    <div class="toolbar-group">
+      <button class="tb-btn" onclick="execFormat('bold')" title="Bold"><b>B</b></button>
+      <button class="tb-btn" onclick="execFormat('italic')" title="Italic"><i>I</i></button>
+      <button class="tb-btn" onclick="execFormat('underline')" title="Underline"><u>U</u></button>
+      <button class="tb-btn" onclick="execFormat('strikeThrough')" title="Strikethrough"><s>S</s></button>
+    </div>
+    <div class="toolbar-group">
+      <button class="tb-btn" onclick="execFormat('justifyLeft')" title="Align Left">⬅️</button>
+      <button class="tb-btn" onclick="execFormat('justifyCenter')" title="Align Center">↔️</button>
+      <button class="tb-btn" onclick="execFormat('justifyRight')" title="Align Right">➡️</button>
+      <button class="tb-btn" onclick="execFormat('justifyFull')" title="Justify">📐</button>
+    </div>
+    <div class="toolbar-group">
+      <select class="tb-select" id="fontFamily" onchange="applyFontFamily(this.value)" title="Font">
+        <option value="">Font</option>
+        <option value="Arial">Arial</option>
+        <option value="Times New Roman">Times</option>
+        <option value="Courier New">Courier</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Verdana">Verdana</option>
+      </select>
+      <select class="tb-select" id="fontSize" onchange="applyFontSize(this.value)" title="Size">
+        <option value="">Size</option>
+        <option value="8px">8</option>
+        <option value="9px">9</option>
+        <option value="10px">10</option>
+        <option value="11px">11</option>
+        <option value="12px">12</option>
+        <option value="14px">14</option>
+        <option value="16px">16</option>
+        <option value="18px">18</option>
+        <option value="20px">20</option>
+        <option value="24px">24</option>
+        <option value="28px">28</option>
+        <option value="32px">32</option>
+      </select>
+    </div>
+    <div class="toolbar-group">
+      <input type="color" class="tb-color" id="textColor" onchange="applyTextColor(this.value)" title="Text Color">
+      <input type="color" class="tb-color" id="bgColor" onchange="applyBgColor(this.value)" title="Background">
+    </div>
+    <div class="toolbar-group">
+      <button class="tb-btn" onclick="applyBorder('all')" title="All Borders">▦</button>
+      <button class="tb-btn" onclick="applyBorder('top')" title="Top">▵</button>
+      <button class="tb-btn" onclick="applyBorder('bottom')" title="Bottom">▿</button>
+      <button class="tb-btn" onclick="applyBorder('left')" title="Left">◃</button>
+      <button class="tb-btn" onclick="applyBorder('right')" title="Right">▹</button>
+      <button class="tb-btn" onclick="applyBorder('outer')" title="Outer">□</button>
+      <button class="tb-btn" onclick="applyBorder('none')" title="No Border">⌧</button>
+    </div>
+    <div class="toolbar-group">
+      <button class="tb-btn" onclick="mergeCells()" title="Merge">🔗 Merge</button>
+      <button class="tb-btn" onclick="unmergeCells()" title="Unmerge">🔓 Unmerge</button>
+      <button class="tb-btn" onclick="toggleHeader()" title="Toggle Header">TH/TD</button>
+    </div>
+    <div class="toolbar-group">
+      <button class="tb-btn" onclick="insertRowAbove()" title="Insert Row Above">⬆️ Row</button>
+      <button class="tb-btn" onclick="insertRowBelow()" title="Insert Row Below">⬇️ Row</button>
+      <button class="tb-btn" onclick="insertColLeft()" title="Insert Col Left">⬅️ Col</button>
+      <button class="tb-btn" onclick="insertColRight()" title="Insert Col Right">➡️ Col</button>
+    </div>
+    <div class="toolbar-group">
+      <button class="tb-btn" onclick="deleteSelectedRows()" title="Delete Rows" style="color:#fca5a5;">🗑️ Rows</button>
+      <button class="tb-btn" onclick="deleteSelectedCols()" title="Delete Cols" style="color:#fca5a5;">🗑️ Cols</button>
+    </div>
+    <div class="toolbar-group">
+      <button class="tb-btn" onclick="showCreateModal()" title="New Table">📄 New</button>
+      <button class="tb-btn" onclick="copyHtml()" title="Copy HTML">📋 Copy</button>
+      <button class="tb-btn btn-success" id="saveBtn" onclick="saveTable()" title="Save" style="background:#166534;border-color:#22c55e;">💾 Save</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Work Area -->
+    <div class="workarea" id="workarea">
+      <div class="empty-state" id="emptyState">
+        <p>No table yet. Create one to start designing.</p>
+        <button class="tb-btn" onclick="showCreateModal()">📄 Create Table</button>
+      </div>
+      <div id="tableWrapper"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="panel-header">Cell Properties <span id="selCount" style="font-size:0.7rem;color:#94a3b8;"></span></div>
+      <div class="panel-body" id="sidebarBody">
+        <p class="info-text">Select a cell to configure</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar" id="statusbar">
+    <span id="statusCells">0 cells</span>
+    <span id="statusSize">0 × 0</span>
+    <span id="statusSel">No selection</span>
+  </div>
+</div>
+
+<!-- Create Table Modal -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal-box">
+    <h3>Create New Table</h3>
+    <div class="form-group">
+      <label>Rows</label>
+      <input type="number" id="newRows" value="4" min="1" max="100">
+    </div>
+    <div class="form-group">
+      <label>Columns</label>
+      <input type="number" id="newCols" value="4" min="1" max="50">
+    </div>
+    <div class="modal-actions">
+      <button class="tb-btn" onclick="hideCreateModal()">Cancel</button>
+      <button class="tb-btn" style="background:#1a365d;border-color:#2563eb;" onclick="createNewTable()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="ctxInsertRowAbove()">⬆️ Insert row above</div>
+  <div class="ctx-item" onclick="ctxInsertRowBelow()">⬇️ Insert row below</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxInsertColLeft()">⬅️ Insert column left</div>
+  <div class="ctx-item" onclick="ctxInsertColRight()">➡️ Insert column right</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxDeleteRow()">🗑️ Delete row</div>
+  <div class="ctx-item" onclick="ctxDeleteCol()">🗑️ Delete column</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxMerge()">🔗 Merge cells</div>
+  <div class="ctx-item" onclick="ctxUnmerge()">🔓 Unmerge</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxToggleHeader()">TH/TD Toggle header</div>
+  <div class="ctx-item" onclick="ctxClearContent()">🧹 Clear content</div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let gridData = {
+  rows: 0,
+  cols: 0,
+  cells: {},
+  colWidths: [],
+  rowHeights: [],
+  tableStyle: 'border-collapse:collapse;width:100%;'
+};
+let selectedCells = new Set();
+let activeCell = null; // primary cell for sidebar
+let isEmbed = false;
+let embedFieldId = null;
+let resizeState = null;
+let ctxTarget = null;
+
+// ============================================================
+// FIELD DEFINITIONS
+// ============================================================
+const FORM_BUILDER_FIELDS = [
+  { id: 'text', name: 'Text Input', type: 'text', icon: '📝', category: 'Basic' },
+  { id: 'number', name: 'Number', type: 'number', icon: '🔢', category: 'Basic' },
+  { id: 'date', name: 'Date', type: 'date', icon: '📅', category: 'Basic' },
+  { id: 'textarea', name: 'Text Area', type: 'textarea', icon: '📄', category: 'Basic' },
+  { id: 'checkbox', name: 'Checkbox', type: 'checkbox', icon: '☑️', category: 'Basic' },
+  { id: 'radio', name: 'Radio', type: 'radio', icon: '⭕', category: 'Basic' },
+  { id: 'select', name: 'Dropdown', type: 'select', icon: '🔽', category: 'Basic' },
+  { id: 'signature', name: 'Signature', type: 'signature', icon: '✍️', category: 'Special' },
+  { id: 'static', name: 'Static Text', type: 'static', icon: '📌', category: 'Special' },
+  { id: 'heading', name: 'Heading', type: 'heading', icon: '📌', category: 'Special' },
+  { id: 'trainer', name: 'Trainer Name', type: 'trainer', icon: '🎓', category: 'Special' },
+  { id: 'remarks', name: 'Remarks', type: 'remarks', icon: '📝', category: 'Special' },
+  { id: 'db_crewName', name: 'Crew Name', type: 'db_crewName', icon: '👤', category: 'Database' },
+  { id: 'db_pilotPosition', name: 'Pilot Position', type: 'db_pilotPosition', icon: '👤', category: 'Database' },
+  { id: 'db_crewId', name: 'Crew ID', type: 'db_crewId', icon: '🪪', category: 'Database' },
+  { id: 'db_crewLicense', name: 'License Number', type: 'db_crewLicense', icon: '📜', category: 'Database' },
+  { id: 'db_instructorTri', name: 'Instructor (TRI)', type: 'db_instructorTri', icon: '🎓', category: 'Database' },
+  { id: 'db_examinerTre', name: 'Examiner (TRE)', type: 'db_examinerTre', icon: '📝', category: 'Database' },
+  { id: 'db_acReg', name: 'A/C Registration', type: 'db_acReg', icon: '✈️', category: 'Database' },
+  { id: 'db_acType', name: 'A/C Type', type: 'db_acType', icon: '✈️', category: 'Database' },
+  { id: 'db_adIcao', name: 'AD ICAO', type: 'db_adIcao', icon: '🌍', category: 'Database' },
+  { id: 'db_crewRole', name: 'Crew Role', type: 'db_crewRole', icon: '👨‍✈️', category: 'Database' },
+];
+
+const TYPE_NAMES = {
+  text: 'Text', number: 'Number', date: 'Date', select: 'Dropdown',
+  radio: 'Radio', checkbox: 'Checkbox', textarea: 'Text Area',
+  signature: 'Signature', static: 'Static', heading: 'Heading',
+  trainer: 'Trainer', remarks: 'Remarks',
+  db_crewName: 'DB: Crew', db_pilotPosition: 'DB: Position',
+  db_crewId: 'DB: ID', db_crewLicense: 'DB: License',
+  db_instructorTri: 'DB: Instructor', db_examinerTre: 'DB: Examiner',
+  db_acReg: 'DB: A/C Reg', db_acType: 'DB: A/C Type',
+  db_adIcao: 'DB: AD ICAO', db_crewRole: 'DB: Role',
+};
+
+const TYPE_BADGE_CLASS = {
+  text: 'badge-text', number: 'badge-number', date: 'badge-date', select: 'badge-select',
+  radio: 'badge-radio', checkbox: 'badge-checkbox', textarea: 'badge-textarea',
+  signature: 'badge-signature', static: 'badge-static', heading: 'badge-heading',
+  trainer: 'badge-trainer', remarks: 'badge-remarks',
+  db_crewName: 'badge-db', db_pilotPosition: 'badge-db', db_crewId: 'badge-db',
+  db_crewLicense: 'badge-db', db_instructorTri: 'badge-db', db_examinerTre: 'badge-db',
+  db_acReg: 'badge-db', db_acType: 'badge-db', db_adIcao: 'badge-db', db_crewRole: 'badge-db',
+};
+
+// ============================================================
+// INIT
+// ============================================================
+(function init() {
+  const params = new URLSearchParams(window.location.search);
+  isEmbed = params.get('edit') === 'true';
+  embedFieldId = params.get('fieldId') || null;
+
+  if (isEmbed) {
+    document.getElementById('mainHeader').style.display = 'none';
+    document.getElementById('embedHeader').style.display = 'flex';
+    document.getElementById('saveBtn').style.display = 'none';
+  }
+
+  const htmlParam = params.get('html');
+  if (htmlParam) {
+    const html = decodeURIComponent(htmlParam);
+    parseExistingHtml(html);
+  } else {
+    createTable(4, 4);
+  }
+
+  // Global resize listeners
+  document.addEventListener('mousemove', onResizeMove);
+  document.addEventListener('mouseup', onResizeEnd);
+  document.addEventListener('click', (e) => {
+    document.getElementById('ctxMenu').style.display = 'none';
+    if (!e.target.closest('.design-table') && !e.target.closest('.tb-btn') && !e.target.closest('.tb-select') && !e.target.closest('.tb-color') && !e.target.closest('.sidebar')) {
+      // Do not clear selection when clicking toolbar/sidebar
+    }
+  });
+  document.addEventListener('keydown', onKeyDown);
+})();
+
+// ============================================================
+// TABLE CREATION
+// ============================================================
+function createTable(rows, cols) {
+  gridData.rows = rows;
+  gridData.cols = cols;
+  gridData.cells = {};
+  gridData.colWidths = new Array(cols).fill('');
+  gridData.rowHeights = new Array(rows).fill('');
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      gridData.cells[`cell_${r}_${c}`] = makeCell(r, c);
+    }
+  }
+  renderGrid();
+}
+
+function makeCell(r, c, content = '') {
+  return {
+    row: r, col: c,
+    content: content,
+    type: 'text',
+    dbName: '',
+    options: [],
+    trainerRole: '',
+    isHeader: false,
+    colspan: 1,
+    rowspan: 1,
+    styles: {},
+    hidden: false,
+    placeholder: '',
+    signatureHeight: 40,
+  };
+}
+
+function showCreateModal() {
+  document.getElementById('createModal').classList.add('visible');
+}
+function hideCreateModal() {
+  document.getElementById('createModal').classList.remove('visible');
+}
+function createNewTable() {
+  const r = parseInt(document.getElementById('newRows').value) || 4;
+  const c = parseInt(document.getElementById('newCols').value) || 4;
+  createTable(r, c);
+  hideCreateModal();
+}
+
+// ============================================================
+// RENDER GRID
+// ============================================================
+function renderGrid() {
+  const wrapper = document.getElementById('tableWrapper');
+  const empty = document.getElementById('emptyState');
+  if (gridData.rows === 0 || gridData.cols === 0) {
+    wrapper.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const table = document.createElement('table');
+  table.className = 'design-table';
+  table.id = 'designTable';
+
+  // Apply saved table styles
+  let ts = gridData.tableStyle || 'border-collapse:collapse;';
+  table.setAttribute('style', ts);
+
+  const rendered = {};
+
+  for (let r = 0; r < gridData.rows; r++) {
+    const tr = document.createElement('tr');
+    // Apply row height if set
+    if (gridData.rowHeights[r]) {
+      tr.style.height = gridData.rowHeights[r];
+    }
+
+    for (let c = 0; c < gridData.cols; c++) {
+      const key = `cell_${r}_${c}`;
+      if (rendered[key]) continue;
+
+      const cell = gridData.cells[key];
+      if (!cell) { const emptyTd = document.createElement('td'); emptyTd.innerHTML = '&nbsp;'; tr.appendChild(emptyTd); continue; }
+      if (cell.hidden) continue;
+
+      const el = document.createElement(cell.isHeader ? 'th' : 'td');
+      el.setAttribute('data-key', key);
+
+      // Build inline style from cell.styles
+      let style = '';
+      if (gridData.colWidths[c]) style += 'width:' + gridData.colWidths[c] + ';';
+      for (const [prop, val] of Object.entries(cell.styles)) {
+        style += prop + ':' + val + ';';
+      }
+      if (style) el.setAttribute('style', style);
+
+      if (cell.colspan > 1) el.setAttribute('colspan', cell.colspan);
+      if (cell.rowspan > 1) el.setAttribute('rowspan', cell.rowspan);
+
+      // Content
+      el.innerHTML = cell.content || '&nbsp;';
+
+      // Type badge
+      if (cell.type !== 'text') {
+        const badge = document.createElement('span');
+        badge.className = 'badge ' + (TYPE_BADGE_CLASS[cell.type] || 'badge-text');
+        badge.textContent = TYPE_NAMES[cell.type] || cell.type;
+        el.appendChild(document.createElement('br'));
+        el.appendChild(badge);
+      }
+
+      // Selection
+      if (selectedCells.has(key)) el.classList.add('selected');
+      if (activeCell === key) el.classList.add('selected');
+
+      // Events
+      el.addEventListener('mousedown', (e) => onCellMouseDown(e, key));
+      el.addEventListener('dblclick', (e) => startEdit(e, key));
+      el.addEventListener('contextmenu', (e) => showCtxMenu(e, key));
+
+      // Resize handles
+      const hCol = document.createElement('div');
+      hCol.className = 'resize-handle-col';
+      hCol.addEventListener('mousedown', (e) => startResizeCol(e, c));
+      el.appendChild(hCol);
+
+      const hRow = document.createElement('div');
+      hRow.className = 'resize-handle-row';
+      hRow.addEventListener('mousedown', (e) => startResizeRow(e, r));
+      el.appendChild(hRow);
+
+      // Mark merged hidden cells
+      if (cell.colspan > 1 || cell.rowspan > 1) {
+        for (let rs = 0; rs < cell.rowspan; rs++) {
+          for (let cs = 0; cs < cell.colspan; cs++) {
+            if (rs === 0 && cs === 0) continue;
+            const hk = `cell_${r + rs}_${c + cs}`;
+            if (gridData.cells[hk]) gridData.cells[hk].hidden = true;
+            rendered[hk] = true;
+          }
+        }
+      }
+
+      tr.appendChild(el);
+    }
+    table.appendChild(tr);
+  }
+
+  wrapper.innerHTML = '';
+  wrapper.appendChild(table);
+  updateStatus();
+}
+
+function updateStatus() {
+  const total = Object.values(gridData.cells).filter(c => !c.hidden).length;
+  document.getElementById('statusCells').textContent = total + ' cells';
+  document.getElementById('statusSize').textContent = gridData.rows + ' × ' + gridData.cols;
+  document.getElementById('statusSel').textContent = selectedCells.size > 0 ? selectedCells.size + ' selected' : (activeCell ? '1 active' : 'No selection');
+}
+
+// ============================================================
+// CELL SELECTION
+// ============================================================
+let selAnchor = null;
+let selMode = 'single'; // single, range, multi
+
+function onCellMouseDown(e, key) {
+  if (e.button !== 0) return; // only left click
+  const cell = gridData.cells[key];
+  if (!cell || cell.hidden) return;
+
+  if (e.shiftKey && selAnchor) {
+    // Range select
+    e.preventDefault();
+    selectedCells.clear();
+    const [r1, c1] = parseKey(selAnchor);
+    const [r2, c2] = parseKey(key);
+    const rmin = Math.min(r1, r2), rmax = Math.max(r1, r2);
+    const cmin = Math.min(c1, c2), cmax = Math.max(c1, c2);
+    for (let r = rmin; r <= rmax; r++) {
+      for (let c = cmin; c <= cmax; c++) {
+        const k = `cell_${r}_${c}`;
+        const ce = gridData.cells[k];
+        if (ce && !ce.hidden) selectedCells.add(k);
+      }
+    }
+    activeCell = key;
+    renderGrid();
+    renderSidebar();
+    return;
+  }
+
+  if (e.ctrlKey || e.metaKey) {
+    // Multi select toggle
+    e.preventDefault();
+    if (selectedCells.has(key)) selectedCells.delete(key);
+    else selectedCells.add(key);
+    activeCell = key;
+    renderGrid();
+    renderSidebar();
+    return;
+  }
+
+  // Single select
+  selectedCells.clear();
+  selectedCells.add(key);
+  selAnchor = key;
+  activeCell = key;
+  renderGrid();
+  renderSidebar();
+}
+
+function parseKey(key) {
+  const parts = key.split('_');
+  return [parseInt(parts[1]), parseInt(parts[2])];
+}
+
+function getSelectedKeys() {
+  const keys = Array.from(selectedCells);
+  if (keys.length === 0 && activeCell) return [activeCell];
+  return keys;
+}
+
+function getSelectedCellData() {
+  const keys = getSelectedKeys();
+  return keys.map(k => gridData.cells[k]).filter(Boolean);
+}
+
+// ============================================================
+// INLINE EDITING
+// ============================================================
+function startEdit(e, key) {
+  e.stopPropagation();
+  const el = e.currentTarget;
+  const cell = gridData.cells[key];
+  if (!cell) return;
+
+  el.classList.add('editing');
+  el.contentEditable = 'true';
+  el.focus();
+
+  // Select all text
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  function finish() {
+    el.contentEditable = 'false';
+    el.classList.remove('editing');
+    // Strip badge spans from content
+    let html = el.innerHTML;
+    // Remove badge spans
+    html = html.replace(/<span class="badge[^"]*"[^>]*>.*?<\/span>/g, '');
+    html = html.replace(/<br\s*\/?>/gi, '\n');
+    // Remove empty lines at end
+    cell.content = html.replace(/&nbsp;/g, ' ').replace(/\n+$/, '').trim();
+    renderGrid();
+  }
+
+  el.addEventListener('blur', finish, { once: true });
+  el.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && !ev.shiftKey) {
+      ev.preventDefault();
+      el.blur();
+    }
+  });
+}
+
+// ============================================================
+// TOOLBAR FORMAT
+// ============================================================
+function execFormat(cmd) {
+  const keys = getSelectedKeys();
+  if (keys.length === 0) return;
+
+  keys.forEach(key => {
+    const cell = gridData.cells[key];
+    if (!cell) return;
+    if (!cell.styles) cell.styles = {};
+
+    switch (cmd) {
+      case 'bold':
+        cell.styles['font-weight'] = cell.styles['font-weight'] === 'bold' ? 'normal' : 'bold';
+        break;
+      case 'italic':
+        cell.styles['font-style'] = cell.styles['font-style'] === 'italic' ? 'normal' : 'italic';
+        break;
+      case 'underline':
+        const u = (cell.styles['text-decoration'] || '');
+        cell.styles['text-decoration'] = u.includes('underline') ? u.replace('underline', '').trim() : (u + ' underline').trim();
+        if (!cell.styles['text-decoration']) delete cell.styles['text-decoration'];
+        break;
+      case 'strikeThrough':
+        const s = (cell.styles['text-decoration'] || '');
+        cell.styles['text-decoration'] = s.includes('line-through') ? s.replace('line-through', '').trim() : (s + ' line-through').trim();
+        if (!cell.styles['text-decoration']) delete cell.styles['text-decoration'];
+        break;
+      case 'justifyLeft': cell.styles['text-align'] = 'left'; break;
+      case 'justifyCenter': cell.styles['text-align'] = 'center'; break;
+      case 'justifyRight': cell.styles['text-align'] = 'right'; break;
+      case 'justifyFull': cell.styles['text-align'] = 'justify'; break;
+    }
+  });
+  renderGrid();
+}
+
+function applyFontFamily(val) {
+  if (!val) return;
+  getSelectedKeys().forEach(key => {
+    const cell = gridData.cells[key];
+    if (cell) cell.styles['font-family'] = val;
+  });
+  renderGrid();
+}
+
+function applyFontSize(val) {
+  if (!val) return;
+  getSelectedKeys().forEach(key => {
+    const cell = gridData.cells[key];
+    if (cell) cell.styles['font-size'] = val;
+  });
+  renderGrid();
+}
+
+function applyTextColor(val) {
+  getSelectedKeys().forEach(key => {
+    const cell = gridData.cells[key];
+    if (cell) cell.styles['color'] = val;
+  });
+  renderGrid();
+}
+
+function applyBgColor(val) {
+  getSelectedKeys().forEach(key => {
+    const cell = gridData.cells[key];
+    if (cell) cell.styles['background-color'] = val;
+  });
+  renderGrid();
+}
+
+function applyBorder(which) {
+  const keys = getSelectedKeys();
+  if (keys.length === 0) return;
+
+  keys.forEach(key => {
+    const cell = gridData.cells[key];
+    if (!cell) return;
+    if (!cell.styles) cell.styles = {};
+
+    const borderVal = '1px solid #94a3b8';
+    const noBorder = 'none';
+
+    switch (which) {
+      case 'all':
+        cell.styles['border'] = borderVal;
+        delete cell.styles['border-top']; delete cell.styles['border-bottom']; delete cell.styles['border-left']; delete cell.styles['border-right'];
+        break;
+      case 'top': cell.styles['border-top'] = borderVal; break;
+      case 'bottom': cell.styles['border-bottom'] = borderVal; break;
+      case 'left': cell.styles['border-left'] = borderVal; break;
+      case 'right': cell.styles['border-right'] = borderVal; break;
+      case 'outer':
+        cell.styles['border-top'] = borderVal;
+        cell.styles['border-bottom'] = borderVal;
+        cell.styles['border-left'] = borderVal;
+        cell.styles['border-right'] = borderVal;
+        break;
+      case 'none':
+        delete cell.styles['border'];
+        delete cell.styles['border-top']; delete cell.styles['border-bottom']; delete cell.styles['border-left']; delete cell.styles['border-right'];
+        break;
+    }
+  });
+  renderGrid();
+}
+
+// ============================================================
+// MERGE / UNMERGE
+// ============================================================
+function mergeCells() {
+  const keys = getSelectedKeys();
+  if (keys.length < 2) { alert('Select at least 2 cells to merge'); return; }
+
+  const coords = keys.map(parseKey);
+  const rmin = Math.min(...coords.map(c => c[0]));
+  const rmax = Math.max(...coords.map(c => c[0]));
+  const cmin = Math.min(...coords.map(c => c[1]));
+  const cmax = Math.max(...coords.map(c => c[1]));
+
+  // Verify it's a contiguous rectangle
+  const expected = (rmax - rmin + 1) * (cmax - cmin + 1);
+  if (expected !== keys.length) { alert('Selection must be a full rectangle to merge'); return; }
+
+  const anchorKey = `cell_${rmin}_${cmin}`;
+  const anchor = gridData.cells[anchorKey];
+  if (!anchor) return;
+
+  // Combine content
+  const contents = [];
+  for (let r = rmin; r <= rmax; r++) {
+    for (let c = cmin; c <= cmax; c++) {
+      const k = `cell_${r}_${c}`;
+      const cell = gridData.cells[k];
+      if (cell && cell.content) contents.push(cell.content);
+    }
+  }
+  anchor.content = contents.join(' ');
+  anchor.colspan = cmax - cmin + 1;
+  anchor.rowspan = rmax - rmin + 1;
+
+  // Mark others hidden
+  for (let r = rmin; r <= rmax; r++) {
+    for (let c = cmin; c <= cmax; c++) {
+      const k = `cell_${r}_${c}`;
+      if (k === anchorKey) continue;
+      if (gridData.cells[k]) gridData.cells[k].hidden = true;
+    }
+  }
+
+  selectedCells.clear();
+  selectedCells.add(anchorKey);
+  activeCell = anchorKey;
+  renderGrid();
+  renderSidebar();
+}
+
+function unmergeCells() {
+  const keys = getSelectedKeys();
+  let unmerged = false;
+  keys.forEach(key => {
+    const cell = gridData.cells[key];
+    if (!cell || cell.colspan <= 1 && cell.rowspan <= 1) return;
+    const [r, c] = parseKey(key);
+    for (let rs = 0; rs < cell.rowspan; rs++) {
+      for (let cs = 0; cs < cell.colspan; cs++) {
+        const k = `cell_${r + rs}_${c + cs}`;
+        if (gridData.cells[k]) {
+          gridData.cells[k].hidden = false;
+          gridData.cells[k].colspan = 1;
+          gridData.cells[k].rowspan = 1;
+        }
+      }
+    }
+    unmerged = true;
+  });
+  if (unmerged) renderGrid();
+}
+
+function toggleHeader() {
+  getSelectedKeys().forEach(key => {
+    const cell = gridData.cells[key];
+    if (cell) cell.isHeader = !cell.isHeader;
+  });
+  renderGrid();
+}
+
+// ============================================================
+// ROW / COLUMN OPERATIONS
+// ============================================================
+function insertRowAbove() {
+  if (!activeCell) return;
+  const [r] = parseKey(activeCell);
+  insertRowAt(r);
+}
+function insertRowBelow() {
+  if (!activeCell) return;
+  const [r] = parseKey(activeCell);
+  insertRowAt(r + 1);
+}
+function insertColLeft() {
+  if (!activeCell) return;
+  const [, c] = parseKey(activeCell);
+  insertColAt(c);
+}
+function insertColRight() {
+  if (!activeCell) return;
+  const [, c] = parseKey(activeCell);
+  insertColAt(c + 1);
+}
+
+function insertRowAt(atRow) {
+  // Shift rows down
+  const newCells = {};
+  for (let r = 0; r < gridData.rows; r++) {
+    for (let c = 0; c < gridData.cols; c++) {
+      const oldKey = `cell_${r}_${c}`;
+      const newR = r >= atRow ? r + 1 : r;
+      const newKey = `cell_${newR}_${c}`;
+      if (gridData.cells[oldKey]) {
+        const cell = { ...gridData.cells[oldKey], row: newR };
+        newCells[newKey] = cell;
+      }
+    }
+  }
+  // Insert new row
+  for (let c = 0; c < gridData.cols; c++) {
+    newCells[`cell_${atRow}_${c}`] = makeCell(atRow, c);
+  }
+  gridData.cells = newCells;
+  gridData.rows++;
+  gridData.rowHeights.splice(atRow, 0, '');
+  selectedCells.clear();
+  renderGrid();
+}
+
+function insertColAt(atCol) {
+  const newCells = {};
+  for (let r = 0; r < gridData.rows; r++) {
+    for (let c = 0; c < gridData.cols; c++) {
+      const oldKey = `cell_${r}_${c}`;
+      const newC = c >= atCol ? c + 1 : c;
+      const newKey = `cell_${r}_${newC}`;
+      if (gridData.cells[oldKey]) {
+        const cell = { ...gridData.cells[oldKey], col: newC };
+        newCells[newKey] = cell;
+      }
+    }
+  }
+  for (let r = 0; r < gridData.rows; r++) {
+    newCells[`cell_${r}_${atCol}`] = makeCell(r, atCol);
+  }
+  gridData.cells = newCells;
+  gridData.cols++;
+  gridData.colWidths.splice(atCol, 0, '');
+  selectedCells.clear();
+  renderGrid();
+}
+
+function deleteSelectedRows() {
+  const rowsToDelete = new Set();
+  getSelectedKeys().forEach(key => rowsToDelete.add(parseKey(key)[0]));
+  if (rowsToDelete.size === 0) return;
+  const sorted = Array.from(rowsToDelete).sort((a, b) => b - a);
+  sorted.forEach(r => deleteRowAt(r));
+  selectedCells.clear();
+  activeCell = null;
+  renderGrid();
+  renderSidebar();
+}
+
+function deleteSelectedCols() {
+  const colsToDelete = new Set();
+  getSelectedKeys().forEach(key => colsToDelete.add(parseKey(key)[1]));
+  if (colsToDelete.size === 0) return;
+  const sorted = Array.from(colsToDelete).sort((a, b) => b - a);
+  sorted.forEach(c => deleteColAt(c));
+  selectedCells.clear();
+  activeCell = null;
+  renderGrid();
+  renderSidebar();
+}
+
+function deleteRowAt(r) {
+  const newCells = {};
+  let newR = 0;
+  for (let row = 0; row < gridData.rows; row++) {
+    if (row === r) continue;
+    for (let c = 0; c < gridData.cols; c++) {
+      const oldKey = `cell_${row}_${c}`;
+      const key = `cell_${newR}_${c}`;
+      if (gridData.cells[oldKey]) {
+        newCells[key] = { ...gridData.cells[oldKey], row: newR };
+      }
+    }
+    newR++;
+  }
+  gridData.cells = newCells;
+  gridData.rows--;
+  gridData.rowHeights.splice(r, 1);
+}
+
+function deleteColAt(c) {
+  const newCells = {};
+  for (let r = 0; r < gridData.rows; r++) {
+    let newC = 0;
+    for (let col = 0; col < gridData.cols; col++) {
+      if (col === c) continue;
+      const oldKey = `cell_${r}_${col}`;
+      const key = `cell_${r}_${newC}`;
+      if (gridData.cells[oldKey]) {
+        newCells[key] = { ...gridData.cells[oldKey], col: newC };
+      }
+      newC++;
+    }
+  }
+  gridData.cells = newCells;
+  gridData.cols--;
+  gridData.colWidths.splice(c, 1);
+}
+
+// ============================================================
+// DRAG-TO-RESIZE
+// ============================================================
+function startResizeCol(e, colIdx) {
+  e.preventDefault();
+  e.stopPropagation();
+  const table = document.getElementById('designTable');
+  const startX = e.clientX;
+  const firstRow = table.querySelector('tr');
+  const cell = firstRow?.children[colIdx];
+  if (!cell) return;
+  const startW = cell.getBoundingClientRect().width;
+
+  resizeState = { type: 'col', col: colIdx, startX, startW };
+  document.body.classList.add('resizing');
+}
+
+function startResizeRow(e, rowIdx) {
+  e.preventDefault();
+  e.stopPropagation();
+  const table = document.getElementById('designTable');
+  const row = table.querySelectorAll('tr')[rowIdx];
+  if (!row) return;
+  const startY = e.clientY;
+  const startH = row.getBoundingClientRect().height;
+
+  resizeState = { type: 'row', row: rowIdx, startY, startH };
+  document.body.classList.add('resizing-row');
+}
+
+function onResizeMove(e) {
+  if (!resizeState) return;
+  e.preventDefault();
+
+  if (resizeState.type === 'col') {
+    const delta = e.clientX - resizeState.startX;
+    const newW = Math.max(40, resizeState.startW + delta);
+    gridData.colWidths[resizeState.col] = newW + 'px';
+    renderGrid();
+  } else if (resizeState.type === 'row') {
+    const delta = e.clientY - resizeState.startY;
+    const newH = Math.max(20, resizeState.startH + delta);
+    gridData.rowHeights[resizeState.row] = newH + 'px';
+    renderGrid();
+  }
+}
+
+function onResizeEnd() {
+  resizeState = null;
+  document.body.classList.remove('resizing');
+  document.body.classList.remove('resizing-row');
+}
+
+// ============================================================
+// CONTEXT MENU
+// ============================================================
+function showCtxMenu(e, key) {
+  e.preventDefault();
+  ctxTarget = key;
+  const menu = document.getElementById('ctxMenu');
+  menu.style.left = e.pageX + 'px';
+  menu.style.top = e.pageY + 'px';
+  menu.style.display = 'block';
+}
+
+function ctxInsertRowAbove() { activeCell = ctxTarget; insertRowAbove(); document.getElementById('ctxMenu').style.display = 'none'; }
+function ctxInsertRowBelow() { activeCell = ctxTarget; insertRowBelow(); document.getElementById('ctxMenu').style.display = 'none'; }
+function ctxInsertColLeft() { activeCell = ctxTarget; insertColLeft(); document.getElementById('ctxMenu').style.display = 'none'; }
+function ctxInsertColRight() { activeCell = ctxTarget; insertColRight(); document.getElementById('ctxMenu').style.display = 'none'; }
+function ctxDeleteRow() { activeCell = ctxTarget; selectedCells.clear(); selectedCells.add(ctxTarget); deleteSelectedRows(); document.getElementById('ctxMenu').style.display = 'none'; }
+function ctxDeleteCol() { activeCell = ctxTarget; selectedCells.clear(); selectedCells.add(ctxTarget); deleteSelectedCols(); document.getElementById('ctxMenu').style.display = 'none'; }
+function ctxMerge() { activeCell = ctxTarget; mergeCells(); document.getElementById('ctxMenu').style.display = 'none'; }
+function ctxUnmerge() { activeCell = ctxTarget; unmergeCells(); document.getElementById('ctxMenu').style.display = 'none'; }
+function ctxToggleHeader() { activeCell = ctxTarget; selectedCells.clear(); selectedCells.add(ctxTarget); toggleHeader(); document.getElementById('ctxMenu').style.display = 'none'; }
+function ctxClearContent() {
+  const cell = gridData.cells[ctxTarget];
+  if (cell) { cell.content = ''; }
+  renderGrid();
+  document.getElementById('ctxMenu').style.display = 'none';
+}
+
+// ============================================================
+// SIDEBAR / FIELD PICKER
+// ============================================================
+function renderSidebar() {
+  const panel = document.getElementById('sidebarBody');
+  const keys = getSelectedKeys();
+  const primary = activeCell ? gridData.cells[activeCell] : null;
+
+  if (!primary) {
+    panel.innerHTML = '<p class="info-text">Select a cell to configure</p>';
+    document.getElementById('selCount').textContent = '';
+    return;
+  }
+
+  document.getElementById('selCount').textContent = keys.length > 1 ? keys.length + ' selected' : '';
+
+  // Group fields
+  const categories = {};
+  FORM_BUILDER_FIELDS.forEach(f => {
+    if (!categories[f.category]) categories[f.category] = [];
+    categories[f.category].push(f);
+  });
+
+  const isSelect = primary.type === 'select' || primary.type === 'radio';
+  const isTrainer = primary.type === 'trainer';
+  const isSignature = primary.type === 'signature';
+  const isDate = primary.type === 'date';
+
+  panel.innerHTML = `
+    <div class="form-group">
+      <label>Cell Content</label>
+      <textarea id="sb_content" rows="2" onchange="updateSelected('content', this.value)">${primary.content || ''}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Field Type</label>
+      <select id="sb_type" onchange="updateSelectedType(this.value)">
+        <optgroup label="Basic">
+          <option value="text" ${primary.type==='text'?'selected':''}>📝 Text Input</option>
+          <option value="number" ${primary.type==='number'?'selected':''}>🔢 Number</option>
+          <option value="date" ${primary.type==='date'?'selected':''}>📅 Date</option>
+          <option value="select" ${primary.type==='select'?'selected':''}>🔽 Dropdown</option>
+          <option value="radio" ${primary.type==='radio'?'selected':''}>⭕ Radio</option>
+          <option value="checkbox" ${primary.type==='checkbox'?'selected':''}>☑️ Checkbox</option>
+          <option value="textarea" ${primary.type==='textarea'?'selected':''}>📄 Text Area</option>
+        </optgroup>
+        <optgroup label="Special">
+          <option value="signature" ${primary.type==='signature'?'selected':''}>✍️ Signature</option>
+          <option value="trainer" ${primary.type==='trainer'?'selected':''}>🎓 Trainer Name</option>
+          <option value="remarks" ${primary.type==='remarks'?'selected':''}>📝 Remarks</option>
+          <option value="static" ${primary.type==='static'?'selected':''}>📌 Static Text</option>
+          <option value="heading" ${primary.type==='heading'?'selected':''}>📌 Heading</option>
+        </optgroup>
+        <optgroup label="Database">
+          <option value="db_crewName" ${primary.type==='db_crewName'?'selected':''}>👤 Crew Name</option>
+          <option value="db_pilotPosition" ${primary.type==='db_pilotPosition'?'selected':''}>👤 Pilot Position</option>
+          <option value="db_crewId" ${primary.type==='db_crewId'?'selected':''}>🪪 Crew ID</option>
+          <option value="db_crewLicense" ${primary.type==='db_crewLicense'?'selected':''}>📜 License Number</option>
+          <option value="db_instructorTri" ${primary.type==='db_instructorTri'?'selected':''}>🎓 Instructor (TRI)</option>
+          <option value="db_examinerTre" ${primary.type==='db_examinerTre'?'selected':''}>📝 Examiner (TRE)</option>
+          <option value="db_acReg" ${primary.type==='db_acReg'?'selected':''}>✈️ A/C Registration</option>
+          <option value="db_acType" ${primary.type==='db_acType'?'selected':''}>✈️ A/C Type</option>
+          <option value="db_adIcao" ${primary.type==='db_adIcao'?'selected':''}>🌍 AD ICAO</option>
+          <option value="db_crewRole" ${primary.type==='db_crewRole'?'selected':''}>👨‍✈️ Crew Role</option>
+        </optgroup>
+      </select>
+    </div>
+
+    ${isSelect ? `
+    <div class="form-group">
+      <label>Options (comma separated)</label>
+      <input type="text" id="sb_options" value="${(primary.options || []).join(', ')}" onchange="updateSelectedOptions(this.value)">
+    </div>` : ''}
+
+    ${isTrainer ? `
+    <div class="form-group">
+      <label>Trainer Role</label>
+      <select id="sb_trainerRole" onchange="updateSelected('trainerRole', this.value)">
+        <option value="">Any</option>
+        <option value="TRI" ${primary.trainerRole==='TRI'?'selected':''}>TRI</option>
+        <option value="TRE" ${primary.trainerRole==='TRE'?'selected':''}>TRE</option>
+        <option value="SFI" ${primary.trainerRole==='SFI'?'selected':''}>SFI</option>
+        <option value="CRMI" ${primary.trainerRole==='CRMI'?'selected':''}>CRMI</option>
+        <option value="INSTR" ${primary.trainerRole==='INSTR'?'selected':''}>INSTR</option>
+      </select>
+    </div>` : ''}
+
+    ${isSignature ? `
+    <div class="form-group">
+      <label>Canvas Height (px)</label>
+      <input type="number" id="sb_sigHeight" value="${primary.signatureHeight || 40}" onchange="updateSelected('signatureHeight', parseInt(this.value)||40)">
+    </div>` : ''}
+
+    ${isDate ? `
+    <div class="form-group">
+      <label>Placeholder</label>
+      <input type="text" id="sb_placeholder" value="${primary.placeholder || 'dd/mmm/yyyy'}" onchange="updateSelected('placeholder', this.value)">
+    </div>` : ''}
+
+    ${primary.type.startsWith('db_') ? `
+    <div class="form-group">
+      <label>Database Field</label>
+      <input type="text" readonly value="${TYPE_NAMES[primary.type] || primary.type}">
+    </div>` : ''}
+
+    ${primary.type === 'static' || primary.type === 'heading' ? `
+    <div class="form-group">
+      <label>Note</label>
+      <input type="text" readonly value="${primary.type === 'heading' ? 'Heading style text' : 'Static text (no input)'}">
+    </div>` : ''}
+
+    <div style="margin-top:10px;border-top:1px solid #334155;padding-top:10px;">
+      <label style="font-size:0.75rem;color:#94a3b8;margin-bottom:6px;display:block;">Quick Assign</label>
+      <div class="quick-assign">
+        ${FORM_BUILDER_FIELDS.slice(0, 15).map(f => `
+          <button class="qa-btn" onclick="quickAssign('${f.id}', '${f.type}', '${f.name}')">${f.icon} ${f.name}</button>
+        `).join('')}
+      </div>
+    </div>
+
+    <div style="margin-top:10px;border-top:1px solid #334155;padding-top:10px;">
+      <label style="font-size:0.75rem;color:#94a3b8;margin-bottom:6px;display:block;">Field Picker</label>
+      <div class="form-group">
+        <input type="text" placeholder="Search..." oninput="filterSidebarFields(this.value)">
+      </div>
+      <div class="field-picker" id="sbPicker">
+        ${Object.entries(categories).map(([cat, fields]) => `
+          <div style="padding:6px 10px 2px;background:#1e293b;font-size:0.7rem;color:#64748b;text-transform:uppercase;">${cat}</div>
+          ${fields.map(f => `
+            <div class="field-item ${primary.type === f.type ? 'selected' : ''}" data-ft="${f.type}" onclick="quickAssign('${f.id}', '${f.type}', '${f.name}')">
+              <span>${f.icon}</span>
+              <span style="flex:1;">${f.name}</span>
+              <span class="ft">${f.type}</span>
+            </div>
+          `).join('')}
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function updateSelected(prop, value) {
+  getSelectedKeys().forEach(key => {
+    const cell = gridData.cells[key];
+    if (cell) cell[prop] = value;
+  });
+  renderGrid();
+}
+
+function updateSelectedType(type) {
+  getSelectedKeys().forEach(key => {
+    const cell = gridData.cells[key];
+    if (!cell) return;
+    cell.type = type;
+    cell.dbName = type.startsWith('db_') ? type.replace('db_', '') : '';
+    if (type !== 'select' && type !== 'radio') cell.options = [];
+    if (type !== 'trainer') cell.trainerRole = '';
+  });
+  renderGrid();
+  renderSidebar();
+}
+
+function updateSelectedOptions(val) {
+  const opts = val.split(',').map(s => s.trim()).filter(Boolean);
+  getSelectedKeys().forEach(key => {
+    const cell = gridData.cells[key];
+    if (cell) cell.options = opts;
+  });
+  renderGrid();
+}
+
+function quickAssign(fieldId, fieldType, fieldName) {
+  getSelectedKeys().forEach(key => {
+    const cell = gridData.cells[key];
+    if (!cell) return;
+    cell.type = fieldType;
+    cell.dbName = fieldType.startsWith('db_') ? fieldType.replace('db_', '') : '';
+    if (!cell.content) cell.content = fieldName;
+  });
+  renderGrid();
+  renderSidebar();
+}
+
+function filterSidebarFields(q) {
+  const query = q.toLowerCase();
+  document.querySelectorAll('#sbPicker .field-item').forEach(el => {
+    const text = el.textContent.toLowerCase();
+    el.style.display = text.includes(query) ? 'flex' : 'none';
+  });
+}
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+function onKeyDown(e) {
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    // If not editing a contenteditable cell
+    if (!document.activeElement || document.activeElement.contentEditable !== 'true') {
+      getSelectedKeys().forEach(key => {
+        const cell = gridData.cells[key];
+        if (cell) cell.content = '';
+      });
+      renderGrid();
+    }
+  }
+}
+
+// ============================================================
+// GENERATE HTML
+// ============================================================
+function generateHtml() {
+  if (gridData.rows === 0 || gridData.cols === 0) return '';
+
+  let html = '<table style="' + (gridData.tableStyle || 'border-collapse:collapse;') + '"';
+  html += '>';
+
+  const rendered = {};
+  for (let r = 0; r < gridData.rows; r++) {
+    let trStyle = '';
+    if (gridData.rowHeights[r]) trStyle += 'height:' + gridData.rowHeights[r] + ';';
+    html += '<tr' + (trStyle ? ' style="' + trStyle + '"' : '') + '>';
+
+    for (let c = 0; c < gridData.cols; c++) {
+      const key = `cell_${r}_${c}`;
+      if (rendered[key]) continue;
+      const cell = gridData.cells[key];
+      if (!cell) { html += '<td>&nbsp;</td>'; continue; }
+      if (cell.hidden) continue;
+
+      if (cell.rowspan > 1) for (let rs = 1; rs < cell.rowspan; rs++) rendered[`cell_${r + rs}_${c}`] = true;
+
+      const tag = cell.isHeader ? 'th' : 'td';
+      let span = '';
+      if (cell.colspan > 1) span += ' colspan="' + cell.colspan + '"';
+      if (cell.rowspan > 1) span += ' rowspan="' + cell.rowspan + '"';
+
+      let style = '';
+      if (gridData.colWidths[c]) style += 'width:' + gridData.colWidths[c] + ';';
+      for (const [prop, val] of Object.entries(cell.styles || {})) {
+        style += prop + ':' + val + ';';
+      }
+
+      let attrs = '';
+      if (style) attrs += ' style="' + style + '"';
+      attrs += ' data-cell-id="' + key + '"';
+      if (cell.type !== 'text') attrs += ' data-cell-type="' + cell.type + '"';
+      if (cell.dbName) attrs += ' data-db-name="' + esc(cell.dbName) + '"';
+      if (cell.trainerRole) attrs += ' data-trainer-role="' + esc(cell.trainerRole) + '"';
+      if (cell.options && cell.options.length) attrs += ' data-options="' + esc(cell.options.join(',')) + '"';
+      if (cell.placeholder) attrs += ' data-placeholder="' + esc(cell.placeholder) + '"';
+
+      const widget = getWidgetHtml(cell);
+      html += '<' + tag + span + attrs + '>' + widget + '</' + tag + '>';
+    }
+    html += '</tr>';
+  }
+  html += '</table>';
+  return html;
+}
+
+function getWidgetHtml(cell) {
+  const content = cell.content || '';
+  const baseInputStyle = 'width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;';
+  const baseSelectStyle = 'width:100%;padding:4px 6px;border:1px solid #475569;border-radius:4px;background:#1e293b;color:#e2e8f0;font-size:0.8rem;';
+
+  switch (cell.type) {
+    case 'date':
+      return content + '<input type="text" placeholder="' + esc(cell.placeholder || 'dd/mmm/yyyy') + '" style="' + baseInputStyle + '">';
+    case 'signature':
+      const h = cell.signatureHeight || 40;
+      return content + '<canvas style="width:100%;max-width:100%;height:' + h + 'px;border:1px solid #475569;border-radius:4px;background:#0f172a;cursor:crosshair;"></canvas>';
+    case 'select': {
+      const opts = (cell.options || []).map(o => '<option>' + esc(o) + '</option>').join('');
+      return content + '<select style="' + baseSelectStyle + '"><option value="">Select...</option>' + opts + '</select>';
+    }
+    case 'radio':
+      return '<label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;"><input type="radio" name="' + esc(cell.fieldName || key) + '"> ' + esc(content.replace(/<[^>]+>/g, '')) + '</label>';
+    case 'checkbox':
+      return '<label style="display:flex;align-items:center;gap:4px;font-size:0.8rem;"><input type="checkbox"> ' + esc(content.replace(/<[^>]+>/g, '')) + '</label>';
+    case 'trainer':
+      return content + '<select class="trainer-field" data-trainer-role="' + esc(cell.trainerRole || '') + '" style="' + baseSelectStyle + '"><option value="">-- Trainer --</option></select>';
+    case 'remarks':
+      return content + '<textarea rows="2" style="' + baseInputStyle + 'resize:vertical;" placeholder="Remarks..."></textarea>';
+    case 'textarea':
+      return content + '<textarea rows="3" style="' + baseInputStyle + 'resize:vertical;" placeholder="..."></textarea>';
+    case 'number':
+      return content + '<input type="number" style="' + baseInputStyle + '" placeholder="...">';
+    case 'static':
+    case 'heading':
+      return '<span style="font-size:' + (cell.type === 'heading' ? '1.1em' : '1em') + ';font-weight:' + (cell.type === 'heading' ? 'bold' : 'normal') + ';">' + content + '</span>';
+    default:
+      if (cell.type.startsWith('db_')) {
+        return content + '<select class="db-field" data-db="' + esc(cell.type.replace('db_', '')) + '" style="' + baseSelectStyle + '"><option value="">-- Loading... --</option></select>';
+      }
+      return content + '<input type="text" style="' + baseInputStyle + '" placeholder="...">';
+  }
+}
+
+function esc(str) {
+  return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ============================================================
+// SAVE / COPY / POSTMESSAGE
+// ============================================================
+function saveTable() {
+  const html = generateHtml();
+  if (!html) { alert('No table to save'); return; }
+
+  const tableName = prompt('Table name:', 'Designed Table');
+  if (!tableName) return;
+
+  const columns = [];
+  for (let c = 0; c < gridData.cols; c++) {
+    const h = gridData.cells[`cell_0_${c}`];
+    columns.push(h ? (h.content || `Col ${c}`) : `Col ${c}`);
+  }
+
+  const columnTypes = [];
+  for (let c = 0; c < gridData.cols; c++) {
+    let ct = 'text';
+    for (let r = 0; r < gridData.rows; r++) {
+      const cell = gridData.cells[`cell_${r}_${c}`];
+      if (cell && cell.type !== 'text') { ct = cell.type; break; }
+    }
+    columnTypes.push(ct);
+  }
+
+  const rows = [];
+  for (let r = 0; r < gridData.rows; r++) {
+    const lc = gridData.cells[`cell_${r}_0`];
+    rows.push({
+      id: lc ? `row_${r}` : `row_${r}`,
+      label: lc ? (lc.content || `Row ${r}`) : `Row ${r}`,
+      name: `row_${r}`,
+    });
+  }
+
+  const cellConfigs = {};
+  Object.values(gridData.cells).forEach(cell => {
+    if (!cell || cell.hidden) return;
+    const key = 'cell_' + cell.row + '_' + cell.col;
+    if (cell.type !== 'text' || cell.dbName || cell.trainerRole) {
+      cellConfigs[key] = {
+        type: cell.type,
+        dbName: cell.dbName || '',
+        options: cell.options || [],
+        label: cell.content || '',
+        trainerRole: cell.trainerRole || '',
+        placeholder: cell.placeholder || '',
+        signatureHeight: cell.signatureHeight || 40,
+      };
+    }
+  });
+
+  const tableField = {
+    id: 'designed_table_' + Date.now(),
+    type: 'imported_html',
+    label: 'Designed Table',
+    name: 'designed_table',
+    required: false,
+    width: '100',
+    rowGroup: 1,
+    generatedHtml: html,
+    cellConfigs: cellConfigs,
+    columns: columns,
+    columnTypes: columnTypes,
+    rows: rows
+  };
+
+  const config = {
+    title: tableName,
+    subtitle: '',
+    formId: '', formIssue: '', formRevision: '', formDate: '',
+    sections: {
+      session: [{
+        id: 'fieldset_designed_' + Date.now(),
+        type: 'fieldset',
+        title: tableName,
+        fields: [tableField]
+      }]
+    }
+  };
+
+  fetch('/api/saved-tables', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: tableName, description: 'Designed table', config: config })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.id) {
+      alert('✅ Table "' + tableName + '" saved!\nID: ' + data.id);
+    } else {
+      alert('❌ Error: ' + (data.error || 'Unknown'));
+    }
+  })
+  .catch(err => alert('❌ Error: ' + err.message));
+}
+
+function copyHtml() {
+  const html = generateHtml();
+  if (!html) { alert('No table to copy'); return; }
+
+  function tryExecCommand(html) {
+    const ta = document.createElement('textarea');
+    ta.value = html;
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (ok) { alert('✅ HTML copied!'); return true; }
+    } catch (e) {}
+    document.body.removeChild(ta);
+    return false;
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(html).then(() => alert('✅ HTML copied!')).catch(() => {
+      if (!tryExecCommand(html)) showManualCopy(html);
+    });
+  } else if (!tryExecCommand(html)) {
+    showManualCopy(html);
+  }
+}
+
+function showManualCopy(html) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  modal.innerHTML = `
+    <div style="background:#1e293b;border:1px solid #475569;border-radius:8px;padding:20px;max-width:600px;width:90%;">
+      <h3 style="margin:0 0 12px;color:#e2e8f0;">📋 Copy HTML manually</h3>
+      <textarea style="width:100%;height:200px;background:#0f172a;color:#e2e8f0;border:1px solid #475569;border-radius:4px;padding:8px;font-family:monospace;font-size:0.75rem;resize:vertical;">${html.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+      <div style="margin-top:12px;text-align:right;">
+        <button onclick="this.closest('.modal-overlay').remove()" style="padding:6px 16px;background:#3b82f6;color:white;border:none;border-radius:4px;cursor:pointer;">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function saveToParent() {
+  if (!isEmbed) return;
+  const html = generateHtml();
+  if (!html) { alert('No table data'); return; }
+
+  const columns = [];
+  for (let c = 0; c < gridData.cols; c++) {
+    const h = gridData.cells[`cell_0_${c}`];
+    columns.push(h ? (h.content || `Col ${c}`) : `Col ${c}`);
+  }
+
+  const columnTypes = [];
+  for (let c = 0; c < gridData.cols; c++) {
+    let ct = 'text';
+    for (let r = 0; r < gridData.rows; r++) {
+      const cell = gridData.cells[`cell_${r}_${c}`];
+      if (cell && cell.type !== 'text') { ct = cell.type; break; }
+    }
+    columnTypes.push(ct);
+  }
+
+  const rows = [];
+  for (let r = 0; r < gridData.rows; r++) {
+    const lc = gridData.cells[`cell_${r}_0`];
+    rows.push({
+      id: `row_${r}`,
+      label: lc ? (lc.content || `Row ${r}`) : `Row ${r}`,
+      name: `row_${r}`,
+    });
+  }
+
+  const cellConfigs = {};
+  Object.values(gridData.cells).forEach(cell => {
+    if (!cell || cell.hidden) return;
+    const key = 'cell_' + cell.row + '_' + cell.col;
+    if (cell.type !== 'text' || cell.dbName || cell.trainerRole) {
+      cellConfigs[key] = {
+        type: cell.type,
+        dbName: cell.dbName || '',
+        options: cell.options || [],
+        label: cell.content || '',
+        trainerRole: cell.trainerRole || '',
+        placeholder: cell.placeholder || '',
+        signatureHeight: cell.signatureHeight || 40,
+      };
+    }
+  });
+
+  window.parent.postMessage({
+    type: 'tableDesignerSave',
+    fieldId: embedFieldId,
+    generatedHtml: html,
+    cellConfigs: cellConfigs,
+    columns: columns,
+    columnTypes: columnTypes,
+    rows: rows
+  }, '*');
+
+  alert('✅ Saved! Returning to Form Builder...');
+  window.close();
+}
+
+// ============================================================
+// PARSE EXISTING HTML (from embed mode)
+// ============================================================
+function parseExistingHtml(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const table = doc.querySelector('table');
+  if (!table) { createTable(4, 4); return; }
+
+  // Capture table style
+  const tsm = {};
+  const ts = table.getAttribute('style') || '';
+  ts.split(';').forEach(s => { const p = s.split(':'); if (p[0] && p[1]) tsm[p[0].trim()] = p[1].trim(); });
+  let tableStyle = 'border-collapse:collapse;';
+  ['width','height','border-collapse','border-spacing','margin','table-layout'].forEach(prop => {
+    if (tsm[prop]) tableStyle += prop + ':' + tsm[prop] + ';';
+  });
+  gridData.tableStyle = tableStyle;
+
+  const rows = table.querySelectorAll('tr');
+  let maxCols = 0;
+  const parsedRows = [];
+
+  rows.forEach(tr => {
+    const cells = tr.querySelectorAll('td, th');
+    const parsedCells = [];
+    cells.forEach(cell => {
+      const colspan = parseInt(cell.getAttribute('colspan')) || 1;
+      const rowspan = parseInt(cell.getAttribute('rowspan')) || 1;
+      const isHeader = cell.tagName === 'TH';
+      let content = cell.innerHTML.trim();
+      // Strip widget HTML to get clean text content
+      const temp = document.createElement('div');
+      temp.innerHTML = content;
+      // Remove input, select, canvas, textarea tags to get original text
+      temp.querySelectorAll('input, select, canvas, textarea').forEach(el => el.remove());
+      let cleanContent = temp.textContent.trim();
+
+      // Parse data attributes
+      const type = cell.getAttribute('data-cell-type') || 'text';
+      const dbName = cell.getAttribute('data-db-name') || '';
+      const optionsStr = cell.getAttribute('data-options') || '';
+      const options = optionsStr ? optionsStr.split(',').map(s => s.trim()) : [];
+      const trainerRole = cell.getAttribute('data-trainer-role') || '';
+      const placeholder = cell.getAttribute('data-placeholder') || '';
+      const sigHeight = parseInt(cell.getAttribute('data-signature-height')) || 40;
+
+      // Parse inline styles
+      const styles = {};
+      const inline = cell.getAttribute('style') || '';
+      inline.split(';').forEach(s => { const p = s.split(':'); if (p[0] && p[1]) styles[p[0].trim()] = p[1].trim(); });
+
+      parsedCells.push({ colspan, rowspan, isHeader, content: cleanContent, type, dbName, options, trainerRole, placeholder, signatureHeight: sigHeight, styles });
+    });
+    let rowCols = 0;
+    parsedCells.forEach(c => rowCols += c.colspan);
+    maxCols = Math.max(maxCols, rowCols);
+    parsedRows.push(parsedCells);
+  });
+
+  gridData.rows = parsedRows.length;
+  gridData.cols = maxCols;
+  gridData.cells = {};
+  gridData.colWidths = new Array(maxCols).fill('');
+  gridData.rowHeights = new Array(parsedRows.length).fill('');
+
+  for (let r = 0; r < parsedRows.length; r++) {
+    let c = 0;
+    parsedRows[r].forEach(pc => {
+      // Skip occupied columns
+      while (gridData.cells[`cell_${r}_${c}`]) c++;
+      for (let rs = 0; rs < pc.rowspan; rs++) {
+        for (let cs = 0; cs < pc.colspan; cs++) {
+          const key = `cell_${r + rs}_${c + cs}`;
+          if (rs === 0 && cs === 0) {
+            gridData.cells[key] = {
+              row: r, col: c,
+              content: pc.content,
+              type: pc.type,
+              dbName: pc.dbName,
+              options: pc.options,
+              trainerRole: pc.trainerRole,
+              placeholder: pc.placeholder,
+              signatureHeight: pc.signatureHeight,
+              isHeader: pc.isHeader,
+              colspan: pc.colspan,
+              rowspan: pc.rowspan,
+              styles: pc.styles,
+              hidden: false,
+            };
+          } else {
+            gridData.cells[key] = makeCell(r + rs, c + cs);
+            gridData.cells[key].hidden = true;
+          }
+        }
+      }
+      c += pc.colspan;
+    });
+    // Fill remaining columns in this row
+    for (; c < maxCols; c++) {
+      const key = `cell_${r}_${c}`;
+      if (!gridData.cells[key]) gridData.cells[key] = makeCell(r, c);
+    }
+  }
+
+  renderGrid();
+}
+</script>
+</body>
+</html>

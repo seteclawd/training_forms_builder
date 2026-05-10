@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Table Creation</title>
+<link rel="stylesheet" href="style.css?v=2">
+<style>
+/* ===== TABLE CREATION APP ===== */
+.tc-app { display:flex; flex-direction:column; height:100vh; background:#0f172a; color:#e2e8f0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+
+/* Header */
+.tc-header { background:#1a365d; padding:10px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0; height:52px; }
+.tc-header h1 { font-size:1.1rem; color:#fff; margin:0; }
+.tc-header .tc-link { color:#93c5fd; text-decoration:none; font-size:0.85rem; }
+.tc-header .tc-link:hover { text-decoration:underline; }
+
+/* Toolbar */
+.tc-toolbar { background:#1e293b; border-bottom:1px solid #334155; padding:6px 12px; display:flex; gap:4px; flex-wrap:wrap; align-items:center; flex-shrink:0; }
+.tc-tb-group { display:flex; gap:2px; padding:0 6px; border-right:1px solid #334155; align-items:center; }
+.tc-tb-group:last-child { border-right:none; }
+.tc-btn { padding:5px 10px; background:#334155; border:1px solid #475569; border-radius:4px; color:#e2e8f0; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px; min-height:28px; }
+.tc-btn:hover { background:#475569; }
+.tc-btn.active { background:#1e40af; border-color:#3b82f6; }
+.tc-btn svg { width:14px; height:14px; fill:currentColor; }
+.tc-divider { width:1px; height:20px; background:#475569; margin:0 4px; }
+.tc-select { padding:4px 6px; background:#334155; border:1px solid #475569; border-radius:4px; color:#e2e8f0; font-size:0.75rem; cursor:pointer; }
+
+/* Main Layout */
+.tc-main { display:flex; flex:1; overflow:hidden; }
+
+/* ===== CANVAS ===== */
+.tc-canvas { flex:1; overflow:auto; padding:20px; background:#0f172a; display:flex; justify-content:center; align-items:flex-start; }
+
+.tc-table-wrap { background:#1e293b; border:1px solid #334155; border-radius:4px; padding:16px; min-width:400px; }
+
+/* The Designer Table */
+.tc-table { border-collapse:separate; border-spacing:0; width:100%; user-select:none; }
+.tc-table td, .tc-table th {
+  border:1px solid #475569; padding:6px 8px; min-width:60px; min-height:32px; position:relative;
+  vertical-align:top; background:#1e293b; color:#e2e8f0; font-size:0.85rem; cursor:cell;
+  transition:outline 0.05s; overflow:hidden; resize:none;
+}
+.tc-table th { background:#334155; font-weight:600; text-align:center; }
+.tc-table td:hover { background:#253654; }
+
+/* Selection */
+.tc-table td.selected, .tc-table th.selected {
+  outline:2px solid #3b82f6; outline-offset:-2px; background:#1e3a5f !important;
+}
+
+/* Multi-selection */
+.tc-table td.in-range, .tc-table th.in-range { background:#1e3a5f; }
+
+/* Merge handling */
+.tc-table td.merge-hidden { display:none; }
+
+/* Resize Handles */
+.tc-resize-col {
+  position:absolute; right:-3px; top:0; bottom:0; width:6px;
+  cursor:col-resize; z-index:5; opacity:0; transition:opacity 0.15s;
+}
+.tc-resize-row {
+  position:absolute; bottom:-3px; left:0; right:0; height:6px;
+  cursor:row-resize; z-index:5; opacity:0; transition:opacity 0.15s;
+}
+.tc-table td:hover .tc-resize-col, .tc-table th:hover .tc-resize-col,
+.tc-table td:hover .tc-resize-row, .tc-table th:hover .tc-resize-row { opacity:1; }
+
+body.resizing-col * { cursor:col-resize !important; user-select:none !important; }
+body.resizing-row * { cursor:row-resize !important; user-select:none !important; }
+
+/* Cell content */
+.tc-cell-content { pointer-events:none; }
+.tc-cell-content input, .tc-cell-content select, .tc-cell-content textarea { pointer-events:auto; }
+
+/* Badge showing field type */
+.tc-field-badge {
+  position:absolute; top:2px; right:2px; font-size:0.55rem; padding:1px 4px; border-radius:3px;
+  background:#1e40af; color:#93c5fd; opacity:0.85; pointer-events:none; z-index:2;
+}
+
+/* ===== INSPECTOR (Right Sidebar) ===== */
+.tc-inspector { width:320px; background:#1e293b; border-left:1px solid #334155; overflow-y:auto; flex-shrink:0; }
+.tc-panel { border-bottom:1px solid #334155; }
+.tc-panel-header { background:#334155; padding:8px 12px; font-weight:600; font-size:0.8rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.tc-panel-body { padding:10px 12px; }
+.tc-panel.collapsed .tc-panel-body { display:none; }
+.tc-panel-toggle { font-size:0.7rem; color:#94a3b8; }
+
+.tc-form-row { display:flex; gap:8px; margin-bottom:8px; }
+.tc-form-row .tc-form-group { flex:1; }
+.tc-form-group { margin-bottom:8px; }
+.tc-form-group label { display:block; font-size:0.7rem; color:#94a3b8; margin-bottom:2px; }
+.tc-form-group input, .tc-form-group select, .tc-form-group textarea {
+  width:100%; padding:5px 7px; background:#0f172a; color:#e2e8f0;
+  border:1px solid #334155; border-radius:4px; font-size:0.8rem;
+}
+.tc-form-group input[type="color"] { padding:2px; height:28px; }
+.tc-form-group input[type="range"] { padding:0; }
+.tc-form-group input[type="number"] { width:60px; }
+
+.tc-preview-box {
+  background:#0f172a; border:1px solid #334155; border-radius:4px; padding:8px;
+  font-size:0.85rem; min-height:36px; display:flex; align-items:center; justify-content:center;
+}
+
+/* Field Type Picker */
+.tc-field-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; }
+.tc-field-btn {
+  padding:5px 4px; background:#334155; border:1px solid #475569; border-radius:3px;
+  font-size:0.68rem; color:#e2e8f0; cursor:pointer; text-align:center;
+}
+.tc-field-btn:hover { background:#475569; }
+.tc-field-btn.active { background:#1e40af; border-color:#3b82f6; }
+
+/* Data Source */
+.tc-data-source { font-size:0.75rem; color:#94a3b8; padding:8px; background:#0f172a; border-radius:4px; border:1px solid #334155; }
+
+/* Scrollbar */
+.tc-inspector::-webkit-scrollbar { width:6px; }
+.tc-inspector::-webkit-scrollbar-track { background:#0f172a; }
+.tc-inspector::-webkit-scrollbar-thumb { background:#334155; border-radius:3px; }
+
+/* ===== MODALS ===== */
+.tc-modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:3000;
+  display:none; align-items:center; justify-content:center;
+}
+.tc-modal-overlay.visible { display:flex; }
+.tc-modal {
+  background:#1e293b; border:1px solid #475569; border-radius:8px; padding:20px; width:400px; max-width:90vw;
+}
+.tc-modal h3 { margin:0 0 12px; font-size:1rem; color:#f1f5f9; }
+.tc-modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+
+/* Status Bar */
+.tc-statusbar {
+  background:#0f172a; border-top:1px solid #334155; padding:4px 12px; font-size:0.72rem;
+  color:#64748b; display:flex; gap:16px; flex-shrink:0; justify-content:space-between;
+}
+
+/* Template list in modal */
+.tc-template-list { max-height:300px; overflow-y:auto; }
+.tc-template-item {
+  padding:8px 10px; border-bottom:1px solid #334155; cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+}
+.tc-template-item:hover { background:#1e293b; }
+.tc-template-item .t-name { font-size:0.85rem; color:#e2e8f0; }
+.tc-template-item .t-meta { font-size:0.7rem; color:#64748b; }
+.tc-template-item .t-actions { display:flex; gap:4px; }
+
+/* Empty state for canvas */
+.tc-empty-canvas {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:12px; height:300px; color:#94a3b8; font-size:0.9rem;
+}
+</style>
+</head>
+<body>
+
+<div class="tc-app">
+  <div class="tc-header">
+    <a href="/" class="tc-link">← Back</a>
+    <h1>📊 Table Creation</h1>
+    <div style="flex:1;"></div>
+    <button class="tc-btn" onclick="TCC.newTable()">➕ New Table</button>
+    <button class="tc-btn" onclick="TCC.openModal()">📂 Open</button>
+    <button class="tc-btn" onclick="TCC.saveTemplate()">💾 Save</button>
+    <button class="tc-btn" onclick="TCC.exportHTML()">📤 Export HTML</button>
+    <button class="tc-btn" onclick="TCC.exportJSON()">📦 Export JSON</button>
+  </div>
+
+  <div class="tc-toolbar">
+    <!-- Structure -->
+    <div class="tc-tb-group">
+      <button class="tc-btn" onclick="TCC.addRowAbove()" title="Add row above">↑ Row</button>
+      <button class="tc-btn" onclick="TCC.addRowBelow()" title="Add row below">↓ Row</button>
+      <button class="tc-btn" onclick="TCC.addColLeft()" title="Add column left">← Col</button>
+      <button class="tc-btn" onclick="TCC.addColRight()" title="Add column right">→ Col</button>
+    </div>
+    <div class="tc-tb-group">
+      <button class="tc-btn" onclick="TCC.deleteRow()" title="Delete row">🗑 Row</button>
+      <button class="tc-btn" onclick="TCC.deleteCol()" title="Delete column">🗑 Col</button>
+    </div>
+    <div class="tc-tb-group">
+      <button class="tc-btn" onclick="TCC.mergeCells()" title="Merge selected cells">🔗 Merge</button>
+      <button class="tc-btn" onclick="TCC.unmergeCells()" title="Unmerge cell">⛓ Unmerge</button>
+    </div>
+    <div class="tc-tb-group">
+      <button class="tc-btn" onclick="TCC.setHeaderRow()" title="Toggle header row">H</button>
+      <button class="tc-btn" onclick="TCC.clearFormatting()" title="Clear formatting">🧹 Clear</button>
+    </div>
+    <div class="tc-tb-group">
+      <span style="font-size:0.7rem;color:#94a3b8;">Grid:</span>
+      <input type="number" id="gridRows" value="4" min="1" max="50" style="width:42px;padding:4px;font-size:0.75rem;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:3px;">
+      <span style="font-size:0.7rem;color:#94a3b8;">×</span>
+      <input type="number" id="gridCols" value="4" min="1" max="50" style="width:42px;padding:4px;font-size:0.75rem;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:3px;">
+      <button class="tc-btn" onclick="TCC.createGrid()">Create</button>
+    </div>
+  </div>
+
+  <div class="tc-main">
+    <!-- CANVAS -->
+    <div class="tc-canvas" id="canvasArea">
+      <div class="tc-empty-canvas">
+        <div style="font-size:3rem;">📊</div>
+        <p>Click "New Table" or set grid size and click "Create"</p>
+      </div>
+    </div>
+
+    <!-- INSPECTOR -->
+    <div class="tc-inspector">
+      <!-- Typography -->
+      <div class="tc-panel" data-panel="typo">
+        <div class="tc-panel-header" onclick="TCC.togglePanel(this)">
+          🅰️ Typography <span class="tc-panel-toggle">▼</span>
+        </div>
+        <div class="tc-panel-body">
+          <div class="tc-form-row">
+            <div class="tc-form-group">
+              <label>Font Family</label>
+              <select id="fontFamily" onchange="TCC.applyStyle('fontFamily',this.value)">
+                <option value="">Default</option>
+                <option value="Arial">Arial</option>
+                <option value="Helvetica">Helvetica</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Tahoma">Tahoma</option>
+                <option value="Trebuchet MS">Trebuchet MS</option>
+                <option value="Impact">Impact</option>
+                <option value="'Segoe UI'">Segoe UI</option>
+                <option value="Roboto">Roboto</option>
+                <option value="monospace">Monospace</option>
+              </select>
+            </div>
+            <div class="tc-form-group">
+              <label>Size</label>
+              <select id="fontSize" onchange="TCC.applyStyle('fontSize',this.value)">
+                <option value="">Default</option>
+                <option value="10px">10px</option>
+                <option value="11px">11px</option>
+                <option value="12px">12px</option>
+                <option value="13px">13px</option>
+                <option value="14px">14px</option>
+                <option value="16px">16px</option>
+                <option value="18px">18px</option>
+                <option value="20px">20px</option>
+                <option value="24px">24px</option>
+                <option value="28px">28px</option>
+                <option value="32px">32px</option>
+              </select>
+            </div>
+          </div>
+          <div class="tc-form-row">
+            <div class="tc-form-group">
+              <label>Color</label>
+              <input type="color" id="fontColor" value="#e2e8f0" onchange="TCC.applyStyle('color',this.value)">
+            </div>
+            <div class="tc-form-group">
+              <label>Style</label>
+              <select id="fontStyle" onchange="TCC.applyFontStyle(this.value)">
+                <option value="">Normal</option>
+                <option value="bold">Bold</option>
+                <option value="italic">Italic</option>
+                <option value="bold italic">Bold + Italic</option>
+                <option value="underline">Underline</option>
+                <option value="bold underline">Bold + Underline</option>
+              </select>
+            </div>
+          </div>
+          <div class="tc-form-group">
+            <label>Text Align</label>
+            <div style="display:flex;gap:4px;">
+              <button class="tc-btn" onclick="TCC.applyStyle('textAlign','left')" style="flex:1;">←</button>
+              <button class="tc-btn" onclick="TCC.applyStyle('textAlign','center')" style="flex:1;">↔</button>
+              <button class="tc-btn" onclick="TCC.applyStyle('textAlign','right')" style="flex:1;">→</button>
+            </div>
+          </div>
+          <div class="tc-form-group">
+            <label>Vertical Align</label>
+            <div style="display:flex;gap:4px;">
+              <button class="tc-btn" onclick="TCC.applyStyle('verticalAlign','top')" style="flex:1;">↑</button>
+              <button class="tc-btn" onclick="TCC.applyStyle('verticalAlign','middle')" style="flex:1;">—</button>
+              <button class="tc-btn" onclick="TCC.applyStyle('verticalAlign','bottom')" style="flex:1;">↓</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Borders -->
+      <div class="tc-panel collapsed" data-panel="borders">
+        <div class="tc-panel-header" onclick="TCC.togglePanel(this)">
+          📐 Borders <span class="tc-panel-toggle">▶</span>
+        </div>
+        <div class="tc-panel-body">
+          <div class="tc-form-row">
+            <div class="tc-form-group">
+              <label>Line Style</label>
+              <select id="borderStyle" onchange="TCC.applyBorder('style',this.value)">
+                <option value="solid">Solid</option>
+                <option value="dashed">Dashed</option>
+                <option value="dotted">Dotted</option>
+                <option value="double">Double</option>
+                <option value="none">None</option>
+              </select>
+            </div>
+            <div class="tc-form-group">
+              <label>Thickness</label>
+              <select id="borderWidth" onchange="TCC.applyBorder('width',this.value)">
+                <option value="0px">0px</option>
+                <option value="1px">1px</option>
+                <option value="2px">2px</option>
+                <option value="3px">3px</option>
+                <option value="4px">4px</option>
+                <option value="5px">5px</option>
+              </select>
+            </div>
+          </div>
+          <div class="tc-form-row">
+            <div class="tc-form-group">
+              <label>Color</label>
+              <input type="color" id="borderColor" value="#475569" onchange="TCC.applyBorder('color',this.value)">
+            </div>
+            <div class="tc-form-group">
+              <label>Apply To</label>
+              <select id="borderTarget" onchange="TCC.borderTarget = this.value">
+                <option value="all">All sides</option>
+                <option value="top">Top</option>
+                <option value="bottom">Bottom</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+                <option value="horizontal">Horizontal only</option>
+                <option value="vertical">Vertical only</option>
+                <option value="outer">Outer only</option>
+              </select>
+            </div>
+          </div>
+          <div class="tc-form-group">
+            <label>Quick Border Presets</label>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <button class="tc-btn" onclick="TCC.applyBorderPreset('all',1,'#475569','solid')">All thin</button>
+              <button class="tc-btn" onclick="TCC.applyBorderPreset('all',2,'#475569','solid')">All thick</button>
+              <button class="tc-btn" onclick="TCC.applyBorderPreset('outer',2,'#475569','solid')">Outer thick</button>
+              <button class="tc-btn" onclick="TCC.applyBorderPreset('horizontal',1,'#475569','solid')">Rows only</button>
+              <button class="tc-btn" onclick="TCC.applyBorderPreset('vertical',1,'#475569','solid')">Cols only</button>
+              <button class="tc-btn" onclick="TCC.applyBorderPreset('all',0,'transparent','none')">No borders</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Backgrounds -->
+      <div class="tc-panel collapsed" data-panel="bg">
+        <div class="tc-panel-header" onclick="TCC.togglePanel(this)">
+          🎨 Backgrounds <span class="tc-panel-toggle">▶</span>
+        </div>
+        <div class="tc-panel-body">
+          <div class="tc-form-group">
+            <label>Cell Background</label>
+            <input type="color" id="cellBgColor" value="#1e293b" onchange="TCC.applyStyle('backgroundColor',this.value)">
+          </div>
+          <div class="tc-form-group">
+            <label>Table Background</label>
+            <input type="color" id="tableBgColor" value="#1e293b" onchange="TCC.setTableBg(this.value)">
+          </div>
+          <div class="tc-form-group">
+            <label>Opacity</label>
+            <input type="range" min="0" max="100" value="100" onchange="TCC.applyOpacity(this.value)">
+          </div>
+          <div style="font-size:0.7rem;color:#64748b;margin-top:4px;">
+            Tip: Select cells first, then apply colors. No selection = affects all.
+          </div>
+        </div>
+      </div>
+
+      <!-- Spacing -->
+      <div class="tc-panel collapsed" data-panel="spacing">
+        <div class="tc-panel-header" onclick="TCC.togglePanel(this)">
+          ↔️ Spacing & Margins <span class="tc-panel-toggle">▶</span>
+        </div>
+        <div class="tc-panel-body">
+          <div class="tc-form-row">
+            <div class="tc-form-group">
+              <label>Cell Padding (px)</label>
+              <input type="number" id="cellPadding" value="6" min="0" max="50" onchange="TCC.applyStyle('padding',this.value+'px')">
+            </div>
+            <div class="tc-form-group">
+              <label>Table Padding (px)</label>
+              <input type="number" id="tablePadding" value="16" min="0" max="50" onchange="TCC.setTablePadding(this.value)">
+            </div>
+          </div>
+          <div class="tc-form-row">
+            <div class="tc-form-group">
+              <label>Border Spacing (px)</label>
+              <input type="number" id="borderSpacing" value="0" min="0" max="20" onchange="TCC.setBorderSpacing(this.value)">
+            </div>
+          </div>
+          <div class="tc-form-group">
+            <label>Cell Width (px)</label>
+            <input type="number" id="cellWidth" min="20" max="500" onchange="TCC.setCellWidth(this.value)">
+          </div>
+          <div class="tc-form-group">
+            <label>Cell Height (px)</label>
+            <input type="number" id="cellHeight" min="20" max="500" onchange="TCC.setCellHeight(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Field Type -->
+      <div class="tc-panel collapsed" data-panel="fieldtype">
+        <div class="tc-panel-header" onclick="TCC.togglePanel(this)">
+          🏷️ Field Type <span class="tc-panel-toggle">▶</span>
+        </div>
+        <div class="tc-panel-body">
+          <div class="tc-form-group">
+            <label>Basic Fields</label>
+            <div class="tc-field-grid">
+              <button class="tc-field-btn" data-type="text" onclick="TCC.setFieldType('text')">📝 Text</button>
+              <button class="tc-field-btn" data-type="number" onclick="TCC.setFieldType('number')">🔢 Number</button>
+              <button class="tc-field-btn" data-type="date" onclick="TCC.setFieldType('date')">📅 Date</button>
+              <button class="tc-field-btn" data-type="dropdown" onclick="TCC.setFieldType('dropdown')">🔽 Dropdown</button>
+              <button class="tc-field-btn" data-type="signature" onclick="TCC.setFieldType('signature')">✍️ Signature</button>
+              <button class="tc-field-btn" data-type="checkbox" onclick="TCC.setFieldType('checkbox')">☑️ Checkbox</button>
+              <button class="tc-field-btn" data-type="textarea" onclick="TCC.setFieldType('textarea')">📄 Textarea</button>
+              <button class="tc-field-btn" data-type="static" onclick="TCC.setFieldType('static')">📌 Static</button>
+            </div>
+          </div>
+          <div class="tc-form-group">
+            <label>🔗 Database Fields</label>
+            <div class="tc-field-grid">
+              <button class="tc-field-btn" data-type="db_crewName" onclick="TCC.setFieldType('db_crewName')">👤 Crew</button>
+              <button class="tc-field-btn" data-type="db_pilotPosition" onclick="TCC.setFieldType('db_pilotPosition')">🧭 Position</button>
+              <button class="tc-field-btn" data-type="db_crewId" onclick="TCC.setFieldType('db_crewId')">🪪 ID</button>
+              <button class="tc-field-btn" data-type="db_crewLicense" onclick="TCC.setFieldType('db_crewLicense')">📜 License</button>
+              <button class="tc-field-btn" data-type="db_crew3lc" onclick="TCC.setFieldType('db_crew3lc')">📋 3LC</button>
+              <button class="tc-field-btn" data-type="db_instructorTri" onclick="TCC.setFieldType('db_instructorTri')">🎓 TRI</button>
+              <button class="tc-field-btn" data-type="db_examinerTre" onclick="TCC.setFieldType('db_examinerTre')">📝 TRE</button>
+              <button class="tc-field-btn" data-type="db_location" onclick="TCC.setFieldType('db_location')">📍 Location</button>
+              <button class="tc-field-btn" data-type="db_fstdId" onclick="TCC.setFieldType('db_fstdId')">🖥️ FSTD</button>
+              <button class="tc-field-btn" data-type="db_acReg" onclick="TCC.setFieldType('db_acReg')">✈️ A/C Reg</button>
+              <button class="tc-field-btn" data-type="db_acType" onclick="TCC.setFieldType('db_acType')">🛩️ A/C Type</button>
+              <button class="tc-field-btn" data-type="db_adIcao" onclick="TCC.setFieldType('db_adIcao')">🌍 ICAO</button>
+            </div>
+          </div>
+          <div class="tc-form-group" id="dropdownOptionsGroup" style="display:none;">
+            <label>Dropdown Options (one per line)</label>
+            <textarea id="dropdownOptions" rows="4" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
+            <button class="tc-btn" style="margin-top:4px;width:100%;" onclick="TCC.saveDropdownOptions()">Apply Options</button>
+          </div>
+          <div class="tc-form-group" id="dataBindingGroup">
+            <label>Data Binding</label>
+            <select id="dataSource" onchange="TCC.setDataSource(this.value)">
+              <option value="">None</option>
+              <option value="api">API Endpoint</option>
+              <option value="csv">CSV File</option>
+              <option value="db">Database Query</option>
+            </select>
+          </div>
+          <div id="apiConfig" style="display:none;" class="tc-data-source">
+            <div class="tc-form-group">
+              <label>API URL</label>
+              <input type="text" id="apiUrl" placeholder="/api/crew">
+            </div>
+            <div class="tc-form-group">
+              <label>JSON Path (e.g., $.name)</label>
+              <input type="text" id="apiPath" placeholder="$.name">
+            </div>
+          </div>
+          <div id="csvConfig" style="display:none;" class="tc-data-source">
+            <div class="tc-form-group">
+              <label>CSV Column Index</label>
+              <input type="number" id="csvCol" value="0" min="0">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="tc-panel collapsed" data-panel="info">
+        <div class="tc-panel-header" onclick="TCC.togglePanel(this)">
+          ℹ️ Selection Info <span class="tc-panel-toggle">▶</span>
+        </div>
+        <div class="tc-panel-body">
+          <div id="selectionInfo" style="font-size:0.75rem;color:#94a3b8;">
+            <p>No cells selected</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tc-statusbar">
+    <div id="statusText">Ready</div>
+    <div id="statusCoords"></div>
+  </div>
+</div>
+
+<!-- Save Template Modal -->
+<div class="tc-modal-overlay" id="saveModal">
+  <div class="tc-modal">
+    <h3>💾 Save Table Template</h3>
+    <div class="tc-form-group">
+      <label>Template Name</label>
+      <input type="text" id="templateName" placeholder="My Table Template">
+    </div>
+    <div class="tc-form-group">
+      <label>Description</label>
+      <input type="text" id="templateDesc" placeholder="Optional description">
+    </div>
+    <div class="tc-modal-actions">
+      <button type="button" class="tc-btn" onclick="event.stopPropagation(); TCC.closeModal()">Cancel</button>
+      <button type="button" class="tc-btn" onclick="event.stopPropagation(); TCC.confirmSave()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Open Template Modal -->
+<div class="tc-modal-overlay" id="openModal">
+  <div class="tc-modal" style="width:500px;">
+    <h3>📂 Open Table Template</h3>
+    <div class="tc-template-list" id="templateList">
+      <p style="text-align:center;color:#94a3b8;padding:20px;">Loading...</p>
+    </div>
+    <div class="tc-modal-actions">
+      <button class="tc-btn" onclick="TCC.closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== TABLE CREATION CONTROLLER ===== */
+const TCC = {
+  // State
+  tableData: {
+    rows: 0, cols: 0,
+    cells: {}, // key: "r,c" → { content, style, fieldType, fieldConfig, colspan, rowspan, merged, mergeHidden }
+    tableStyle: { backgroundColor: '#1e293b', padding: '16px', borderSpacing: '0' },
+    headerRows: [],
+    name: '',
+    description: ''
+  },
+  selection: { start: null, end: null, cells: [] },
+  editingCell: null,
+  borderTarget: 'all',
+  isResizing: false,
+  resizeStart: null,
+  resizeColIdx: null,
+  resizeRowIdx: null,
+  resizeStartWidth: null,
+  resizeStartHeight: null,
+  lastFocusedCell: null,
+
+  // Init
+  init() {
+    document.addEventListener('click', e => this.handleClick(e));
+    document.addEventListener('keydown', e => this.handleKey(e));
+    document.addEventListener('mouseup', e => this.handleMouseUp(e));
+    document.addEventListener('mousemove', e => this.handleMouseMove(e));
+    // Close context menu on click elsewhere
+    document.addEventListener('click', e => {
+      const menu = document.getElementById('ctxMenu');
+      if(menu && !menu.contains(e.target)) menu.style.display = 'none';
+    });
+    this.updateStatus('Ready');
+  },
+
+  // ===== TABLE CREATION =====
+  newTable() {
+    const r = parseInt(document.getElementById('gridRows').value)||4;
+    const c = parseInt(document.getElementById('gridCols').value)||4;
+    this.createTable(r, c);
+  },
+
+  createGrid() {
+    const r = parseInt(document.getElementById('gridRows').value)||4;
+    const c = parseInt(document.getElementById('gridCols').value)||4;
+    this.createTable(r, c);
+  },
+
+  createTable(rows, cols) {
+    this.tableData = {
+      rows, cols,
+      cells: {},
+      tableStyle: { backgroundColor: '#1e293b', padding: '16px', borderSpacing: '0' },
+      headerRows: [],
+      name: '', description: ''
+    };
+    // Initialize all cells
+    for(let r=0; r<rows; r++) {
+      for(let c=0; c<cols; c++) {
+        this.tableData.cells[`${r},${c}`] = {
+          content: '',
+          style: { border: '1px solid #475569', padding: '6px 8px' },
+          fieldType: null,
+          fieldConfig: null
+        };
+      }
+    }
+    this.selection = { start:null, end:null, cells:[] };
+    this.renderTable();
+    this.updateStatus(`Table ${rows}×${cols} created`);
+  },
+
+  // ===== RENDERING =====
+  renderTable() {
+    const canvas = document.getElementById('canvasArea');
+    if(this.tableData.rows === 0) {
+      canvas.innerHTML = `<div class="tc-empty-canvas"><div style="font-size:3rem;">📊</div><p>Click "New Table" to start</p></div>`;
+      return;
+    }
+
+    let html = `<div class="tc-table-wrap" id="tableWrap" style="background:${this.tableData.tableStyle.backgroundColor};padding:${this.tableData.tableStyle.padding};border-spacing:${this.tableData.tableStyle.borderSpacing};">`;
+    html += `<table class="tc-table" id="designTable">`;
+
+    for(let r=0; r<this.tableData.rows; r++) {
+      html += '<tr>';
+      for(let c=0; c<this.tableData.cols; c++) {
+        const key = `${r},${c}`;
+        const cell = this.tableData.cells[key];
+        if(!cell) continue;
+        if(cell.mergeHidden) continue;
+
+        const isSel = this.selection.cells.includes(key);
+        const tag = this.tableData.headerRows.includes(r) ? 'th' : 'td';
+        let styleStr = this.cellStyleToString(cell.style);
+        let cls = isSel ? 'selected' : '';
+
+        let attrs = '';
+        if(cell.colspan > 1) attrs += ` colspan="${cell.colspan}"`;
+        if(cell.rowspan > 1) attrs += ` rowspan="${cell.rowspan}"`;
+
+        // Field badge
+        let badge = '';
+        if(cell.fieldType) {
+          const icons = { text:'📝', number:'🔢', date:'📅', dropdown:'🔽', signature:'✍️', checkbox:'☑️', textarea:'📄', static:'📌',
+            db_crewName:'👤', db_pilotPosition:'🧭', db_crewId:'🪪', db_crewLicense:'📜', db_crew3lc:'📋',
+            db_instructorTri:'🎓', db_examinerTre:'📝', db_location:'📍', db_fstdId:'🖥️',
+            db_acReg:'✈️', db_acType:'🛩️', db_adIcao:'🌍' };
+          badge = `<span class="tc-field-badge">${icons[cell.fieldType]||''} ${cell.fieldType}</span>`;
+        }
+
+        html += `<${tag} class="${cls}" data-row="${r}" data-col="${c}" style="${styleStr}"${attrs}>`;
+        html += `<div class="tc-resize-row" data-rrow="${r}" data-rcol="${c}"></div>`;
+        html += `<div class="tc-resize-col" data-rrow="${r}" data-rcol="${c}"></div>`;
+        html += `<div class="tc-cell-content" style="pointer-events:none;">${this.escapeHtml(cell.content)}</div>`;
+        html += badge;
+        html += `</${tag}>`;
+      }
+      html += '</tr>';
+    }
+
+    html += '</table></div>';
+    canvas.innerHTML = html;
+
+    // Attach resize listeners
+    this.attachResizeListeners();
+    this.updateSelectionInfo();
+  },
+
+  cellStyleToString(style) {
+    if(!style) return '';
+    const parts = [];
+    for(const [k,v] of Object.entries(style)) {
+      if(v !== '' && v !== null && v !== undefined) {
+        parts.push(`${k.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())}:${v}`);
+      }
+    }
+    return parts.join(';');
+  },
+
+  escapeHtml(text) {
+    if(!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  },
+
+  // ===== SELECTION =====
+  handleClick(e) {
+    const td = e.target.closest('td,th');
+    if(!td || !td.closest('#designTable')) return;
+
+    const r = parseInt(td.dataset.row);
+    const c = parseInt(td.dataset.col);
+
+    // Check for resize handle click
+    if(e.target.classList.contains('tc-resize-col')) {
+      this.startResizeCol(e, c);
+      return;
+    }
+    if(e.target.classList.contains('tc-resize-row')) {
+      this.startResizeRow(e, r);
+      return;
+    }
+
+    // Shift+click = extend selection
+    if(e.shiftKey && this.selection.start) {
+      this.selection.end = {r,c};
+      this.calcSelection();
+    } else {
+      this.selection = { start:{r,c}, end:{r,c}, cells:[`${r},${c}`] };
+    }
+
+    // Double click = edit
+    if(e.detail === 2) {
+      this.startEdit(td);
+    }
+
+    this.lastFocusedCell = {r,c};
+    this.renderTable();
+  },
+
+  calcSelection() {
+    if(!this.selection.start || !this.selection.end) return;
+    const r1 = Math.min(this.selection.start.r, this.selection.end.r);
+    const r2 = Math.max(this.selection.start.r, this.selection.end.r);
+    const c1 = Math.min(this.selection.start.c, this.selection.end.c);
+    const c2 = Math.max(this.selection.start.c, this.selection.end.c);
+
+    const cells = [];
+    for(let r=r1; r<=r2; r++) {
+      for(let c=c1; c<=c2; c++) {
+        cells.push(`${r},${c}`);
+      }
+    }
+    this.selection.cells = cells;
+    this.syncInspector();
+  },
+
+  syncInspector() {
+    const cells = this.getSelectedCells();
+    if(cells.length === 0) return;
+
+    // Show field type of first selected cell
+    const first = this.tableData.cells[cells[0]];
+    if(!first) return;
+
+    // Highlight field type button
+    document.querySelectorAll('.tc-field-btn').forEach(btn=>btn.classList.remove('active'));
+    const ft = first.fieldType;
+    if(ft) {
+      const active = document.querySelector(`.tc-field-btn[data-type="${ft}"]`);
+      if(active) active.classList.add('active');
+    }
+
+    // Show/hide dropdown options
+    const ddGroup = document.getElementById('dropdownOptionsGroup');
+    if(ft === 'dropdown' && first.fieldConfig?.options) {
+      ddGroup.style.display = 'block';
+      document.getElementById('dropdownOptions').value = first.fieldConfig.options.join('\n');
+    } else {
+      ddGroup.style.display = 'none';
+    }
+
+    // Sync Data Binding controls for db_* fields
+    const dsSel = document.getElementById('dataSource');
+    const apiUrlInput = document.getElementById('apiUrl');
+    const apiPathInput = document.getElementById('apiPath');
+    const apiConfig = document.getElementById('apiConfig');
+    const csvConfig = document.getElementById('csvConfig');
+    if(ft && ft.startsWith('db_')) {
+      if(dsSel) dsSel.value = 'db';
+      apiConfig.style.display = 'none';
+      csvConfig.style.display = 'none';
+    } else if(first.fieldConfig?.dataSource) {
+      if(dsSel) dsSel.value = first.fieldConfig.dataSource;
+      apiConfig.style.display = first.fieldConfig.dataSource === 'api' ? 'block' : 'none';
+      csvConfig.style.display = first.fieldConfig.dataSource === 'csv' ? 'block' : 'none';
+      if(first.fieldConfig.dataSource === 'api') {
+        if(apiUrlInput && first.fieldConfig.apiUrl) apiUrlInput.value = first.fieldConfig.apiUrl;
+        if(apiPathInput && first.fieldConfig.apiPath) apiPathInput.value = first.fieldConfig.apiPath;
+      }
+    } else {
+      if(dsSel) dsSel.value = '';
+      apiConfig.style.display = 'none';
+      csvConfig.style.display = 'none';
+    }
+
+    // Sync typography controls with first cell style
+    if(first.style) {
+      const fontSizeMap = {
+        '10px':'10px','11px':'11px','12px':'12px','13px':'13px',
+        '14px':'14px','16px':'16px','18px':'18px','20px':'20px',
+        '24px':'24px','28px':'28px','32px':'32px'
+      };
+      const fs = document.getElementById('fontSize');
+      if(fs && first.style.fontSize && fontSizeMap[first.style.fontSize]) {
+        fs.value = first.style.fontSize;
+      }
+      const fc = document.getElementById('fontColor');
+      if(fc && first.style.color) fc.value = first.style.color;
+    }
+
+    this.updateSelectionInfo();
+  },
+
+  getSelectedCells() {
+    if(this.selection.cells.length === 0) {
+      // If no selection but last focused cell exists, use that
+      if(this.lastFocusedCell) {
+        return [`${this.lastFocusedCell.r},${this.lastFocusedCell.c}`];
+      }
+      return [];
+    }
+    return this.selection.cells;
+  },
+
+  // ===== EDITING =====
+  startEdit(td) {
+    const r = parseInt(td.dataset.row);
+    const c = parseInt(td.dataset.col);
+    const key = `${r},${c}`;
+    const cell = this.tableData.cells[key];
+    if(!cell) return;
+
+    this.editingCell = {r,c};
+    td.classList.add('editing');
+
+    // If cell has a field type, show appropriate input
+    if(cell.fieldType === 'date') {
+      td.innerHTML = `<input type="date" value="${cell.content}" style="width:100%;" onblur="TCC.finishEdit(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">`;
+      td.querySelector('input').focus();
+    } else if(cell.fieldType === 'dropdown') {
+      const opts = (cell.fieldConfig?.options || []).map(o=>`<option>${this.escapeHtml(o)}</option>`).join('');
+      td.innerHTML = `<select style="width:100%;" onblur="TCC.finishEdit(this.value)">${opts}</select>`;
+      td.querySelector('select').focus();
+    } else {
+      td.innerHTML = `<input type="text" value="${this.escapeHtml(cell.content)}" style="width:100%;background:transparent;border:none;color:inherit;" onblur="TCC.finishEdit(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">`;
+      const input = td.querySelector('input');
+      input.focus();
+      input.select();
+    }
+  },
+
+  finishEdit(value) {
+    if(!this.editingCell) return;
+    const {r,c} = this.editingCell;
+    const key = `${r},${c}`;
+    if(this.tableData.cells[key]) {
+      this.tableData.cells[key].content = value;
+    }
+    this.editingCell = null;
+    this.renderTable();
+  },
+
+  // ===== KEYBOARD =====
+  handleKey(e) {
+    // Don't intercept keys when typing in inputs, textareas, or selects (including modal)
+    if(document.activeElement && /input|textarea|select/i.test(document.activeElement.tagName)) {
+      if(e.key==='Escape') {
+        document.activeElement.blur();
+      }
+      return;
+    }
+
+    if(e.ctrlKey || e.metaKey) {
+      if(e.key==='a') { e.preventDefault(); this.selectAll(); }
+      if(e.key==='s') { e.preventDefault(); this.saveTemplate(); }
+      return;
+    }
+
+    if(!this.lastFocusedCell) return;
+    const {r,c} = this.lastFocusedCell;
+    let nr=r, nc=c;
+
+    if(e.key==='ArrowUp') nr = Math.max(0, r-1);
+    else if(e.key==='ArrowDown') nr = Math.min(this.tableData.rows-1, r+1);
+    else if(e.key==='ArrowLeft') nc = Math.max(0, c-1);
+    else if(e.key==='ArrowRight') nc = Math.min(this.tableData.cols-1, c+1);
+    else if(e.key==='Delete' || e.key==='Backspace') {
+      e.preventDefault();
+      this.clearSelectedContent();
+      return;
+    } else if(e.key.length===1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      // Start editing with typed char
+      const key = `${r},${c}`;
+      if(this.tableData.cells[key]) {
+        this.tableData.cells[key].content = e.key;
+        this.lastFocusedCell = {r:nr, c:nc};
+        this.selection = { start:{r:nr,c:nc}, end:{r:nr,c:nc}, cells:[`${nr},${nc}`] };
+        this.renderTable();
+        const td = document.querySelector(`[data-row="${nr}"][data-col="${nc}"]`);
+        if(td) this.startEdit(td);
+      }
+      return;
+    } else return;
+
+    e.preventDefault();
+    this.lastFocusedCell = {r:nr, c:nc};
+    this.selection = { start:{r:nr,c:nc}, end:{r:nr,c:nc}, cells:[`${nr},${nc}`] };
+    this.renderTable();
+  },
+
+  selectAll() {
+    const cells = [];
+    for(let r=0; r<this.tableData.rows; r++) {
+      for(let c=0; c<this.tableData.cols; c++) {
+        cells.push(`${r},${c}`);
+      }
+    }
+    this.selection = { start:{r:0,c:0}, end:{r:this.tableData.rows-1,c:this.tableData.cols-1}, cells };
+    this.renderTable();
+  },
+
+  clearSelectedContent() {
+    for(const key of this.getSelectedCells()) {
+      if(this.tableData.cells[key]) {
+        this.tableData.cells[key].content = '';
+      }
+    }
+    this.renderTable();
+  },
+
+  // ===== ROW/COL OPERATIONS =====
+  addRowAbove() {
+    const anchor = this.getAnchorRow();
+    if(anchor === null) return;
+    this.insertRow(anchor);
+  },
+
+  addRowBelow() {
+    const anchor = this.getAnchorRow();
+    if(anchor === null) return;
+    this.insertRow(anchor + 1);
+  },
+
+  insertRow(at) {
+    const oldRows = this.tableData.rows;
+    const cols = this.tableData.cols;
+    const newCells = {};
+
+    for(let r=0; r<oldRows+1; r++) {
+      for(let c=0; c<cols; c++) {
+        const srcR = r < at ? r : (r === at ? -1 : r-1);
+        const key = `${r},${c}`;
+        if(srcR === -1) {
+          newCells[key] = { content:'', style:{border:'1px solid #475569',padding:'6px 8px'}, fieldType:null, fieldConfig:null };
+        } else {
+          const srcKey = `${srcR},${c}`;
+          if(this.tableData.cells[srcKey]) {
+            newCells[key] = JSON.parse(JSON.stringify(this.tableData.cells[srcKey]));
+          }
+        }
+      }
+    }
+
+    this.tableData.cells = newCells;
+    this.tableData.rows++;
+    if(this.tableData.headerRows.length > 0) {
+      this.tableData.headerRows = this.tableData.headerRows.map(h => h >= at ? h+1 : h);
+    }
+    this.selection = { start:null, end:null, cells:[] };
+    this.renderTable();
+    this.updateStatus(`Row inserted at ${at}`);
+  },
+
+  addColLeft() {
+    const anchor = this.getAnchorCol();
+    if(anchor === null) return;
+    this.insertCol(anchor);
+  },
+
+  addColRight() {
+    const anchor = this.getAnchorCol();
+    if(anchor === null) return;
+    this.insertCol(anchor + 1);
+  },
+
+  insertCol(at) {
+    const rows = this.tableData.rows;
+    const oldCols = this.tableData.cols;
+    const newCells = {};
+
+    for(let r=0; r<rows; r++) {
+      for(let c=0; c<oldCols+1; c++) {
+        const srcC = c < at ? c : (c === at ? -1 : c-1);
+        const key = `${r},${c}`;
+        if(srcC === -1) {
+          newCells[key] = { content:'', style:{border:'1px solid #475569',padding:'6px 8px'}, fieldType:null, fieldConfig:null };
+        } else {
+          const srcKey = `${r},${srcC}`;
+          if(this.tableData.cells[srcKey]) {
+            newCells[key] = JSON.parse(JSON.stringify(this.tableData.cells[srcKey]));
+          }
+        }
+      }
+    }
+
+    this.tableData.cells = newCells;
+    this.tableData.cols++;
+    this.selection = { start:null, end:null, cells:[] };
+    this.renderTable();
+    this.updateStatus(`Column inserted at ${at}`);
+  },
+
+  deleteRow() {
+    const anchor = this.getAnchorRow();
+    if(anchor === null || this.tableData.rows <= 1) return;
+
+    const newCells = {};
+    for(let r=0; r<this.tableData.rows; r++) {
+      if(r===anchor) continue;
+      const newR = r < anchor ? r : r-1;
+      for(let c=0; c<this.tableData.cols; c++) {
+        const key = `${newR},${c}`;
+        const srcKey = `${r},${c}`;
+        if(this.tableData.cells[srcKey]) {
+          newCells[key] = JSON.parse(JSON.stringify(this.tableData.cells[srcKey]));
+        }
+      }
+    }
+    this.tableData.cells = newCells;
+    this.tableData.rows--;
+    this.tableData.headerRows = this.tableData.headerRows.filter(h=>h!==anchor).map(h=>h>anchor?h-1:h);
+    this.selection = { start:null, end:null, cells:[] };
+    this.renderTable();
+    this.updateStatus(`Row ${anchor} deleted`);
+  },
+
+  deleteCol() {
+    const anchor = this.getAnchorCol();
+    if(anchor === null || this.tableData.cols <= 1) return;
+
+    const newCells = {};
+    for(let r=0; r<this.tableData.rows; r++) {
+      for(let c=0; c<this.tableData.cols; c++) {
+        if(c===anchor) continue;
+        const newC = c < anchor ? c : c-1;
+        const key = `${r},${newC}`;
+        const srcKey = `${r},${c}`;
+        if(this.tableData.cells[srcKey]) {
+          newCells[key] = JSON.parse(JSON.stringify(this.tableData.cells[srcKey]));
+        }
+      }
+    }
+    this.tableData.cells = newCells;
+    this.tableData.cols--;
+    this.selection = { start:null, end:null, cells:[] };
+    this.renderTable();
+    this.updateStatus(`Column ${anchor} deleted`);
+  },
+
+  getAnchorRow() {
+    if(this.selection.cells.length === 0) {
+      if(this.lastFocusedCell) return this.lastFocusedCell.r;
+      return null;
+    }
+    return this.selection.start ? this.selection.start.r : parseInt(this.selection.cells[0].split(',')[0]);
+  },
+
+  getAnchorCol() {
+    if(this.selection.cells.length === 0) {
+      if(this.lastFocusedCell) return this.lastFocusedCell.c;
+      return null;
+    }
+    return this.selection.start ? this.selection.start.c : parseInt(this.selection.cells[0].split(',')[1]);
+  },
+
+  // ===== MERGE =====
+  mergeCells() {
+    const cells = this.getSelectedCells();
+    if(cells.length < 2) { this.updateStatus('Select at least 2 cells to merge'); return; }
+
+    const coords = cells.map(k=>{const[p,q]=k.split(',');return{r:parseInt(p),c:parseInt(q)};});
+    const r1 = Math.min(...coords.map(c=>c.r)), r2 = Math.max(...coords.map(c=>c.r));
+    const c1 = Math.min(...coords.map(c=>c.c)), c2 = Math.max(...coords.map(c=>c.c));
+
+    // Check it's a rectangle
+    const expected = (r2-r1+1)*(c2-c1+1);
+    if(coords.length !== expected) { this.updateStatus('Select a rectangular area'); return; }
+
+    const masterKey = `${r1},${c1}`;
+    this.tableData.cells[masterKey].colspan = c2-c1+1;
+    this.tableData.cells[masterKey].rowspan = r2-r1+1;
+    this.tableData.cells[masterKey].merged = true;
+
+    for(const key of cells) {
+      if(key !== masterKey) {
+        this.tableData.cells[key].mergeHidden = true;
+      }
+    }
+
+    this.selection = { start:{r:r1,c:c1}, end:{r:r1,c:c1}, cells:[masterKey] };
+    this.renderTable();
+    this.updateStatus(`Merged ${cells.length} cells`);
+  },
+
+  unmergeCells() {
+    const cells = this.getSelectedCells();
+    if(cells.length !== 1) { this.updateStatus('Select one merged cell'); return; }
+
+    const key = cells[0];
+    const cell = this.tableData.cells[key];
+    if(!cell || !cell.merged) { this.updateStatus('Cell is not merged'); return; }
+
+    const [r,c] = key.split(',').map(Number);
+    const rs = cell.rowspan || 1;
+    const cs = cell.colspan || 1;
+
+    cell.colspan = 1;
+    cell.rowspan = 1;
+    cell.merged = false;
+
+    for(let i=0; i<rs; i++) {
+      for(let j=0; j<cs; j++) {
+        const k = `${r+i},${c+j}`;
+        if(this.tableData.cells[k]) {
+          this.tableData.cells[k].mergeHidden = false;
+        }
+      }
+    }
+
+    this.renderTable();
+    this.updateStatus('Cell unmerged');
+  },
+
+  // ===== HEADER ROW =====
+  setHeaderRow() {
+    const anchor = this.getAnchorRow();
+    if(anchor === null) return;
+
+    const idx = this.tableData.headerRows.indexOf(anchor);
+    if(idx >= 0) {
+      this.tableData.headerRows.splice(idx, 1);
+      this.updateStatus(`Row ${anchor} is no longer header`);
+    } else {
+      this.tableData.headerRows.push(anchor);
+      this.tableData.headerRows.sort((a,b)=>a-b);
+      this.updateStatus(`Row ${anchor} set as header`);
+    }
+    this.renderTable();
+  },
+
+  // ===== STYLING =====
+  applyStyle(prop, value) {
+    const cells = this.getSelectedCells();
+    if(cells.length === 0) {
+      // Apply to all cells if none selected
+      for(let r=0; r<this.tableData.rows; r++) {
+        for(let c=0; c<this.tableData.cols; c++) {
+          cells.push(`${r},${c}`);
+        }
+      }
+    }
+    for(const key of cells) {
+      if(this.tableData.cells[key]) {
+        if(!this.tableData.cells[key].style) this.tableData.cells[key].style = {};
+        this.tableData.cells[key].style[prop] = value;
+      }
+    }
+    this.renderTable();
+  },
+
+  applyFontStyle(style) {
+    const cells = this.getSelectedCells();
+    if(cells.length === 0) {
+      for(let r=0; r<this.tableData.rows; r++) {
+        for(let c=0; c<this.tableData.cols; c++) {
+          cells.push(`${r},${c}`);
+        }
+      }
+    }
+    for(const key of cells) {
+      if(this.tableData.cells[key]) {
+        if(!this.tableData.cells[key].style) this.tableData.cells[key].style = {};
+        this.tableData.cells[key].style.fontWeight = style.includes('bold') ? 'bold' : 'normal';
+        this.tableData.cells[key].style.fontStyle = style.includes('italic') ? 'italic' : 'normal';
+        this.tableData.cells[key].style.textDecoration = style.includes('underline') ? 'underline' : 'none';
+      }
+    }
+    this.renderTable();
+  },
+
+  clearFormatting() {
+    const cells = this.getSelectedCells();
+    if(cells.length === 0) return;
+    for(const key of cells) {
+      if(this.tableData.cells[key]) {
+        this.tableData.cells[key].style = { border:'1px solid #475569', padding:'6px 8px' };
+      }
+    }
+    this.renderTable();
+    this.updateStatus('Formatting cleared');
+  },
+
+  // ===== BORDERS =====
+  applyBorder(prop, value) {
+    const cells = this.getSelectedCells();
+    if(cells.length === 0) {
+      for(let r=0; r<this.tableData.rows; r++) {
+        for(let c=0; c<this.tableData.cols; c++) {
+          cells.push(`${r},${c}`);
+        }
+      }
+    }
+
+    const target = this.borderTarget;
+    for(const key of cells) {
+      if(!this.tableData.cells[key]) continue;
+      if(!this.tableData.cells[key].style) this.tableData.cells[key].style = {};
+
+      if(prop === 'style') {
+        this.setBorderProp(key, 'borderStyle', value, target);
+      } else if(prop === 'width') {
+        this.setBorderProp(key, 'borderWidth', value, target);
+      } else if(prop === 'color') {
+        this.setBorderProp(key, 'borderColor', value, target);
+      }
+    }
+    this.renderTable();
+  },
+
+  setBorderProp(key, prop, value, target) {
+    const st = this.tableData.cells[key].style;
+    const sides = this.getBorderSides(key, target);
+    for(const side of sides) {
+      const cssProp = `border${side.charAt(0).toUpperCase()+side.slice(1)}${prop.replace('border','')}`;
+      st[cssProp] = value;
+    }
+  },
+
+  getBorderSides(key, target) {
+    if(target === 'all') return ['top','right','bottom','left'];
+    if(target === 'top') return ['top'];
+    if(target === 'bottom') return ['bottom'];
+    if(target === 'left') return ['left'];
+    if(target === 'right') return ['right'];
+    if(target === 'horizontal') return ['top','bottom'];
+    if(target === 'vertical') return ['left','right'];
+    if(target === 'outer') {
+      // Determine if edge cell
+      const [r,c] = key.split(',').map(Number);
+      const sides = [];
+      if(r===0) sides.push('top');
+      if(r===this.tableData.rows-1) sides.push('bottom');
+      if(c===0) sides.push('left');
+      if(c===this.tableData.cols-1) sides.push('right');
+      return sides.length ? sides : ['top','right','bottom','left'];
+    }
+    return ['top','right','bottom','left'];
+  },
+
+  applyBorderPreset(target, widthPx, color, style) {
+    const w = widthPx + 'px';
+    const cells = this.getSelectedCells();
+    if(cells.length === 0) {
+      for(let r=0; r<this.tableData.rows; r++) {
+        for(let c=0; c<this.tableData.cols; c++) {
+          cells.push(`${r},${c}`);
+        }
+      }
+    }
+
+    const oldTarget = this.borderTarget;
+    this.borderTarget = target;
+    this.applyBorder('width', w);
+    this.applyBorder('color', color);
+    this.applyBorder('style', style);
+    this.borderTarget = oldTarget;
+
+    this.updateStatus(`Applied ${target} border preset`);
+  },
+
+  // ===== BACKGROUNDS =====
+  setTableBg(color) {
+    this.tableData.tableStyle.backgroundColor = color;
+    this.renderTable();
+  },
+
+  applyOpacity(val) {
+    const opacity = val / 100;
+    const cells = this.getSelectedCells();
+    if(cells.length === 0) return;
+    for(const key of cells) {
+      if(this.tableData.cells[key]) {
+        if(!this.tableData.cells[key].style) this.tableData.cells[key].style = {};
+        this.tableData.cells[key].style.opacity = opacity;
+      }
+    }
+    this.renderTable();
+  },
+
+  // ===== SPACING =====
+  setTablePadding(px) {
+    this.tableData.tableStyle.padding = px + 'px';
+    this.renderTable();
+  },
+
+  setBorderSpacing(px) {
+    this.tableData.tableStyle.borderSpacing = px + 'px';
+    this.renderTable();
+  },
+
+  setCellWidth(px) {
+    const cells = this.getSelectedCells();
+    if(cells.length === 0) {
+      // Apply to whole columns of last focused cell
+      if(this.lastFocusedCell) {
+        const c = this.lastFocusedCell.c;
+        for(let r=0; r<this.tableData.rows; r++) {
+          cells.push(`${r},${c}`);
+        }
+      }
+    }
+    for(const key of cells) {
+      if(this.tableData.cells[key]) {
+        if(!this.tableData.cells[key].style) this.tableData.cells[key].style = {};
+        this.tableData.cells[key].style.width = px + 'px';
+      }
+    }
+    this.renderTable();
+  },
+
+  setCellHeight(px) {
+    const cells = this.getSelectedCells();
+    if(cells.length === 0) {
+      if(this.lastFocusedCell) {
+        const r = this.lastFocusedCell.r;
+        for(let c=0; c<this.tableData.cols; c++) {
+          cells.push(`${r},${c}`);
+        }
+      }
+    }
+    for(const key of cells) {
+      if(this.tableData.cells[key]) {
+        if(!this.tableData.cells[key].style) this.tableData.cells[key].style = {};
+        this.tableData.cells[key].style.height = px + 'px';
+      }
+    }
+    this.renderTable();
+  },
+
+  // ===== FIELD TYPES =====
+  setFieldType(type) {
+    const cells = this.getSelectedCells();
+    if(cells.length === 0) return;
+
+    // Configuración automática de data binding para campos de base de datos
+    let autoDataSource = null;
+    let autoDbSource = null;
+    if(type.startsWith('db_')) {
+      autoDataSource = 'db';
+      const dbMap = {
+        db_crewName: 'crewName', db_crewId: 'crewId', db_crewLicense: 'crewLicense',
+        db_crew3lc: 'crew3lc', db_instructorTri: 'instructorTri', db_examinerTre: 'examinerTre',
+        db_pilotPosition: 'pilotPosition', db_location: 'location', db_fstdId: 'fstdId',
+        db_acReg: 'acReg', db_acType: 'acType', db_adIcao: 'adIcao'
+      };
+      autoDbSource = dbMap[type] || type.replace('db_', '');
+    }
+
+    for(const key of cells) {
+      if(this.tableData.cells[key]) {
+        this.tableData.cells[key].fieldType = type;
+        this.tableData.cells[key].fieldConfig = { type };
+        if(autoDataSource) {
+          this.tableData.cells[key].fieldConfig.dataSource = autoDataSource;
+          this.tableData.cells[key].fieldConfig.dbSource = autoDbSource;
+        }
+      }
+    }
+
+    // Show/hide dropdown options
+    const ddGroup = document.getElementById('dropdownOptionsGroup');
+    ddGroup.style.display = type === 'dropdown' ? 'block' : 'none';
+
+  // Highlight active button
+    document.querySelectorAll('.tc-field-btn').forEach(btn=>btn.classList.remove('active'));
+    const active = document.querySelector(`.tc-field-btn[data-type="${type}"]`);
+    if(active) active.classList.add('active');
+
+    this.renderTable();
+    this.updateStatus(`Set ${cells.length} cells to ${type}`);
+  },
+
+  saveDropdownOptions() {
+    const text = document.getElementById('dropdownOptions').value;
+    const options = text.split('\n').map(s=>s.trim()).filter(s=>s);
+    const cells = this.getSelectedCells();
+    for(const key of cells) {
+      if(this.tableData.cells[key] && this.tableData.cells[key].fieldType === 'dropdown') {
+        this.tableData.cells[key].fieldConfig = { type:'dropdown', options };
+      }
+    }
+    this.renderTable();
+    this.updateStatus('Dropdown options saved');
+  },
+
+  setDataSource(src) {
+    document.getElementById('apiConfig').style.display = src==='api' ? 'block' : 'none';
+    document.getElementById('csvConfig').style.display = src==='csv' ? 'block' : 'none';
+    const cells = this.getSelectedCells();
+    for(const key of cells) {
+      if(this.tableData.cells[key]) {
+        if(!this.tableData.cells[key].fieldConfig) this.tableData.cells[key].fieldConfig = {};
+        this.tableData.cells[key].fieldConfig.dataSource = src;
+      }
+    }
+  },
+
+  // ===== RESIZE WITH MOUSE =====
+  attachResizeListeners() {
+    // Handlers are inline in renderTable via data attributes
+  },
+
+  startResizeCol(e, colIdx) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.isResizing = true;
+    this.resizeType = 'col';
+    this.resizeColIdx = colIdx;
+    this.resizeStartX = e.clientX;
+
+    // Find a cell in this column to measure
+    const td = document.querySelector(`[data-col="${colIdx}"]`);
+    if(td) this.resizeStartWidth = td.offsetWidth;
+
+    document.body.classList.add('resizing-col');
+  },
+
+  startResizeRow(e, rowIdx) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.isResizing = true;
+    this.resizeType = 'row';
+    this.resizeRowIdx = rowIdx;
+    this.resizeStartY = e.clientY;
+
+    const td = document.querySelector(`[data-row="${rowIdx}"]`);
+    if(td) this.resizeStartHeight = td.offsetHeight;
+
+    document.body.classList.add('resizing-row');
+  },
+
+  handleMouseMove(e) {
+    if(!this.isResizing) return;
+    e.preventDefault();
+
+    if(this.resizeType === 'col' && this.resizeColIdx !== null) {
+      const diff = e.clientX - this.resizeStartX;
+      const newWidth = Math.max(30, (this.resizeStartWidth || 60) + diff);
+
+      // Apply as inline style to column cells
+      for(let r=0; r<this.tableData.rows; r++) {
+        const key = `${r},${this.resizeColIdx}`;
+        if(this.tableData.cells[key]) {
+          if(!this.tableData.cells[key].style) this.tableData.cells[key].style = {};
+          this.tableData.cells[key].style.width = newWidth + 'px';
+        }
+      }
+      // Re-render every 50ms for performance (throttle)
+      if(!this._resizeTimer) {
+        this._resizeTimer = setTimeout(()=>{
+          this._resizeTimer = null;
+          this.renderTable();
+          document.getElementById('statusCoords').textContent = `Col ${this.resizeColIdx}: ${newWidth}px`;
+        }, 30);
+      }
+    } else if(this.resizeType === 'row' && this.resizeRowIdx !== null) {
+      const diff = e.clientY - this.resizeStartY;
+      const newHeight = Math.max(20, (this.resizeStartHeight || 32) + diff);
+
+      for(let c=0; c<this.tableData.cols; c++) {
+        const key = `${this.resizeRowIdx},${c}`;
+        if(this.tableData.cells[key]) {
+          if(!this.tableData.cells[key].style) this.tableData.cells[key].style = {};
+          this.tableData.cells[key].style.height = newHeight + 'px';
+        }
+      }
+      if(!this._resizeTimer) {
+        this._resizeTimer = setTimeout(()=>{
+          this._resizeTimer = null;
+          this.renderTable();
+          document.getElementById('statusCoords').textContent = `Row ${this.resizeRowIdx}: ${newHeight}px`;
+        }, 30);
+      }
+    }
+  },
+
+  handleMouseUp(e) {
+    if(!this.isResizing) return;
+    this.isResizing = false;
+    this.resizeType = null;
+    this.resizeColIdx = null;
+    this.resizeRowIdx = null;
+    document.body.classList.remove('resizing-col', 'resizing-row');
+    if(this._resizeTimer) { clearTimeout(this._resizeTimer); this._resizeTimer = null; }
+    this.renderTable();
+  },
+
+  // ===== PANEL TOGGLES =====
+  togglePanel(header) {
+    const panel = header.parentElement;
+    panel.classList.toggle('collapsed');
+    const toggle = header.querySelector('.tc-panel-toggle');
+    toggle.textContent = panel.classList.contains('collapsed') ? '▶' : '▼';
+  },
+
+  // ===== SELECTION INFO =====
+  updateSelectionInfo() {
+    const info = document.getElementById('selectionInfo');
+    const cells = this.getSelectedCells();
+    if(cells.length === 0) {
+      info.innerHTML = '<p>No cells selected</p>';
+      return;
+    }
+
+    // Get first cell info as preview
+    const first = this.tableData.cells[cells[0]];
+    let html = `<p><strong>${cells.length}</strong> cells selected</p>`;
+    if(first) {
+      html += `<p>Type: <strong>${first.fieldType || 'text'}</strong></p>`;
+      html += `<p>Font: ${first.style?.fontSize || 'default'} ${first.style?.fontWeight || ''}</p>`;
+      html += `<p>Bg: <span style="display:inline-block;width:14px;height:14px;background:${first.style?.backgroundColor||'#1e293b'};border:1px solid #475569;vertical-align:middle;"></span></p>`;
+    }
+    info.innerHTML = html;
+  },
+
+  // ===== SAVE / LOAD =====
+  saveTemplate() {
+    if(this.tableData.rows === 0) { this.updateStatus('No table to save'); return; }
+    document.getElementById('templateName').value = this.tableData.name || '';
+    document.getElementById('templateDesc').value = this.tableData.description || '';
+    document.getElementById('saveModal').classList.add('visible');
+  },
+
+  async confirmSave() {
+    try {
+      const name = document.getElementById('templateName').value.trim();
+      if(!name) { this.updateStatus('Name required'); return; }
+
+      this.tableData.name = name;
+      this.tableData.description = document.getElementById('templateDesc').value.trim();
+
+      this.updateStatus('Saving...');
+      const res = await fetch('/api/saved-tables', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ name, description: this.tableData.description, config: this.tableData })
+      });
+      if(!res.ok) {
+        const errText = await res.text().catch(()=>'Unknown error');
+        throw new Error(`HTTP ${res.status}: ${errText}`);
+      }
+      const data = await res.json();
+      this.updateStatus(`Saved: ${name} (ID:${data.id})`);
+      this.closeModal();
+    } catch(err) {
+      this.updateStatus('Error saving: ' + err.message);
+      console.error('Save error:', err);
+    }
+  },
+
+  async openModal() {
+    document.getElementById('openModal').classList.add('visible');
+    const list = document.getElementById('templateList');
+    list.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;">Loading...</p>';
+
+    try {
+      const res = await fetch('/api/saved-tables');
+      if(!res.ok) throw new Error('Failed to load');
+      const items = await res.json();
+
+      if(items.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:20px;">No saved templates</p>';
+        return;
+      }
+
+      list.innerHTML = items.map(item=>`
+        <div class="tc-template-item" onclick="TCC.loadTemplate(${item.id})">
+          <div>
+            <div class="t-name">${this.escapeHtml(item.name)}</div>
+            <div class="t-meta">${this.escapeHtml(item.description||'') || 'No description'} • ${new Date(item.created_at).toLocaleDateString()}</div>
+          </div>
+          <div class="t-actions">
+            <button class="tc-btn" style="padding:3px 8px;font-size:0.7rem;" onclick="event.stopPropagation();TCC.deleteTemplate(${item.id},'${this.escapeHtml(item.name)}')">🗑</button>
+          </div>
+        </div>
+      `).join('');
+    } catch(err) {
+      list.innerHTML = `<p style="text-align:center;color:#ef4444;padding:20px;">Error: ${err.message}</p>`;
+    }
+  },
+
+  async loadTemplate(id) {
+    try {
+      const res = await fetch(`/api/saved-tables/${id}`);
+      if(!res.ok) throw new Error('Not found');
+      const item = await res.json();
+      this.tableData = item.config;
+      this.renderTable();
+      this.updateStatus(`Loaded: ${item.name}`);
+      this.closeModal();
+    } catch(err) {
+      this.updateStatus('Error loading: ' + err.message);
+    }
+  },
+
+  async deleteTemplate(id, name) {
+    if(!confirm(`Delete template "${name}"?`)) return;
+    try {
+      const res = await fetch(`/api/saved-tables/${id}`, { method:'DELETE' });
+      if(!res.ok) throw new Error('Delete failed');
+      this.updateStatus('Deleted');
+      this.openModal();
+    } catch(err) {
+      this.updateStatus('Error: ' + err.message);
+    }
+  },
+
+  closeModal() {
+    document.querySelectorAll('.tc-modal-overlay').forEach(m=>m.classList.remove('visible'));
+  },
+
+  // ===== EXPORT =====
+  exportHTML() {
+    if(this.tableData.rows === 0) { this.updateStatus('No table to export'); return; }
+
+    let html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+table { border-collapse:collapse; background:${this.tableData.tableStyle.backgroundColor}; padding:${this.tableData.tableStyle.padding}; }
+</style>
+</head>
+<body>
+<table style="border-collapse:separate; border-spacing:${this.tableData.tableStyle.borderSpacing}; background:${this.tableData.tableStyle.backgroundColor}; padding:${this.tableData.tableStyle.padding};">\n`;
+
+    for(let r=0; r<this.tableData.rows; r++) {
+      html += '  <tr>\n';
+      for(let c=0; c<this.tableData.cols; c++) {
+        const key = `${r},${c}`;
+        const cell = this.tableData.cells[key];
+        if(!cell || cell.mergeHidden) continue;
+
+        const tag = this.tableData.headerRows.includes(r) ? 'th' : 'td';
+        let style = this.cellStyleToString(cell.style);
+        let attrs = '';
+        if(cell.colspan > 1) attrs += ` colspan="${cell.colspan}"`;
+        if(cell.rowspan > 1) attrs += ` rowspan="${cell.rowspan}"`;
+        if(style) attrs += ` style="${style}"`;
+
+        html += `    <${tag}${attrs}>${this.escapeHtml(cell.content)}</${tag}>\n`;
+      }
+      html += '  </tr>\n';
+    }
+    html += '</table>\n</body>\n</html>';
+
+    this.downloadFile(html, `table-${Date.now()}.html`, 'text/html');
+    this.updateStatus('HTML exported');
+  },
+
+  exportJSON() {
+    if(this.tableData.rows === 0) { this.updateStatus('No table to export'); return; }
+    const json = JSON.stringify(this.tableData, null, 2);
+    this.downloadFile(json, `table-config-${Date.now()}.json`, 'application/json');
+    this.updateStatus('JSON config exported');
+  },
+
+  downloadFile(content, filename, type) {
+    const blob = new Blob([content], {type});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  },
+
+  // ===== STATUS =====
+  updateStatus(msg) {
+    document.getElementById('statusText').textContent = msg;
+    console.log('[TableCreation]', msg);
+  },
+
+  // ===== IMPORT JSON =====
+  importJSON(data) {
+    if(typeof data === 'string') {
+      try { data = JSON.parse(data); } catch(e) { this.updateStatus('Invalid JSON'); return; }
+    }
+    if(data && data.cells && data.rows && data.cols) {
+      this.tableData = data;
+      this.renderTable();
+      this.updateStatus(`Imported table ${data.rows}×${data.cols}`);
+    } else {
+      this.updateStatus('Invalid table data');
+    }
+  }
+};
+
+// Initialize
+TCC.init();
+</script>
+</body>
+</html>

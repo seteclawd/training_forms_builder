@@ -270,6 +270,12 @@ async function generateHtml(config = {}, isPreview = false) {
   label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 4px; }
   input, select, textarea { width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; }
   input:focus, select:focus, textarea:focus { outline: none; border-color: #3182ce; }
+  /* Hide native select dropdown arrow (chevron) */
+  select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: none; }
+  /* Remove focus ring/box from select when an option is selected */
+  select:focus { outline: none; box-shadow: none; }
+  /* Remove focus ring from signature/photo canvas */
+  canvas:focus { outline: none; }
   table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 8px; }
   th { background: #1a365d; color: #fff; padding: 10px; text-align: left; font-weight: 600; }
   td { padding: 10px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
@@ -277,7 +283,7 @@ async function generateHtml(config = {}, isPreview = false) {
   .radio-cell { text-align: center; width: 70px; }
   input[type="radio"] { width: 22px; height: 22px; }
   .notes-input { width: 100%; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }
-  .signature-box { border: 2px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; text-align: center; padding: 10px; }
+  .signature-box { border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; text-align: center; padding: 10px; }
   canvas { background: #fff; border-radius: 6px; cursor: crosshair; touch-action: none; -webkit-user-select: none; user-select: none; }
 
   .form-footer { padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: center; }
@@ -958,8 +964,12 @@ function renderTableHtml(field) {
         html += `                <td${tdExtra}><select name="${esc(fieldName)}_${i}"><option value="">Select...</option><option value="yes">Yes</option><option value="no">No</option></select></td>\n`;
       } else if (colType === 'date') {
         html += `                <td${tdExtra}><input type="date" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;" onchange="if(this.value){var d=new Date(this.value+'T00:00:00');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];this.setAttribute('data-raw',this.value);this.type='text';this.value=d.getDate()+'-'+m[d.getMonth()]+'-'+d.getFullYear();}" onfocus="if(this.getAttribute('data-raw')){this.type='date';this.value=this.getAttribute('data-raw');}"></td>\n`;
-      } else if (colType === 'db_crewName' || colType === 'db_crewId' || colType === 'db_crewLicense' || colType === 'db_crew3lc' || colType === 'db_instructorTri' || colType === 'db_examinerTre' || colType === 'db_pilotPosition' || colType === 'db_location' || colType === 'db_fstdId') {
-        html += `                <td${tdExtra}><select class="db-field" data-db="${colType.replace('db_','')}" name="${esc(fieldName)}_${i}" style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option value="">-- Loading... --</option></select></td>\n`;
+      } else if (colType && colType.startsWith('db_')) {
+        const dbName = colType.replace('db_','');
+        const isLocation = dbName === 'location';
+        const isFstdId = dbName === 'fstdId';
+        const extraAttr = isLocation ? ' data-role="location"' : (isFstdId ? ' data-role="fstdId"' : '');
+        html += `                <td${tdExtra}><select class="db-field" data-db="${dbName}" name="${esc(fieldName)}_${i}"${extraAttr} style="width:100%;padding:6px;border:1px solid #e2e8f0;border-radius:4px;"><option value="">-- Loading... --</option></select></td>\n`;
       } else if (colType === 'multiline') {
         const mlRows = field.columnRows?.[i] || 2;
         html += `                <td${tdExtra}><textarea rows="${mlRows}" class="notes-input" name="${esc(fieldName)}_${i}" placeholder="..."></textarea></td>\n`;
