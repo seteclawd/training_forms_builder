@@ -317,7 +317,7 @@ async function generateHtml(config = {}, isPreview = false) {
     input:placeholder-shown { border-color: transparent !important; }
     input:placeholder-shown::placeholder { display: none; }
     /* Footer for each section — inserted by JS, appears at end of section */
-    .print-footer-clone {
+    .print-footer, .print-footer-clone {
       display: flex !important;
       page-break-inside: avoid;
       align-items: center;
@@ -329,7 +329,7 @@ async function generateHtml(config = {}, isPreview = false) {
       margin-top: 10mm;
       background: #fff;
     }
-    /* Hide original footer template on print */
+    /* Original template: shown in print if visible (Ctrl+P fires beforeprint to inject clones) */
     #printFooterTemplate { display: none !important; }
   }
 </style>
@@ -385,7 +385,8 @@ async function generateHtml(config = {}, isPreview = false) {
 </div>
 <!-- Print footer: hidden on screen, shown in print at page bottom -->
 <div class="print-footer" id="printFooterTemplate">
-  <div class="print-footer-left">Form ID: <span class="print-form-id">${esc(config.subtitle || config.formId || '-')}</span></div>
+  <div class="print-footer-left">Form ID: <span class="print-form-id">${esc(config.subtitle || config.formId || '')}</span></div>
+  <div class="print-footer-center"></div>
   <div class="print-footer-right">Crew: <span class="print-crew-name">-</span></div>
 </div>
 <script>
@@ -418,7 +419,9 @@ async function generateHtml(config = {}, isPreview = false) {
       if(el.type === 'checkbox' || el.type === 'radio') return;
       if(el.value) el.setAttribute('value', el.value);
     });
-    // Collect crew data first for print footer
+    // Update footer values dynamically
+    window.updatePrintFooterValues && window.updatePrintFooterValues();
+    // Collect crew data for email body
     var crewName = '', crew3lc = '', instructorName = '', examinerName = '', dateVal = '';
     var selCrew = form.querySelector('select[data-db="crewName"]');
     if(selCrew && selCrew.value) crewName = selCrew.value;
@@ -429,10 +432,6 @@ async function generateHtml(config = {}, isPreview = false) {
         if(nm.indexOf('crew') !== -1 && nm.indexOf('3lc') === -1 && nm.indexOf('license') === -1 && el.value) crewName = el.value;
       });
     }
-    document.querySelectorAll('.print-crew-name').forEach(function(el) {
-      if(crewName) el.textContent = crewName;
-    });
-
     var html = '<!DOCTYPE html>' + document.documentElement.outerHTML;
     var formName = config.formId || config.formName || config.title || 'Training Form';
     var formId = config.subtitle || config.formId || '-';
@@ -515,20 +514,8 @@ async function generateHtml(config = {}, isPreview = false) {
         tc.appendChild(clone);
       });
     }
-    if (form) {
-      var crewSel = form.querySelector('select[data-db="crewName"]');
-      if (crewSel && crewSel.value) crewName = crewSel.value;
-      if (!crewName) {
-        form.querySelectorAll('input, select').forEach(function(el) {
-          if (crewName) return;
-          var nm = (el.name || '').toLowerCase();
-          if (nm.indexOf('crew') !== -1 && nm.indexOf('3lc') === -1 && nm.indexOf('license') === -1 && el.value) crewName = el.value;
-        });
-      }
-    }
-    document.querySelectorAll('.print-crew-name').forEach(function(el) {
-      el.textContent = crewName || '-';
-    });
+    // Update footer values dynamically
+    window.updatePrintFooterValues && window.updatePrintFooterValues();
     var html = document.documentElement.outerHTML;
     var blob = new Blob([html], {type: 'text/html;charset=utf-8'});
     var url = URL.createObjectURL(blob);
@@ -574,6 +561,70 @@ async function generateHtml(config = {}, isPreview = false) {
     localStorage.setItem('training_drafts', JSON.stringify(drafts));
     showDrafts();
   }
+  // Print footer helpers
+  function getCrewNameFromForm() {
+    var form = document.getElementById('trainingForm');
+    if (!form) return '';
+    var crewSel = form.querySelector('select[data-db="crewName"]');
+    if (crewSel && crewSel.value) return crewSel.value;
+    var fallback = '';
+    form.querySelectorAll('input, select').forEach(function(el) {
+      if (fallback) return;
+      var nm = (el.name || '').toLowerCase();
+      if (nm.indexOf('crew') !== -1 && nm.indexOf('3lc') === -1 && nm.indexOf('license') === -1 && el.value) fallback = el.value;
+    });
+    if (!fallback) {
+      var knownFields = ['crew_name','crewname','trainee','student','pilot_name','pilot'];
+      form.querySelectorAll('input, select').forEach(function(el) {
+        if (fallback) return;
+        var nm = (el.name || '').toLowerCase();
+        if (knownFields.indexOf(nm) !== -1 && el.value) fallback = el.value;
+      });
+    }
+    return fallback;
+  }
+  function getFormIdFromHeader() {
+    var header = document.querySelector('.header');
+    if (!header) return config.subtitle || config.formId || '';
+    var text = header.textContent || '';
+    var m = text.match(/Form[:\s]+([^|]+)/i);
+    return m ? m[1].trim() : (config.subtitle || config.formId || '');
+  }
+  window.updatePrintFooterValues = function() {
+    var crewName = getCrewNameFromForm();
+    var formId = getFormIdFromHeader();
+    document.querySelectorAll('.print-crew-name').forEach(function(el) {
+      el.textContent = crewName || '-';
+    });
+    document.querySelectorAll('.print-form-id').forEach(function(el) {
+      el.textContent = formId || '-';
+    });
+  };
+  // Auto-update footer on crew select change
+  document.addEventListener('change', function(e) {
+    if (e.target.getAttribute('data-db') === 'crewName' || /crew/i.test(e.target.name || '')) {
+      window.updatePrintFooterValues && window.updatePrintFooterValues();
+    }
+  });
+  // Ctrl+P support: inject clones + update values
+  window.addEventListener('beforeprint', function() {
+    window.updatePrintFooterValues && window.updatePrintFooterValues();
+    var footerTemplate = document.getElementById('printFooterTemplate');
+    if (footerTemplate) {
+      document.querySelectorAll('.print-footer-clone').forEach(function(el) { el.remove(); });
+      document.querySelectorAll('.tab-content').forEach(function(tc) {
+        var clone = footerTemplate.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.classList.add('print-footer-clone');
+        clone.style.display = 'flex';
+        tc.appendChild(clone);
+      });
+    }
+    window.updatePrintFooterValues && window.updatePrintFooterValues();
+  });
+  window.addEventListener('afterprint', function() {
+    document.querySelectorAll('.print-footer-clone').forEach(function(el) { el.remove(); });
+  });
 </script>
 <script>
   var __crewData = ${JSON.stringify(crewData)};
